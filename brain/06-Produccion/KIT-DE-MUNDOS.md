@@ -7,6 +7,8 @@ tags: [orbita, mundos, produccion, integracion]
 ---
 # Kit de mundos v1 — guía para el equipo
 
+> **Actualización del 14 de noviembre de 2026:** esta guía describe el kit 2D, que sigue disponible en `/?legacy`. El juego pasa a 3D según [ADR 006](../03-Arquitectura/ADR/ADR-006.md); el reparto y el avance están en [tandas](TANDAS.md). El contrato de nivel v2 se documentará al cerrar la primera zona 3D.
+
 Todos los destinos se juegan dentro de Órbita. El responsable de un mundo entrega su terreno, sus lugares de interés y la lógica de su misión en el contrato común. La base compartida dibuja la interfaz, mueve al astronauta y a LUMA, comprueba los objetivos y emite el informe. Si la misión necesita una operación nueva, se añade al motor común con una prueba y después se usa desde el mapa.
 
 ## Punto de partida
@@ -22,11 +24,11 @@ El kit principal implementa un recorrido local de superficie. La rama orbital a�
 
 | Encargo | Trabaja en | Entrega al integrador |
 | --- | --- | --- |
-| Base común | `src/kit/`, `src/main.tsx`, `src/style.css`, `public/art/`, registro `src/worlds/index.ts` | Versión del contrato, cámara, controles, HUD, LUMA, guardado, informe, catálogo y pruebas. |
-| Órbita / C1 | `src/worlds/orbit/`; ficha C1 | Plan, estación y EVA; entrega AUR-E01/AUR-E02 y llegada segura al nodo lunar. |
-| Luna / C2 | `src/worlds/moon.ts`; ficha C2 | Referencia y ampliación lunar. Diseñar sombra, rutas y relé. Las tres piezas completas se autentican solo en C2-M06. |
-| Marte / C3 | `src/worlds/mars.ts`; ficha C3 | Hábitat, valle y relé. Entrega AUR-E04/AUR-E05 y capacidad de rescate desde el nodo marciano. |
-| Bennu y Tierra / C4 | `src/worlds/bennu.ts`; ficha C4 | Contacto anclado, evacuación y recepción humana. Coordinar los hitos irreversibles de LUMA y el regreso con integración. |
+| Base común | `src/core/`, `src/legacy/LegacyApp.tsx`, `src/legacy/style.css`, `public/art/`, registro `src/core/worlds/index.ts` | Versión del contrato, cámara, controles, HUD, LUMA, guardado, informe, catálogo y pruebas. |
+| Órbita / C1 | `src/core/orbit/`, `src/ui/screens/` y `src/legacy/OrbitChapter.tsx`; ficha C1 | Plan, estación y EVA; entrega AUR-E01/AUR-E02 y llegada segura al nodo lunar. |
+| Luna / C2 | `src/core/worlds/moon.ts`; ficha C2 | Referencia y ampliación lunar. Diseñar sombra, rutas y relé. Las tres piezas completas se autentican solo en C2-M06. |
+| Marte / C3 | `src/core/worlds/mars.ts`; ficha C3 | Hábitat, valle y relé. Entrega AUR-E04/AUR-E05 y capacidad de rescate desde el nodo marciano. |
+| Bennu y Tierra / C4 | `src/core/worlds/bennu.ts`; ficha C4 | Contacto anclado, evacuación y recepción humana. Coordinar los hitos irreversibles de LUMA y el regreso con integración. |
 
 Un responsable confirmado por tarea; los nombres se acuerdan en PREP-01. Con dos o tres personas, agrupen destinos. Para la hackathon mantengan un único mapa lunar integrado; los cuatro capítulos completos pertenecen a expansión. Nadie necesita duplicar la app para trabajar su parte.
 
@@ -62,7 +64,7 @@ La pantalla del informe distingue qué se recogió, qué se validó y qué queda
 
 ## Cómo entregar un mundo
 
-Parte de [la definición lunar](../../src/worlds/moon.ts) y de la [plantilla](../09-Plantillas/MUNDO.md). Los datos de mapa de esta versión se editan como una cuadrícula lógica en TypeScript; la importación desde Tiled queda para la expansión. Mantén un ID estable por misión de prueba y por objetivo. Dibuja la región con las piezas del [catálogo compartido](../05-Arte/ASSETS-COMPARTIDOS.md). Ejecuta:
+Parte de [la definición lunar](../../src/core/worlds/moon.ts) y de la [plantilla](../09-Plantillas/MUNDO.md). Los datos de mapa de esta versión se editan como una cuadrícula lógica en TypeScript; la importación desde Tiled queda para la expansión. Mantén un ID estable por misión de prueba y por objetivo. Dibuja la región con las piezas del [catálogo compartido](../05-Arte/ASSETS-COMPARTIDOS.md). Ejecuta:
 
 ~~~text
 pnpm test

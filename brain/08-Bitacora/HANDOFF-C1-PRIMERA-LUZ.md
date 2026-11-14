@@ -23,11 +23,11 @@ La referencia incluye seis principales, cuatro encargos opcionales y 15 hallazgo
 
 ## Integración con el equipo de Luna
 
-- El arte, `src/worlds/moon.ts`, su CSS global, su esquema y su clave `c2-reference` quedan como estaban. Los estados persistidos de C1 viven en `orbita-chapters / c1-first-light`; los mapas y pruebas de C2 siguen en el kit v1.
+- El arte, `src/core/worlds/moon.ts`, su CSS global, su esquema y su clave `c2-reference` quedan como estaban. Los estados persistidos de C1 viven en `orbita-chapters / c1-first-light`; los mapas y pruebas de C2 siguen en el kit v1.
 - C1 guarda designación `c1-first-light`, telemetría de cada maniobra, horas de crucero, plan, región y pruebas. El crucero se cobra una sola vez; no se conserva una maniobra a medio segundo. La recarga devuelve al último control confirmado.
-- [readLunarHandoff](../../src/worlds/orbit/storage.ts) devuelve `null` antes de archivar el informe. Luego devuelve un objeto v1 con cap. C1, entrada `C2-M01`, destino `lunar-node`, llegada segura, AUR-E01/AUR-E02, nave y LUMA protegido. La función solo lee, no cambia el guardado de Luna. El selector muestra la entrega como contexto; C2 conserva autoridad sobre descenso, pista marciana y AUR-E03.
+- [readLunarHandoff](../../src/core/save/orbit.ts) devuelve `null` antes de archivar el informe. Luego devuelve un objeto v1 con cap. C1, entrada `C2-M01`, destino `lunar-node`, llegada segura, AUR-E01/AUR-E02, nave y LUMA protegido. La función solo lee, no cambia el guardado de Luna. El selector muestra la entrega como contexto; C2 conserva autoridad sobre descenso, pista marciana y AUR-E03.
 - El acceso directo a Luna sigue siendo un ensayo disponible y no exige completar C1. Al combinar la campaña, el integrador puede consumir la entrega desde la entrada de C2 y conservar sus propias reglas; el diseño detallado del descenso sigue siendo de ese equipo.
 
 ## Evidencia y siguiente paso
 
-Código en [src/worlds/orbit](../../src/worlds/orbit/OrbitChapter.tsx). Revisar [contraste con el enunciado](../04-Ciencia/REQUISITOS-NASA.md) y [pruebas de aceptación](../07-Calidad/ACEPTACION-Y-PRUEBAS.md). Los perfiles de vuelo, tasas de enlace y combustible son educativos, sin navegación real. No se activó IA ni multijugador. El siguiente paso es revisar el PR, completar C2 en su rama y ensayar su integración sin fusionar antes de tiempo.
+Código en [src/core/orbit](../../src/core/orbit/progress.ts), [src/ui/screens](../../src/ui/screens/planner.tsx) y [la vista heredada](../../src/legacy/OrbitChapter.tsx). Revisar [contraste con el enunciado](../04-Ciencia/REQUISITOS-NASA.md) y [pruebas de aceptación](../07-Calidad/ACEPTACION-Y-PRUEBAS.md). Los perfiles de vuelo, tasas de enlace y combustible son educativos, sin navegación real. No se activó IA ni multijugador. El siguiente paso es revisar el PR, completar C2 en su rama y ensayar su integración sin fusionar antes de tiempo.

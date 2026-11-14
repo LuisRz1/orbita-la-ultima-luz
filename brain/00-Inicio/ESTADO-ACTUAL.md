@@ -1,7 +1,7 @@
 ---
 id: estado-actual
 type: estado
-status: orbita-jugable-en-rama
+status: reconstruccion-3d-tanda-0
 updated: 2026-11-14
 tags: [orbita, continuidad]
 ---
@@ -9,7 +9,11 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
-**Fase activa: Tierra y órbita en `feat/world-orbit`.** Primera luz tiene seis misiones jugables y una entrega validada al nodo lunar. El equipo trabaja Luna por separado y main conserva el kit anterior. La demo pública y la campaña completa siguen pendientes.
+**Fase activa: reconstrucción 3D en la rama local `feat/3d`.** La tanda 0 está cerrada: la lógica vive en `src/core`, el motor three.js arranca en `/` con una rejilla de referencia y el juego 2D sigue completo en `/?legacy`. Siguiente paso: tanda 1, la Luna en gris con movimiento. Leer [tandas](../06-Produccion/TANDAS.md) y [ADR 006](../03-Arquitectura/ADR/ADR-006.md).
+
+Primera luz (capítulo 1 en 2D) conserva sus seis misiones jugables y su entrega al nodo lunar; ahora se abre con `/?legacy&world=orbit`. La demo pública y la campaña completa siguen pendientes. Los cambios de `feat/3d` están sin commit: los hace el propietario.
+
+**Fecha de entrega sin confirmar:** el cierre general publicado es el 15 de noviembre a las 23:59 locales; el propietario cree que su sede entrega el lunes 16.
 
 El 14 de noviembre se preparó una copia con historial independiente y la documentación original de octubre. El código, los assets y las guías del kit se publican en [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz), rama main. El [registro del arranque](../08-Bitacora/2026-11-14.md) identifica la revisión de origen y la separación entre importación, desarrollo y publicación.
 
