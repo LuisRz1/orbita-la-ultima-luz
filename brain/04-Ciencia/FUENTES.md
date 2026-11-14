@@ -15,7 +15,7 @@ tags: [orbita, fuentes]
 | NASA-C1-LEO | [Observing our Planet from Low Earth Orbit](https://www.nasa.gov/missions/station/iss-research/observing-our-planet-from-low-earth-orbit/) | Altitud aproximada de 400 km y periodo de unos 90 min de la ISS. | Valores de referencia en [science.ts](../../src/core/orbit/science.ts); pasadas y límites del juego simplificados. |
 | NASA-C1-RENDEZVOUS | [Relative Navigation System](https://www.nasa.gov/isam/relative-navigation-system/) | Posición y velocidad relativas en el acercamiento. | Referencia de control local; tolerancias del juego. |
 | NASA-C1-EVA | [Dark Sky, Bright Sun](https://science.nasa.gov/missions/hubble/dark-sky-bright-sun/) | Contraste de luz y sombra durante la EVA. | Fuente en el punto de observación; escenario ficticio. |
-| NASA-MOON | [Moon Facts](https://science.nasa.gov/moon/facts/) | Contexto físico lunar. | Fuente identificada. |
+| NASA-MOON | [Moon Facts](https://science.nasa.gov/moon/facts/) | Contexto físico lunar. En el menú 3D: gravedad 1/6 de la terrestre, día hasta 127 °C y noche hasta −173 °C, exosfera no respirable. | Verificado el 14 de noviembre de 2026. La gravedad de juego es estilizada y la interfaz lo declara. |
 | PDS-LOLA | [LRO LOLA](https://pds-geosciences.wustl.edu/missions/lro/lola.htm) | Topografía lunar. | Catálogo identificado; ningún producto incorporado. |
 | PDS-MOLA | [Mars Global Surveyor / MOLA](https://pds-geosciences.wustl.edu/missions/mgs/mola.html) | Topografía marciana. | Candidato; validar producto al usarlo. |
 | JPL-HORIZONS | [Horizons API](https://ssd-api.jpl.nasa.gov/doc/horizons.html) | Efemérides y distancias. | Documentación consultada; no datos integrados. |

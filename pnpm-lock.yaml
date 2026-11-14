@@ -200,6 +200,9 @@ importers:
       '@types/three':
         specifier: 0.187.0
         version: 0.187.0
+      opentype.js:
+        specifier: 2.0.0
+        version: 2.0.0
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -595,6 +598,10 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  opentype.js@2.0.0:
+    resolution: {integrity: sha512-kCyjv6xdDY1W/jLWZ/L3QhhTlKUqDZMQ5+Jdlw12b3dXkKNpYBqqlMMj0YDQPShWFTMwgZI1hG14kN3XUDSg/A==}
+    hasBin: true
+
   phaser@4.2.1:
     resolution: {integrity: sha512-WUNwCPJpdjvZiuT6SgCfYVW8Qw/3j0jJ4ws7P2QkhFLFu74sbGuyHJcbFueGkY/AYO4Pi47bNQXn1OCJeLX//w==}
 
@@ -963,6 +970,8 @@ snapshots:
   meshoptimizer@1.1.1: {}
 
   nanoid@3.3.20: {}
+
+  opentype.js@2.0.0: {}
 
   phaser@4.2.1:
     dependencies:

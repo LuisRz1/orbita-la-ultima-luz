@@ -1,7 +1,7 @@
 ---
 id: estado-actual
 type: estado
-status: reconstruccion-3d-tanda-0
+status: reconstruccion-3d-tanda-3
 updated: 2026-11-14
 tags: [orbita, continuidad]
 ---
@@ -9,7 +9,7 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
-**Fase activa: reconstrucción 3D en la rama local `feat/3d`.** La tanda 0 está cerrada: la lógica vive en `src/core`, el motor three.js arranca en `/` con una rejilla de referencia y el juego 2D sigue completo en `/?legacy`. Siguiente paso: tanda 1, la Luna en gris con movimiento. Leer [tandas](../06-Produccion/TANDAS.md) y [ADR 006](../03-Arquitectura/ADR/ADR-006.md).
+**Fase activa: reconstrucción 3D en la rama local `feat/3d`.** Tandas 0 y 1 cerradas: `/` abre la Luna en gris, jugable en tercera persona con salto, doble salto, dash, seis objetivos, ocho ecos, títulos de zona y repliegue al perder el enlace ([niveles](../02-Diseno/NIVELES.md)). El juego 2D sigue completo en `/?legacy`. La tanda 2 añadió el bucle del reto NASA: consola de diseño del traje, energía en juego, repliegue, informe con causas y rediseño, con intentos guardados ([mecánicas](../02-Diseno/MECANICAS.md)). La tanda 3 añadió menú principal, pausa, ajustes (idioma, sensibilidad, movimiento reducido, calidad), diez [logros](../02-Diseno/LOGROS.md), diálogos de LUMA y Control, interfaz en español e inglés y créditos con fuentes NASA. Siguiente paso: tanda 4 (aspecto: luz horneada, toon, contornos y props) y una sesión del propietario para afinar movimiento y equilibrio. Leer [tandas](../06-Produccion/TANDAS.md) y [ADR 006](../03-Arquitectura/ADR/ADR-006.md).
 
 Primera luz (capítulo 1 en 2D) conserva sus seis misiones jugables y su entrega al nodo lunar; ahora se abre con `/?legacy&world=orbit`. La demo pública y la campaña completa siguen pendientes. Los cambios de `feat/3d` están sin commit: los hace el propietario.
 

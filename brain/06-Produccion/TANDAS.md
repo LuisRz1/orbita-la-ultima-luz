@@ -1,7 +1,7 @@
 ---
 id: tandas-3d
 type: produccion
-status: tanda-0-cerrada
+status: tanda-3-cerrada
 updated: 2026-11-14
 tags: [orbita, produccion, 3d]
 ---
@@ -18,9 +18,9 @@ Diseñas la salida en una terminal → eso define tu traje y lo que puedes hacer
 | # | Tanda | Entrega | Cómo se comprueba | Estado |
 | --- | --- | --- | --- | --- |
 | 0 | Cimientos | Lógica en `src/core`, Phaser tras `/?legacy`, motor three con bucle fijo y regulador, ADR 006 | `pnpm build`, `pnpm test`, `pnpm test:e2e` | Cerrada |
-| 1 | Luna en gris | Terreno, controlador, cámara, 6 puntos, títulos de zona, límite de enlace, panel `?debug`, NIVELES.md | Recorrer los 6 puntos; ms por cuadro en Iris Xe | Pendiente |
-| 2 | Bucle de misión | Traje, consola de diseño → salida → informe → rediseño, guardado | Fallar con un diseño y completar con otro | Pendiente |
-| 3 | Interfaz y LUMA | HUD terminal, menú, diálogos, LUMA, logros, ES/EN | Recorrido completo en ambos idiomas | Pendiente |
+| 1 | Luna en gris | Terreno, controlador, cámara, 6 puntos, títulos de zona, límite de enlace, panel `?debug`, NIVELES.md | Recorrer los 6 puntos; ms por cuadro en Iris Xe | Cerrada; falta medir en Iris Xe y afinar con el propietario |
+| 2 | Bucle de misión | Traje, consola de diseño → salida → informe → rediseño, guardado | Fallar con un diseño y completar con otro | Cerrada; falta equilibrar con partidas reales |
+| 3 | Interfaz y LUMA | HUD terminal, menú, diálogos, LUMA, logros, ES/EN | Recorrido completo en ambos idiomas | Cerrada |
 | 4 | Look | Luz horneada, toon, contornos, cielo, props | 30 fps o más en Iris Xe a 720p | Pendiente |
 | 5 | Audio | ZzFX y efectos generados | Volumen en ajustes | Pendiente |
 | 6 | Capítulo 1 en 3D | Estación y vuelo; se retira Phaser | Capítulo 1 hasta la llegada a la Luna | Pendiente |
