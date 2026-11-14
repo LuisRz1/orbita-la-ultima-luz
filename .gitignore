@@ -9,6 +9,7 @@ coverage/
 .vercel/
 playwright-report/
 test-results/
+/entregas/
 *.tsbuildinfo
 
 # Secretos y preferencias locales

@@ -33,6 +33,8 @@ Vuelo local, crucero y superficie tienen estados y marcos separados. El crucero 
 
 El director de campaña verifica objetivos, pruebas de Aurora, manifiesto y cierre; el director narrativo aplica revelaciones y los hitos escritos de LUMA. La generación procedural y la IA no los sustituyen. Las vistas de conocimiento usan únicamente evidencia ya validada para evitar adelantar destinos o acontecimientos.
 
+La base de integración local implementa un solo runtime y deja el contenido de cada mundo en su propio módulo. Ver [ADR 005](ADR/ADR-005.md) para el contrato, validación de salidas y límites del guardado de ensayo.
+
 Zustand expone el estado de interfaz y lecturas derivadas; no se propaga un render React por cada objeto o frame de Phaser.
 
 ## Recursos y publicación

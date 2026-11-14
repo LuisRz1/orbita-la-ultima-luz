@@ -4,9 +4,20 @@ Juego de exploración espacial para navegador, con pixel art 2.5D, pilotaje, exp
 
 Una cápsula de la expedición desaparecida Aurora regresa con LUMA y registros dañados. Tu hermana viajaba en esa expedición. Debes reconstruir su ruta, encontrar a los supervivientes y traerlos a la Tierra.
 
-**Estado: preparación documental. Todavía no existe una versión jugable.** El objetivo es construir una demo durante NASA Space Apps 2026 y ampliar después el juego hasta una campaña de 12–20 horas.
+**Estado: kit local jugable de integración.** Luna es el nivel de referencia; Órbita, Marte y Bennu son escenarios de ensayo. El objetivo de demo y la campaña de 12–20 horas conservan su alcance en el plan.
 
-Este espacio local empieza sin código y con historial Git propio. Reutiliza la planificación de octubre, cuyo origen está registrado en la [bitácora del 14 de noviembre](brain/08-Bitacora/2026-11-14.md).
+Este espacio local empezó con la documentación y un historial Git propio. Reutiliza la planificación de octubre, cuyo origen está registrado en la [bitácora del 14 de noviembre](brain/08-Bitacora/2026-11-14.md).
+
+## Ejecutar localmente
+
+Con Node 24 y pnpm 12.4.1, abre una terminal en este directorio:
+
+~~~text
+pnpm install --frozen-lockfile
+pnpm dev
+~~~
+
+Abre la URL local de Vite. Para integradores: `pnpm test`, `pnpm build` y `pnpm test:e2e` (la prueba en Windows reutiliza Chrome instalado).
 
 ## Empieza aquí
 
@@ -21,6 +32,7 @@ Este espacio local empieza sin código y con historial Git propio. Reutiliza la 
 | Saber qué está hecho y qué sigue | [Estado actual](brain/00-Inicio/ESTADO-ACTUAL.md) |
 | Trabajar como agente o colaborador | [Instrucciones de trabajo](AGENTS.md) |
 | Consultar tareas y dependencias | [Backlog](brain/06-Produccion/BACKLOG.md) |
+| Construir un mundo con la misma base de juego | [Kit de mundos](brain/06-Produccion/KIT-DE-MUNDOS.md), [assets](brain/05-Arte/ASSETS-COMPARTIDOS.md) y [plantilla](brain/09-Plantillas/MUNDO.md) |
 | Revisar investigación de juegos | [Comparativa de referentes](brain/01-Producto/INVESTIGACION-JUEGOS.md) |
 
 ## El juego
@@ -39,7 +51,7 @@ La ambientación será un futuro cercano hipotético. Los datos científicos ten
 
 Phaser 4.2.1, TypeScript, Vite, React, Zustand, Zod e IndexedDB con Dexie. Tiled para mapas y LibreSprite para sprites. Vercel para la publicación y un servicio opcional de conversación online. El juego completo deberá poder jugarse sin pagar IA.
 
-Las versiones investigadas, sus límites y la instalación futura están en [Entorno](brain/06-Produccion/ENTORNO.md). No hay dependencias que instalar ni comandos de arranque de juego en esta fase.
+Las versiones del kit están fijadas en el lockfile. [Entorno](brain/06-Produccion/ENTORNO.md) distingue las herramientas usadas de las previstas.
 
 ## Calendario y elegibilidad
 
@@ -48,7 +60,9 @@ Las versiones investigadas, sus límites y la instalación futura están en [Ent
 - **14–15 de noviembre:** desarrollo de la demo durante el periodo autorizado.
 - **Después del evento:** expansión por hitos hasta la campaña completa.
 
-La FAQ oficial indica que los equipos no pueden empezar a trabajar en los retos antes de la hackathon. Se acordó conservar la elegibilidad y limitar esta etapa a investigación, planificación y documentación. La preparación documental no constituye una certificación de elegibilidad: se revisarán las condiciones vigentes y las instrucciones de la sede. [FAQ oficial](https://www.spaceappschallenge.org/resources/participant-faqs/).
+La FAQ oficial indica que los equipos no pueden empezar a trabajar en los retos antes de la hackathon. Se limitó la etapa previa a investigación, planificación y documentación. La preparación documental no constituye una certificación de elegibilidad. [FAQ oficial](https://www.spaceappschallenge.org/resources/participant-faqs/).
+
+El propietario registró la apertura comunicada por su sede en [Cajamarca](brain/08-Bitacora/2026-11-14.md#apertura-en-cajamarca) antes de empezar este kit. La verificación del enunciado completo y de la entrega interna sigue pendiente.
 
 ## Abrir el cerebro en Obsidian
 

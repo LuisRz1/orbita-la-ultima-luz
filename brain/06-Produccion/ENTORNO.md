@@ -1,8 +1,8 @@
 ---
 id: entorno
 type: configuracion
-status: inspeccionado-sin-instalacion
-updated: 2026-10-14
+status: kit-local-verificado
+updated: 2026-11-14
 tags: [orbita, herramientas]
 ---
 # Entorno y herramientas
@@ -21,7 +21,7 @@ Node 24.18.0, npm 11.6.2, pnpm 12.4.1, Git, GitHub CLI, Vercel CLI, Chrome y Obs
 
 Phaser 4.2.1; Vite 8.3.4; TypeScript 7.0.2; React 19.3.0; Zustand 5.0.15; Zod 4.6.6; Dexie 4.4.6; AI SDK 7.0.137; Vitest 5.0.3; Playwright 1.64.0.
 
-Son referencias de investigación de octubre, no dependencias instaladas en este repositorio. Antes de instalar se revisarán engines, pares y documentación; versiones compatibles exactas quedarán fijadas en lockfile.
+Las anteriores son referencias de octubre. El kit fijó Phaser 4.2.1, Vite 8.3.8, TypeScript 7.0.2, React 19.3.1, Zod 4.6.7, Dexie 4.4.7 y Playwright 1.65.1 con Node 24.18.0 y pnpm 12.4.1. No requiere cuentas, backend, credenciales ni IA. Se probó Chrome existente; los comandos de integración están en [kit](KIT-DE-MUNDOS.md).
 
 ## Instalación futura
 
@@ -31,4 +31,4 @@ No modificar configuración global ni desinstalar herramientas existentes para p
 
 ## Abrir hoy
 
-La única operación necesaria es clonar el repositorio y abrir brain como bóveda en Obsidian. Todavía no existen package.json, servidor de desarrollo o build de juego.
+Ejecuta `pnpm install --frozen-lockfile` y `pnpm dev` desde la raíz; abre la URL local de Vite. Para el catálogo PNG no se requiere instalar un editor de arte. La documentación puede abrirse como bóveda seleccionando brain.

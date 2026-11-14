@@ -7,6 +7,8 @@ tags: [orbita, demo]
 ---
 # Demo de hackathon
 
+El [nivel de referencia](../06-Produccion/KIT-DE-MUNDOS.md) ya cubre el tramo de superficie, los seis lugares y el informe local. No acredita todavía crucero, vuelo, una duración de 15–25 minutos ni la entrega al jurado.
+
 ## Recorrido normal: 15–25 minutos
 
 Planificar → resolver tramo acelerado → pilotar aproximación breve con asistencia → desplegar astronauta y LUMA → investigar seis lugares → gestionar incidencia → regresar → revisar resultados.

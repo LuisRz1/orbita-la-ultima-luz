@@ -1,8 +1,8 @@
 ---
 id: aceptacion-pruebas
 type: calidad
-status: criterios-sin-ejecucion
-updated: 2026-10-14
+status: referencia-local-comprobada
+updated: 2026-11-14
 tags: [orbita, pruebas]
 ---
 # Aceptación y pruebas
@@ -32,7 +32,7 @@ tags: [orbita, pruebas]
 | Crucero | Acelerar, pausar y reanudar sin duplicar consumo de recursos. |
 | Historia local | Recuperar un registro parcial de Aurora, reparar el enlace y entregarlo cierra la demo; no declara el rescate global ni completa el capítulo. |
 
-Vitest comprobará reglas y persistencia relevantes. Playwright comprobará recorridos de usuario y fallos de red. No escribir pruebas que solo repitan la implementación.
+El kit usa el runner de Node para las reglas y Playwright para el recorrido de usuario. Las pruebas de la demo completa siguen sujetas a su alcance.
 
 ## Rendimiento
 
@@ -61,4 +61,4 @@ Verificar cuatro paletas de LUMA con señales accesibles, traducción escrita si
 - Esperar en menús o explorar secundarias no mata a LUMA o a Aurora. Los riesgos ordinarios permiten recuperación y no sustituyen el desenlace.
 - Recargar en los límites de evacuación, despedida y recepción conserva el estado. El epílogo reconoce rescate y pérdida, y mantiene los pendientes mediante nuevas expediciones.
 
-**Resultado actual:** ninguna prueba del juego ejecutada; todavía no existe implementación.
+**Resultado del kit local:** cuatro pruebas de reglas cubren las cargas, las salidas, los seis órdenes lunares, la reserva y la reanudación. Dos recorridos de Playwright en Chrome comprueban Luna y Marte, incluida la persistencia, la pausa, el idioma y la separación de partidas. El build de producción pasa. No se han ejecutado pruebas de campaña, crucero, vuelo, rendimiento sostenido o despliegue.

@@ -7,6 +7,8 @@ tags: [orbita, animacion]
 ---
 # Animaciones y audio
 
+El [kit v1](ASSETS-COMPARTIDOS.md) incluye cuatro orientaciones de reposo y paso compartidas, con acciones indicadas por icono y texto. Las animaciones de trabajo, ocho orientaciones y audio continúan como dirección de producción.
+
 ## Astronauta
 
 Objetivo de campaña: ocho orientaciones para reposo y desplazamiento; acciones legibles de escanear, recoger, reparar y EVA. Distinguir caminar en una instalación, desplazarse con gravedad lunar y moverse en microgravedad.

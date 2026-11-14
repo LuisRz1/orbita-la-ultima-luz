@@ -17,6 +17,8 @@ tags: [orbita, colaboracion]
 
 Con dos integrantes, ciencia, narrativa y entrega se reparten. Los nombres, disponibilidad y propiedad de tareas se confirmarán en PREP-01.
 
+Para desarrollo por mundos, usar el [reparto y contrato común](KIT-DE-MUNDOS.md). Un integrador mantiene el motor, el catálogo, el inicio y el cierre; el responsable de un mundo mantiene su configuración, lugares, tácticas y textos. Cada entrega incluye una [ficha de mundo](../09-Plantillas/MUNDO.md).
+
 ## Contrato de cada tarea
 
 ID; resultado; responsable confirmado; fase; dependencias; alcance; nota de diseño; aceptación; comprobaciones; bloqueo; siguiente paso.

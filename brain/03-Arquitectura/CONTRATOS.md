@@ -9,6 +9,8 @@ tags: [orbita, interfaces]
 
 Este documento describe responsabilidades. No es un esquema ejecutable ni fija todos los campos de la futura implementación.
 
+El nivel de referencia usa un contrato separado y ya ejecutable: [ADR 005](ADR/ADR-005.md). Su informe cierra un ensayo; la cadena de evidencias, campaña y manifiesto de esta nota permanecen como contratos de expansión.
+
 | Contrato | Datos que debe representar |
 | --- | --- |
 | MissionDefinition | ID, objetivo, aporte al rescate, requisitos, piezas de evidencia, recursos, estados, evaluación y recompensa. |

@@ -9,6 +9,8 @@ tags: [orbita, persistencia]
 
 IndexedDB mediante Dexie será el almacenamiento principal. El usuario podrá exportar e importar una partida como archivo de datos validado.
 
+El kit local ya usa Dexie para reanudar los hitos de cada escenario con una clave de misión y una versión. Su [contrato v1](ADR/ADR-005.md) no implementa todavía exportación, migración de campaña ni guardado de evidencias globales.
+
 ## Contenido persistente
 
 Versión de esquema y contenido; perfil local; progreso de misiones; recursos estables; IDs de hallazgos; mejoras; semillas necesarias; memoria y decisiones escritas de LUMA; opciones.

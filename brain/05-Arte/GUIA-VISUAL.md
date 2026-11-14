@@ -28,7 +28,7 @@ Mapa en Tiled → exportación JSON → validación de capas y referencias. Spri
 
 Conservar archivos editables y registrar licencias. Los tamaños de tile y sprite se fijarán con la primera prueba de legibilidad, antes de producir el resto del contenido.
 
-Esta nota es una especificación. No se han producido sprites, mapas o una muestra visual del juego.
+El [catálogo de assets](ASSETS-COMPARTIDOS.md) fija el primer conjunto de sprites y tamaños que usa el kit local. El mapa actual usa casillas declarativas; la importación de mapas Tiled continúa prevista para la expansión.
 
 ## LUMA y paleta estelar
 

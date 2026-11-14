@@ -6,7 +6,7 @@ Este repositorio contiene investigación y planificación de **Órbita: La últi
 
 **No implementar el juego, producir assets del reto, descargar/procesar datasets para la solución ni desplegar una versión jugable antes del inicio autorizado de la hackathon.** Tampoco usar ramas auxiliares para adelantar ese trabajo. Esta restricción deriva de la decisión expresa del propietario y de la FAQ enlazada en [requisitos NASA](brain/04-Ciencia/REQUISITOS-NASA.md).
 
-La fecha global es 14–15 de noviembre de 2026. El horario y sede exactos aún deben verificarse. La fecha del sistema por sí sola no acredita que la ventana esté abierta. La documentación de preparación está autorizada; no presentar esta interpretación como aprobación del organizador.
+La fecha global es 14–15 de noviembre de 2026. El propietario confirmó su sede en Cajamarca (Perú) y que allí le indicaron el inicio el 14 de noviembre a las 08:00, hora local (America/Lima, UTC−05:00). El [registro de apertura](brain/08-Bitacora/2026-11-14.md#apertura-en-cajamarca) distingue el aviso recibido de la confirmación pública de entrega. No presentar este registro como certificación de elegibilidad.
 
 ## Lectura de entrada
 
@@ -29,6 +29,7 @@ La fecha global es 14–15 de noviembre de 2026. El horario y sede exactos aún 
 - El objetivo principal es rescatar a Aurora, incluida la hermana del protagonista, y volver con sus supervivientes. Leer la [historia principal](brain/02-Diseno/HISTORIA-PRINCIPAL.md) antes de cambiar misiones o revelaciones. La ruta reabastece en Marte y vuelve a la Tierra después del rescate.
 - Preservar la cadena AUR-E01–AUR-E07: recogido y validado son estados distintos; la IA y las conversaciones no revelan pruebas futuras. La extracción exige el manifiesto completo y reservas para el retorno.
 - Respetar cuatro capítulos de seis principales y el modelo de pilotaje local con crucero acelerado. Los opcionales no bloquean avanzar.
+- Para repartir los destinos y mantener arte, inicio, cierre y controles en común, seguir el [kit de mundos](brain/06-Produccion/KIT-DE-MUNDOS.md). Cada destino tiene su módulo y el motor común aplica los requisitos.
 - No contratar servicios, comprar créditos, activar recargas ni añadir cobros. La IA online es opcional y el presupuesto autorizado de pagos es cero.
 - No publicar claves, tokens, partidas personales, conversaciones completas ni configuraciones privadas en este repositorio público.
 - Nunca dar a la IA autoridad para modificar progreso, recursos o recompensas.
@@ -36,7 +37,7 @@ La fecha global es 14–15 de noviembre de 2026. El horario y sede exactos aún 
 
 ## Verificación y cierre
 
-En esta fase, comprobar enlaces locales, referencias Obsidian, coherencia del estado y ausencia de secretos. No inventar resultados de ejecución: todavía no hay un juego.
+Comprobar enlaces locales, referencias Obsidian, coherencia del estado y ausencia de secretos. La referencia local no acredita por sí sola la demo completa ni la campaña.
 
 Cuando se autorice implementación, ejecutar las comprobaciones relevantes descritas en [calidad](brain/07-Calidad/ACEPTACION-Y-PRUEBAS.md). Un mock o una captura no acredita una función completa.
 

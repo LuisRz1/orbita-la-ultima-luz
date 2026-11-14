@@ -1,0 +1,342 @@
+{
+  "astronaut": {
+    "file": "astronaut.png",
+    "frame": [
+      32,
+      40
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.875
+    ],
+    "size": [
+      128,
+      160
+    ],
+    "usage": "actor"
+  },
+  "beacon": {
+    "file": "beacon.png",
+    "frame": [
+      28,
+      36
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.88
+    ],
+    "size": [
+      28,
+      36
+    ],
+    "usage": "prop"
+  },
+  "cache": {
+    "file": "cache.png",
+    "frame": [
+      32,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.88
+    ],
+    "size": [
+      32,
+      28
+    ],
+    "usage": "prop"
+  },
+  "console": {
+    "file": "console.png",
+    "frame": [
+      28,
+      36
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.88
+    ],
+    "size": [
+      28,
+      36
+    ],
+    "usage": "prop"
+  },
+  "floor-bennu": {
+    "file": "floor-bennu.png",
+    "frame": [
+      48,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.39285714285714285
+    ],
+    "size": [
+      192,
+      28
+    ],
+    "usage": "terrain"
+  },
+  "floor-mars": {
+    "file": "floor-mars.png",
+    "frame": [
+      48,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.39285714285714285
+    ],
+    "size": [
+      192,
+      28
+    ],
+    "usage": "terrain"
+  },
+  "floor-moon": {
+    "file": "floor-moon.png",
+    "frame": [
+      48,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.39285714285714285
+    ],
+    "size": [
+      192,
+      28
+    ],
+    "usage": "terrain"
+  },
+  "floor-orbit": {
+    "file": "floor-orbit.png",
+    "frame": [
+      48,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.39285714285714285
+    ],
+    "size": [
+      192,
+      28
+    ],
+    "usage": "terrain"
+  },
+  "habitat": {
+    "file": "habitat.png",
+    "frame": [
+      80,
+      68
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.85
+    ],
+    "size": [
+      80,
+      68
+    ],
+    "usage": "prop"
+  },
+  "luma-bennu": {
+    "file": "luma-bennu.png",
+    "frame": [
+      24,
+      24
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.875
+    ],
+    "size": [
+      96,
+      96
+    ],
+    "usage": "actor"
+  },
+  "luma-mars": {
+    "file": "luma-mars.png",
+    "frame": [
+      24,
+      24
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.875
+    ],
+    "size": [
+      96,
+      96
+    ],
+    "usage": "actor"
+  },
+  "luma-moon": {
+    "file": "luma-moon.png",
+    "frame": [
+      24,
+      24
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.875
+    ],
+    "size": [
+      96,
+      96
+    ],
+    "usage": "actor"
+  },
+  "luma-orbit": {
+    "file": "luma-orbit.png",
+    "frame": [
+      24,
+      24
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.875
+    ],
+    "size": [
+      96,
+      96
+    ],
+    "usage": "actor"
+  },
+  "markers": {
+    "file": "markers.png",
+    "frame": [
+      22,
+      22
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.5
+    ],
+    "size": [
+      110,
+      22
+    ],
+    "usage": "ui"
+  },
+  "relay": {
+    "file": "relay.png",
+    "frame": [
+      40,
+      48
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.875
+    ],
+    "size": [
+      40,
+      48
+    ],
+    "usage": "prop"
+  },
+  "rock-bennu": {
+    "file": "rock-bennu.png",
+    "frame": [
+      35,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.89
+    ],
+    "size": [
+      35,
+      28
+    ],
+    "usage": "prop"
+  },
+  "rock-mars": {
+    "file": "rock-mars.png",
+    "frame": [
+      35,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.89
+    ],
+    "size": [
+      35,
+      28
+    ],
+    "usage": "prop"
+  },
+  "rock-moon": {
+    "file": "rock-moon.png",
+    "frame": [
+      35,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.89
+    ],
+    "size": [
+      35,
+      28
+    ],
+    "usage": "prop"
+  },
+  "rock-orbit": {
+    "file": "rock-orbit.png",
+    "frame": [
+      35,
+      28
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.89
+    ],
+    "size": [
+      35,
+      28
+    ],
+    "usage": "prop"
+  },
+  "shuttle": {
+    "file": "shuttle.png",
+    "frame": [
+      76,
+      62
+    ],
+    "license": "CC-BY-4.0",
+    "origin": [
+      0.5,
+      0.88
+    ],
+    "size": [
+      76,
+      62
+    ],
+    "usage": "prop"
+  }
+}

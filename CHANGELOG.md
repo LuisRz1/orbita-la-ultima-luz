@@ -1,5 +1,11 @@
 # Registro de cambios
 
+## 2026-11-14 — Kit de mundos v1
+
+- Base local compartida, Luna jugable de referencia y mapas de ensayo en Órbita, Marte y Bennu.
+- 20 PNG originales, catálogo, contrato v1 y plantilla para entregar un mundo por separado.
+- Planificación, movimiento, diario, terminal, informe y guardado verificados; vuelo y campaña siguen pendientes.
+
 ## 2026-10-14 — Revisión 1.2: historia de Aurora y misiones de rescate
 
 - Título de trabajo Órbita: La última luz e historia principal completa con spoilers.

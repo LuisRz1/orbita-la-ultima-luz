@@ -1,7 +1,7 @@
 ---
 id: estado-actual
 type: estado
-status: preparacion-documental
+status: kit-jugable-local
 updated: 2026-11-14
 tags: [orbita, continuidad]
 ---
@@ -9,11 +9,11 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
-**Fase activa: preparación documental. No hay juego implementado.**
+**Fase activa: implementación del kit de mundos.** La Luna tiene un recorrido jugable de referencia; Órbita, Marte y Bennu son ensayos de integración. La demo completa y la campaña siguen pendientes.
 
 El 14 de noviembre se preparó una copia local con historial independiente y la documentación original de octubre. El [registro del arranque](../08-Bitacora/2026-11-14.md) identifica el origen y la revisión copiada. La copia no se publicó ni tiene remoto.
 
-El propietario pidió publicar el plan y el cerebro para compartirlos. Esta entrega deja una base de documentación, decisiones y tareas; no acredita movimiento, misiones, guardado, IA o rendimiento.
+Se abrió este desarrollo después del aviso de Cajamarca comunicado por el propietario. Lee primero el [kit de mundos](../06-Produccion/KIT-DE-MUNDOS.md) y el [catálogo](../05-Arte/ASSETS-COMPARTIDOS.md) antes de repartir mapas y objetivos.
 
 La revisión 1.2 integra la historia de Aurora en los cuatro capítulos y 24 misiones: buscar a la hermana del protagonista y a los supervivientes y traerlos a la Tierra. LUMA llega en la cápsula de emergencia, se deteriora y se sacrifica para salvar al jugador. El título de trabajo es Órbita: La última luz. Son especificaciones, no contenido jugable.
 
@@ -21,6 +21,9 @@ Leer [historia principal — spoilers](../02-Diseno/HISTORIA-PRINCIPAL.md), [cam
 
 ## Entregado
 
+- Un proyecto Phaser/React con cuatro módulos de mundo, controles, sprites, planificación, diario, cierre validado, informe y guardado local compartidos.
+- 20 PNG originales con un manifiesto y fuente reproducible. Luna tiene seis lugares y un cierre local; los otros tres escenarios tienen mapas separados y guardados independientes.
+- Guía de integración, inicio y salida de los cuatro capítulos, contrato v1 y plantilla de entrega.
 - Plan completo y README de entrada.
 - Vault compatible con Obsidian y GitHub, sin plugins obligatorios.
 - Especificaciones de producto, diseño, arquitectura, ciencia, arte y calidad.
@@ -38,8 +41,8 @@ Leer [historia principal — spoilers](../02-Diseno/HISTORIA-PRINCIPAL.md), [cam
 - Carpeta de partida vacía y sin Git, comprobado el 14 de octubre.
 - Cuenta de publicación confirmada: LuisRz1.
 - FAQ oficial revisada el 14 de octubre: fechas globales y restricción de trabajo previo siguen publicadas.
-- No hay dependencias del juego, assets, datasets procesados, pruebas de ejecución ni demo.
-- Las versiones técnicas son una base investigada; no existe todavía un lockfile.
+- Dependencias fijadas en `pnpm-lock.yaml`; `pnpm build`, cuatro pruebas de reglas y dos recorridos en Chrome verificados.
+- Los escenarios de ensayo no validan la física de cada destino, no publican datos científicos y no escriben hitos de campaña.
 - Publicación inicial confirmada en el commit ec0edf1; consultar Git para las actualizaciones posteriores.
 - Revisión documental inicial: 45 archivos, 40 documentos Markdown, 32 notas y 63 enlaces válidos.
 - Revisión 1.1: 52 archivos previstos para versionar, 47 documentos Markdown, 39 notas y 94 enlaces locales comprobados. Se verificaron seis misiones por capítulo, 18 regiones únicas y los totales 24/32/18/120.
@@ -50,17 +53,16 @@ Leer [historia principal — spoilers](../02-Diseno/HISTORIA-PRINCIPAL.md), [cam
 
 ## Próximo trabajo permitido
 
-1. Revisar con el equipo plan, historia y fichas de misión; asignar responsables reales mediante PREP-01. El handoff enumera los detalles editoriales y de balance pendientes para sus fases autorizadas.
-2. Completar la investigación donde la evidencia aún sea histórica o parcial.
-3. Revisar el enunciado completo y actualizar la matriz de requisitos ([PREP-03](https://github.com/LuisRz1/nasa-orbita/issues/3)).
-4. Confirmar sede de inscripción, zona horaria, hora de comienzo del desarrollo, cierre y guías vigentes ([PREP-04](https://github.com/LuisRz1/nasa-orbita/issues/4)). El [calendario global de 2026](https://www.spaceappschallenge.org/2026/) da la ventana general de entrega; aún no consta la hora autorizada para el equipo.
-5. Una vez resueltas las dependencias y abierta la ventana, comenzar [JAM-01](https://github.com/LuisRz1/nasa-orbita/issues/5) según el [handoff vigente](../08-Bitacora/HANDOFF-2026-11-14.md).
+1. Confirmar quién lleva cada destino y quién integra el motor. Probar la Luna antes de abrir ramas individuales.
+2. Revisar el enunciado completo y la entrega local ([PREP-03](https://github.com/LuisRz1/nasa-orbita/issues/3) y [PREP-04](https://github.com/LuisRz1/nasa-orbita/issues/4)); el horario de apertura ya está registrado según el aviso comunicado al dueño.
+3. Completar primero crucero y aproximación comunes en [JAM-08](https://github.com/LuisRz1/nasa-orbita/issues/14), y ampliar Luna con fuentes y planificación de misión. La campaña, el mando, la exportación de guardado, el audio y la publicación requieren trabajo adicional.
+4. Integrar cada entrega siguiendo el [handoff vigente](../08-Bitacora/HANDOFF-2026-11-14.md) y su ficha de mundo.
 
 Consulta [backlog](../06-Produccion/BACKLOG.md) para IDs, dependencias y enlaces a Issues.
 
 ## Preguntas externas pendientes
 
-- Sede y horas exactas de inicio y entrega.
+- Fuente pública del horario local y hora de entrega interna de Cajamarca.
 - Requisitos y datasets definitivos del enunciado completo.
 - Nombres y disponibilidad de los integrantes.
 - Acceso gratuito real al modelo de conversación en la fecha de entrega.

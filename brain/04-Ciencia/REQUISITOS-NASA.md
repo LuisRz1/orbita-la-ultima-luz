@@ -30,4 +30,4 @@ La [FAQ oficial](https://www.spaceappschallenge.org/resources/participant-faqs/)
 
 El propietario eligió conservar la elegibilidad. Esta etapa se limita a preparación documental. Se volverán a consultar condiciones, guías y horario de la sede; no se ha solicitado ni obtenido una aprobación del organizador.
 
-Registrar el 13 de noviembre: sede, fuente del horario, zona horaria, inicio y cierre, reglas de entrega y uso permitido de herramientas. No contactar al organizador en nombre del propietario sin autorización explícita.
+El 14 de noviembre el propietario registró [la apertura que le comunicaron en Cajamarca](../08-Bitacora/2026-11-14.md#apertura-en-cajamarca). La página global publica la ventana de entrega. Falta acceder al enunciado completo y confirmar guías, cierre interno y condiciones de herramientas. El kit usa valores de juego y no incorpora todavía un producto científico descargado. No contactar al organizador en nombre del propietario sin autorización explícita.
