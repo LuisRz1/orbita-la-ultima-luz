@@ -220,5 +220,6 @@ for i,symbol in enumerate(('scan','salvage','service','upload','done')):
     im.paste(tile,(i*22,0))
 emit('markers',im,(22,22),(.5,.5),'ui')
 
-(ROOT/'manifest.json').write_text(json.dumps(MANIFEST,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+manifest = ROOT.parents[1] / 'src' / 'art-manifest.json'
+manifest.write_bytes((json.dumps(MANIFEST,indent=2,sort_keys=True)+'\n').encode('utf-8'))
 print(f'{len(MANIFEST)} PNG; {sum(p.stat().st_size for p in ROOT.glob("*.png")):,} bytes')

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import art from '../../public/art/manifest.json';
+import art from '../art-manifest.json';
 import { accessible, distance, inBounds, isWalkable, pointKey, route, type Point, type POI, type World } from './contract.ts';
 import { approachRange } from './mission.ts';
 
