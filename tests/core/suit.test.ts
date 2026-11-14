@@ -22,10 +22,10 @@ test('mass lowers the jump and the thruster decides air jumps', () => {
   assert.equal(suitMovement(defaultParams, heavy).airJumps, 1);
 });
 
-test('every required objective fits in both proposals with the reserve and five minutes of life support', () => {
+test('every required objective fits in both proposals with the reserve and three minutes of life support', () => {
   for (const p of proposals) {
     const required = moonLevel.points.filter(q => q.required).reduce((sum, q) => sum + actionCost(q.power, q.action, p.design), 0);
-    assert.ok(required + reserve + 300 * 0.16 <= assessSuit(p.design).capacity, `${p.id}: ${required}`);
+    assert.ok(required + reserve + 180 * 0.16 <= assessSuit(p.design).capacity, `${p.id}: ${required}`);
   }
 });
 

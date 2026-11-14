@@ -265,3 +265,69 @@
 @media (prefers-reduced-motion: reduce) {
   .orbita .toast, .orbita .dialogue, .orbita .data-card .blink { animation: none; }
 }
+.orbita .setting-hint { margin: -4px 0 8px; color: var(--dim); font-size: 11px; }
+
+/* Film grain and vignette over the 3D view: a CSS layer, so it costs the GPU nothing. */
+.orbita .film {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 38%) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay; opacity: 0.32;
+}
+@media (prefers-reduced-motion: reduce) { .orbita .film { opacity: 0.2; } }
+
+/* Playtest fixes: no wrapping in the battery row; the cold mark is an icon. */
+.orbita .row.nowrap { white-space: nowrap; }
+.orbita .row .cold { color: #bfe9ff; font-style: normal; }
+/* Over the report, dialogue sits at the top so the report buttons stay reachable. */
+.orbita .report-screen ~ .dialogue { top: 6vh; bottom: auto; }
+.orbita .meter-note { margin: 0 0 6px; color: var(--dim); font-size: 11px; text-align: right; }
+.orbita .slot button:disabled { opacity: 0.3; cursor: default; }
+
+/* ---------- compass and compact mission panel ---------- */
+.orbita .compass {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: min(460px, 46vw); height: 34px;
+  border: 2px solid var(--frame); background: var(--panel); overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.orbita .compass span { position: absolute; top: 9px; transform: translateX(-50%); color: var(--text); font-size: 12px; letter-spacing: 0.1em; }
+.orbita .compass span.minor { color: var(--dim); font-size: 10px; top: 10px; }
+.orbita .compass .center { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--frame); }
+.orbita .compass .mark { position: absolute; top: 3px; transform: translateX(-50%); display: grid; justify-items: center; font-weight: 400; line-height: 1; font-size: 13px; }
+.orbita .compass .mark small { font-size: 9px; color: var(--text); }
+.orbita .compass .mark.goal { color: var(--accent); }
+.orbita .compass .mark.home { color: var(--warn); }
+.orbita .compass .mark.edge { opacity: 0.6; }
+.orbita .compass .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.orbita .mission .next { display: grid; gap: 1px; margin: 4px 0 8px; padding: 6px 8px; border-left: 2px solid var(--accent); background: rgb(127 227 224 / 6%); }
+.orbita .mission .next span { color: var(--dim); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; }
+.orbita .mission .next b { font-weight: 400; color: var(--accent); }
+.orbita .mission .next em { font-style: normal; color: var(--text); font-size: 11px; }
+.orbita .pips { display: flex; gap: 4px; }
+.orbita .pips i { width: 9px; height: 9px; border: 1px solid var(--accent); }
+.orbita .pips i.done { background: var(--accent); }
+
+/* ---------- ship interior ---------- */
+.orbita .ship-screen { position: absolute; inset: 0; pointer-events: none; }
+.orbita .ship-screen > * { pointer-events: auto; }
+.orbita .ship-bar {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px;
+  max-width: 94vw; padding: 8px 14px; border: 2px solid var(--frame); background: var(--panel); white-space: nowrap;
+}
+.orbita .ship-bar span { color: var(--dim); display: inline-flex; align-items: center; gap: 6px; }
+.orbita .ship-bar span.set { color: var(--text); }
+.orbita .ship-bar i { font-style: normal; color: var(--accent); }
+.orbita .ship-bar span b { width: 9px; height: 9px; border: 1px solid var(--dim); display: inline-block; }
+.orbita .ship-bar span b.on, .orbita .ship-bar .goals b.ok { background: var(--accent); border-color: var(--accent); }
+.orbita .ship-bar .goals b.bad { background: #ff7a6b; border-color: #ff7a6b; }
+.orbita .ship-bar .mass.over, .orbita .ship-bar .warnv { color: var(--warn); }
+.orbita .station { left: 50%; bottom: 22px; transform: translateX(-50%); width: min(560px, 94vw); border-color: var(--frame-active); }
+.orbita .station-why { margin: 0 0 10px; color: var(--text); }
+.orbita .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.orbita .options button { padding: 10px; border: 2px solid var(--frame); background: rgb(11 15 20 / 40%); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.orbita .options button.on { border-color: var(--accent); background: rgb(127 227 224 / 10%); }
+.orbita .options small { display: block; margin-top: 4px; color: var(--dim); font-size: 11px; }
+.orbita .station-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.orbita .station-foot .primary { width: auto; margin: 0; padding: 8px 18px; }
+@media (max-width: 640px) { .orbita .options { grid-template-columns: 1fr; } }

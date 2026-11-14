@@ -2,6 +2,7 @@
 import { useStore } from 'zustand';
 import { achievements, type AchievementId } from '../core/achievements.ts';
 import { reserve } from '../core/suit.ts';
+import { debugEnabled } from '../engine/debug.ts';
 import { useT } from './i18n.ts';
 import { commands, hud } from './store.ts';
 
@@ -12,21 +13,46 @@ const clock = (s: number) => {
 
 export function MissionPanel() {
   const { t } = useT();
-  const { levelTitle, objectives, echoes, elapsed } = useStore(hud);
+  const { levelTitle, objectives, echoes, elapsed, compass } = useStore(hud);
   if (!levelTitle) return null;
-  const done = objectives.filter(o => o.required && o.done).length, total = objectives.filter(o => o.required).length;
+  const required = objectives.filter(o => o.required);
+  const goal = compass.marks.find(m => m.kind === 'goal');
   return <section className="panel mission" aria-label={t('eva')}>
-    <span className="panel-title">{t('eva')}</span>
+    <span className="panel-title">{t('eva')} · {clock(elapsed)}</span>
     <h1>{t(levelTitle)}</h1>
-    <div className="row"><span>{t('objectives')}</span><b>{done}/{total}</b></div>
+    <div className="next" data-next>
+      <span>{t('nextGoal')}</span>
+      <b>{goal?.label ? t(goal.label) : t('allDone')}</b>
+      {goal && <em>{Math.round(goal.dist)} m</em>}
+    </div>
+    <div className="row"><span>{t('objectives')}</span>
+      <b className="pips" aria-label={required.filter(o => o.done).length + '/' + required.length}>
+        {required.map(o => <i key={o.id} data-objective={o.id} className={o.done ? 'done' : ''} title={t(o.title)} />)}
+      </b>
+    </div>
     <div className="row"><span>{t('echoes')}</span><b>{echoes.found}/{echoes.total}</b></div>
-    <div className="row"><span>MET</span><b>{clock(elapsed)}</b></div>
-    <ol className="objectives">
-      {objectives.map(o => <li key={o.id} data-objective={o.id} className={(o.done ? 'done' : '') + (o.required ? '' : ' optional')}>
-        <span aria-hidden="true">{o.done ? '■' : '□'}</span> {t(o.title)}{o.required ? '' : ' ·' + t('optional')}
-      </li>)}
-    </ol>
   </section>;
+}
+
+/** Compass strip: ±70° around the camera heading, cardinal ticks, the next objective and the lander. */
+export function Compass() {
+  const { t } = useT();
+  const { compass } = useStore(hud);
+  const span = 70 * Math.PI / 180;
+  const rel = (bearing: number) => { let d = bearing - compass.heading; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
+  const place = (bearing: number) => { const d = rel(bearing); return Math.abs(d) > span ? null : 50 + d / span * 50; };
+  const cardinals: [string, number][] = [['N', Math.PI], ['E', Math.PI / 2], ['S', 0], ['O', -Math.PI / 2], ['NE', Math.PI * 0.75], ['SE', Math.PI / 4], ['SO', -Math.PI / 4], ['NO', -Math.PI * 0.75]];
+  return <div className="compass" aria-hidden="true">
+    {cardinals.map(([name, b]) => { const x = place(b); return x === null ? null : <span key={name} className={name.length > 1 ? 'minor' : ''} style={{ left: x + '%' }}>{name}</span>; })}
+    {compass.marks.map(m => {
+      const d = rel(m.bearing), x = Math.abs(d) > span ? (d > 0 ? 100 : 0) : 50 + d / span * 50;
+      return <b key={m.id} className={'mark ' + m.kind + (Math.abs(d) > span ? ' edge' : '')} style={{ left: x + '%' }} data-mark={m.id}>
+        {m.kind === 'home' ? '⌂' : '◆'}<small>{Math.round(m.dist)} m</small>
+      </b>;
+    })}
+    <i className="center" />
+    <span className="sr">{t('nextGoal')}</span>
+  </div>;
 }
 
 export function Telemetry() {
@@ -41,13 +67,15 @@ export function Telemetry() {
       <div className={'signal' + (signal < 0.5 ? ' low' : '')} aria-label={t('signal') + ' ' + Math.round(signal * 100) + '%'}>
         {'▮'.repeat(bars)}<i>{'▯'.repeat(10 - bars)}</i> <b>{Math.round(signal * 100)}%</b>
       </div>
-      <div className="row"><span>pos</span><b>{player.x.toFixed(0)} / {player.z.toFixed(0)}</b></div>
-      <div className="row"><span>alt</span><b>{player.y.toFixed(1)} m</b></div>
-      <div className="row"><span>vel</span><b>{player.speed.toFixed(1)} m/s</b></div>
+      {debugEnabled() && <>
+        <div className="row"><span>pos</span><b>{player.x.toFixed(0)} / {player.z.toFixed(0)}</b></div>
+        <div className="row"><span>alt</span><b>{player.y.toFixed(1)} m</b></div>
+        <div className="row"><span>vel</span><b>{player.speed.toFixed(1)} m/s</b></div>
+      </>}
     </section>
     <section className="panel energy-panel" aria-label={t('systems')}>
       <span className="panel-title">{t('systems')}</span>
-      <div className="row"><span>{t('battery')}{draining ? ' · ' + t(draining) : ''}</span><b className={low ? 'warn' : ''}>{energy.toFixed(0)} / {capacity} u.</b></div>
+      <div className="row nowrap"><span>{t('battery')}{draining ? <em className="cold"> ❄</em> : ''}</span><b className={low ? 'warn' : ''}>{energy.toFixed(0)} / {capacity} u.</b></div>
       <div className="bar energy" role="progressbar" aria-label={t('energy')} aria-valuenow={Math.round(energy)} aria-valuemin={0} aria-valuemax={capacity}>
         <i style={{ width: pct + '%' }} className={low ? 'warn' : ''} />
         <s style={{ left: (capacity ? reserve / capacity * 100 : 0) + '%' }} title={t('reserve')} />
@@ -67,7 +95,7 @@ export function ZoneTitle() {
 
 export function Prompt() {
   const { t } = useT();
-  const { prompt, notice, now, locked, dialogue } = useStore(hud);
+  const { prompt, notice, now, locked, dialogue, elapsed } = useStore(hud);
   const showNotice = notice && now - notice.at < 6 && !dialogue;
   return <div className="center-bottom">
     {showNotice && <p className={'notice ' + notice.tone} key={notice.at}>
@@ -78,7 +106,7 @@ export function Prompt() {
       {prompt.blocked.length > 0 && <small>{t('requires')}: {prompt.blocked.map(b => t(b)).join(', ')}</small>}
       {prompt.missing && <small>{t('suitLacks')} {t(prompt.missing).toLowerCase()}</small>}
     </p>}
-    {!locked && !dialogue && <p className="hint">{t('hint')}</p>}
+    {!dialogue && (elapsed < 25 || !locked) && <p className="hint">{t('hint')}</p>}
   </div>;
 }
 

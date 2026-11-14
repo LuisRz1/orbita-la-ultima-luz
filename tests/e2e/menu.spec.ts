@@ -5,6 +5,7 @@ const call = (page: Page, fn: string, ...args: unknown[]) =>
   page.evaluate(([fn, args]) => (window.__orbita as unknown as Api)[fn as string](...(args as unknown[])), [fn, args] as const);
 
 test('title menu, English, story dialogue, pause and an achievement', async ({ page }) => {
+  test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });

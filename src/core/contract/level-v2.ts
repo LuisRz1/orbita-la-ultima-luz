@@ -10,7 +10,7 @@ export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: numbe
 /** `drain`: extra energy per second while inside (cold, dust). */
 export type Zone = { id: string; title: Localized; center: Vec2; radius: number; drain?: number };
 export type Collectible = { id: string; position: Vec2; y?: number };
-export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock';
+export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step';
 export type Prop = { kind: PropKind; solid: Solid };
 
 export type LevelV2 = {

@@ -6,9 +6,9 @@ import type { MoveParams } from './movement.ts';
 const t = (es: string, en: string): Localized => ({ es, en });
 
 export const batteries = {
-  light: { name: t('Batería ligera', 'Light battery'), capacity: 60, mass: 4 },
-  standard: { name: t('Batería estándar', 'Standard battery'), capacity: 100, mass: 8 },
-  extended: { name: t('Batería extendida', 'Extended battery'), capacity: 150, mass: 14 },
+  light: { name: t('Batería ligera', 'Light battery'), capacity: 50, mass: 4 },
+  standard: { name: t('Batería estándar', 'Standard battery'), capacity: 85, mass: 8 },
+  extended: { name: t('Batería extendida', 'Extended battery'), capacity: 120, mass: 14 },
 } as const;
 export const thrusters = {
   none: { name: t('Sin propulsor', 'No thruster'), airJumps: 0, airJumpCost: 0, boost: 1, mass: 0 },
@@ -40,7 +40,8 @@ export const designSchema = z.object({
 export type SuitDesign = z.infer<typeof designSchema>;
 
 export const massLimit = 28;
-export const reserve = 10;
+/** Energy kept to walk back to the lander; only walking may spend it. */
+export const reserve = 6;
 /** Energy per unit of a point's `power` value from the mission data. */
 export const actionScale = 4;
 export const dashCost = 5;

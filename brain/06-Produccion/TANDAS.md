@@ -1,7 +1,7 @@
 ---
 id: tandas-3d
 type: produccion
-status: tanda-3-cerrada
+status: tanda-5-cerrada
 updated: 2026-11-14
 tags: [orbita, produccion, 3d]
 ---
@@ -21,11 +21,11 @@ Diseñas la salida en una terminal → eso define tu traje y lo que puedes hacer
 | 1 | Luna en gris | Terreno, controlador, cámara, 6 puntos, títulos de zona, límite de enlace, panel `?debug`, NIVELES.md | Recorrer los 6 puntos; ms por cuadro en Iris Xe | Cerrada; falta medir en Iris Xe y afinar con el propietario |
 | 2 | Bucle de misión | Traje, consola de diseño → salida → informe → rediseño, guardado | Fallar con un diseño y completar con otro | Cerrada; falta equilibrar con partidas reales |
 | 3 | Interfaz y LUMA | HUD terminal, menú, diálogos, LUMA, logros, ES/EN | Recorrido completo en ambos idiomas | Cerrada |
-| 4 | Look | Luz horneada, toon, contornos, cielo, props | 30 fps o más en Iris Xe a 720p | Pendiente |
-| 5 | Audio | ZzFX y efectos generados | Volumen en ajustes | Pendiente |
+| 4 | Look | Luz horneada, toon, contornos, cielo, props | 30 fps o más en Iris Xe a 720p | Cerrada; falta medir fps en Iris Xe |
+| 5 | Audio | ZzFX y efectos generados | Volumen en ajustes | Cerrada; audio procedural verificado con earshot |
 | 6 | Capítulo 1 en 3D | Estación y vuelo; se retira Phaser | Capítulo 1 hasta la llegada a la Luna | Pendiente |
 | 7 | Marte y Bennu | Mismo molde; Bennu con gravedad radial | Nivel nuevo solo con datos y horneado | Pendiente |
-| 8 | Entrega | Despliegue, README, fuentes, vídeo | URL abierta en otro equipo | Pendiente |
+| 8 | Entrega | Despliegue (Vercel, a cargo del equipo), README, fuentes, vídeo | URL abierta en otro equipo | Pendiente |
 
 Mínimo entregable: tandas 0 a 3, la luz horneada del terreno y la tanda 8. El 2D en `/?legacy` es la red de seguridad. Orden de recorte: tanda 7, audio generado, vuelo en 3D, cámara del menú, contornos.
 

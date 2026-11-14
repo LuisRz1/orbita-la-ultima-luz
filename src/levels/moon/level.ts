@@ -41,7 +41,19 @@ const props: Prop[] = [
   { kind: 'rock', solid: cylinder(18, 58, 1, 1.1) },
   { kind: 'rock', solid: cylinder(-24, 12, 1.2, 1.3) },
   { kind: 'rock', solid: cylinder(40, -48, 0.9, 1) },
+  // Lit posts along the south-west ramp: the walkable way up the peak.
+  ...[9, 14, 20, 26].map(r => ({ kind: 'marker' as const, solid: cylinder(-r * Math.SQRT1_2 - 1.2, r * Math.SQRT1_2 + 1.2, 0.12, 1.3) })),
+  // Rock steps up both walls of the rift, about 2.2 m apart: a way out for anyone who falls in.
+  ...riftSteps(8, -50.6), ...riftSteps(-8, -61.4),
 ];
+
+function riftSteps(x0: number, z: number) {
+  const floor = ground(x0, z);
+  return [1, 2, 3, 4, 5].map(k => {
+    const x = x0 + Math.sign(x0) * (k - 1) * 2.1;
+    return { kind: 'step' as const, solid: { kind: 'box' as const, x, z, hx: 0.9, hz: 0.9, top: floor + 2.1 * k } };
+  });
+}
 
 const above = (index: number, lift = 0.9) => {
   const s = props[index].solid;

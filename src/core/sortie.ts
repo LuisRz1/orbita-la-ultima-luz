@@ -14,6 +14,8 @@ export type Outcome = 'complete' | 'recalled';
 export type Sortie = {
   design: SuitDesign; stats: SuitStats; energy: number; ledger: Record<LedgerKey, number>;
   session: Session; time: number; outcome: Outcome | null; blocked: string[];
+  /** True when the battery ran out on the way back and LUMA had to drag the player home. */
+  emergency: boolean;
 };
 
 export const ledgerLabels: Record<LedgerKey, Localized> = {
@@ -24,7 +26,7 @@ export const ledgerLabels: Record<LedgerKey, Localized> = {
 export function startSortie(design: SuitDesign): Sortie {
   const stats = assessSuit(design);
   return { design, stats, energy: stats.capacity, ledger: { life: 0, move: 0, dash: 0, thruster: 0, actions: 0, cold: 0 },
-    session: createSession(), time: 0, outcome: null, blocked: [] };
+    session: createSession(), time: 0, outcome: null, blocked: [], emergency: false };
 }
 
 /** Energy above the return reserve, i.e. what actions may still spend. */
@@ -72,7 +74,7 @@ export type Report = {
   outcome: Outcome; completed: string[]; required: number; requiredDone: number;
   missed: { id: string; title: Localized; cause: Localized }[];
   ledger: Record<LedgerKey, number>; capacity: number; used: number; left: number; time: number;
-  insights: Localized[]; echoes: number; recalls: number;
+  insights: Localized[]; echoes: number; recalls: number; emergency: boolean;
 };
 
 /** Explains the sortie in terms of the design: every missed objective gets the decision that caused it. */
@@ -101,12 +103,15 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
   ];
   if (s.ledger.thruster > 0) insights.push(t(`${thrusters[s.design.thruster].name.es}: ${Math.round(s.ledger.thruster)} u. en saltos en el aire.`, `${thrusters[s.design.thruster].name.en}: ${Math.round(s.ledger.thruster)} u on air jumps.`));
   if (s.ledger.cold > 0) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
+  if (outcome === 'recalled') insights.push(s.emergency
+    ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
+    : t('Volviste al módulo con la reserva de retorno: repliegue seguro.', 'You walked back to the lander on the return reserve: a safe recall.'));
   if (s.session.recalls > 0) insights.push(t(`${antennas[s.design.antenna].name.es} (${s.stats.commsRadius} m): perdiste el enlace ${s.session.recalls} vez/veces.`, `${antennas[s.design.antenna].name.en} (${s.stats.commsRadius} m): link lost ${s.session.recalls} time(s).`));
   const required = level.points.filter(p => p.required);
   return {
     outcome, completed: [...s.session.completed], required: required.length, requiredDone: required.filter(p => done.has(p.id)).length,
     missed, ledger: { ...s.ledger }, capacity: s.stats.capacity, used, left: s.energy, time: s.time, insights,
-    echoes: s.session.collected.length, recalls: s.session.recalls,
+    echoes: s.session.collected.length, recalls: s.session.recalls, emergency: s.emergency,
   };
 }
 

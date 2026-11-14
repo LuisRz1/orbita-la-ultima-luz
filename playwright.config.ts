@@ -7,7 +7,9 @@ const browser = process.env.ORBITA_BROWSER ?? (existsSync(windowsChrome) ? windo
 export default defineConfig({
   testDir:'./tests/e2e',
   fullyParallel:true,
-  timeout:30_000,
+  // Software WebGL (SwiftShader) is slow; three workers and a 60 s budget keep runs stable on a laptop.
+  timeout:60_000,
+  workers:3,
   use:{
     ...devices['Desktop Chrome'],
     viewport:{width:1440,height:960},

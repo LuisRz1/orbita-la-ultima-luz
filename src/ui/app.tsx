@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import type { MoveParams } from '../core/movement.ts';
+import { sound, type Sfx } from '../engine/audio.ts';
 import { debugEnabled } from '../engine/debug.ts';
 import { webglAvailable } from '../engine/renderer.ts';
 import { resetTuning, setTuning, tuning } from '../engine/tuning.ts';
-import { AchievementToast, DialogueBox, Fade, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
+import { AchievementToast, Compass, DialogueBox, Fade, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
 import { useT } from './i18n.ts';
 import { MainMenu, PauseMenu } from './screens/menu.tsx';
 import { SortieReport } from './screens/sortie-report.tsx';
-import { SuitConsole } from './screens/suit-console.tsx';
+import { ShipScreen } from './screens/ship.tsx';
 import { commands, hud } from './store.ts';
 import './ui.css';
 
@@ -64,16 +65,13 @@ function TuningPanel() {
 
 function Screens() {
   const { t } = useT();
-  const { phase, design, objectives, attempts, report, briefing, levelTitle, saveError, paused } = useStore(hud);
+  const { phase, report, saveError, paused } = useStore(hud);
   let body = null;
   if (phase === 'menu') body = <MainMenu />;
-  else if (phase === 'design' && design) body = <>
-    <header className="design-header"><span className="panel-title">{levelTitle ? t(levelTitle).toUpperCase() : ''} · {t('briefing')}</span><p>{briefing ? t(briefing) : ''}</p></header>
-    <SuitConsole initial={design} objectives={objectives} attempts={attempts} onStart={d => commands.start(d)} />
-  </>;
+  else if (phase === 'ship') body = <ShipScreen />;
   else if (phase === 'report' && report) body = <SortieReport report={report} onRedesign={() => commands.redesign()} onRetry={() => commands.retry()} />;
   else if (phase === 'eva') body = <>
-    <MissionPanel /><Telemetry /><ZoneTitle /><Prompt /><Fade />
+    <MissionPanel /><Compass /><Telemetry /><ZoneTitle /><Prompt /><Fade />
     {paused && <PauseMenu />}
   </>;
   return <>
@@ -84,7 +82,21 @@ function Screens() {
   </>;
 }
 
+/** Interface sounds for every button: `data-sfx` picks one, the default is a soft select click. */
+function useUiSounds() {
+  useEffect(() => {
+    let lastHover: Element | null = null;
+    const button = (e: Event) => (e.target as Element | null)?.closest?.('.orbita button, .orbita input[type=checkbox], .orbita [data-sfx]') ?? null;
+    const click = (e: Event) => { const b = button(e); if (b) { sound.unlock(); sound.play(((b as HTMLElement).dataset.sfx as Sfx) || 'ui-select'); } };
+    const over = (e: Event) => { const b = button(e); if (b && b !== lastHover && !(b as HTMLButtonElement).disabled) sound.play('ui-hover'); lastHover = b; };
+    document.addEventListener('click', click, true);
+    document.addEventListener('pointerover', over);
+    return () => { document.removeEventListener('click', click, true); document.removeEventListener('pointerover', over); };
+  }, []);
+}
+
 export function App() {
+  useUiSounds();
   const { t } = useT();
   const [error, setError] = useState<string | null>(null);
   const ready = useStore(hud, s => s.ready);
@@ -97,6 +109,7 @@ export function App() {
   }
   return <div className="orbita">
     <GameCanvas onError={setError} />
+    <div className="film" aria-hidden="true" />
     {!ready && <p className="loading">{t('loading')}</p>}
     {ready && <Screens />}
     {ready && debugEnabled() && <><PerfPanel /><TuningPanel /></>}

@@ -8,7 +8,10 @@ import type { Tier } from '../engine/quality.ts';
 export type Objective = { id: string; title: Localized; required: boolean; done: boolean; action: string; power: number };
 export type Prompt = { verb: Localized; title: Localized; blocked: Localized[]; cost: number; missing: Localized | null };
 export type Notice = { text: Localized; at: number; tone: 'luma' | 'system' | 'warn' };
-export type Phase = 'loading' | 'menu' | 'design' | 'eva' | 'report';
+export type CompassMark = { id: string; label: Localized | null; bearing: number; dist: number; kind: 'goal' | 'home' };
+export type Phase = 'loading' | 'menu' | 'ship' | 'eva' | 'report';
+export type StationId = 'battery' | 'thruster' | 'antenna' | 'instruments' | 'locker' | 'airlock';
+export type ShipState = { draft: SuitDesign; done: StationId[]; next: StationId | null; open: StationId | null; near: StationId | null; guided: boolean };
 export type DialogueLine = { speaker: 'LUMA' | 'CONTROL'; text: Localized };
 
 /** State the engine publishes for the DOM interface. Continuous values are refreshed ten times per second. */
@@ -38,10 +41,13 @@ export type HudState = {
   attempts: Attempt[];
   saveError: boolean;
   paused: boolean;
+  /** Camera heading and marks for the compass, as angles in radians (0 = south, π/2 = east). */
+  compass: { heading: number; marks: CompassMark[] };
   dialogue: DialogueLine | null;
   toast: { id: string; at: number } | null;
   achievements: string[];
   hasProgress: boolean;
+  ship: ShipState | null;
 };
 
 export const hud = createStore<HudState>(() => ({
@@ -49,12 +55,14 @@ export const hud = createStore<HudState>(() => ({
   levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
-  paused: false, dialogue: null, toast: null, achievements: [], hasProgress: false,
+  paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,
 }));
 
 /** Commands the interface sends to the engine. The running game replaces these no-ops. */
 export const commands = {
   start: (_design: SuitDesign) => {},
+  /** Shows a design on the astronaut while the player edits it. */
+  preview: (_design: SuitDesign) => {},
   redesign: () => {},
   retry: () => {},
   newGame: () => {},
@@ -63,4 +71,7 @@ export const commands = {
   resume: () => {},
   abandon: () => {},
   advance: () => {},
+  pick: (_draft: SuitDesign) => {},
+  confirmStation: () => {},
+  closeStation: () => {},
 };

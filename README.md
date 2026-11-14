@@ -1,10 +1,10 @@
 # Órbita: La última luz
 
-Juego de exploración espacial para navegador, con pixel art 2.5D, pilotaje, exploración planetaria y un animal extraterrestre acompañante llamado **LUMA**.
+Juego de exploración espacial en 3D para navegador (three.js): diseñas el traje con recursos limitados, exploras en tercera persona con un animal extraterrestre acompañante llamado **LUMA**, y un informe une cada decisión con su resultado. Responde al reto Space Mission Design Game de NASA Space Apps 2026.
 
 Una cápsula de la expedición desaparecida Aurora regresa con LUMA y registros dañados. Tu hermana viajaba en esa expedición. Debes reconstruir su ruta, encontrar a los supervivientes y traerlos a la Tierra.
 
-**Estado: kit local jugable de integración.** Luna es el nivel de referencia; Órbita, Marte y Bennu son escenarios de ensayo. El objetivo de demo y la campaña de 12–20 horas conservan su alcance en el plan.
+**Estado:** la Luna («Nácar») es jugable en 3D con diseño de traje, energía, informe, logros, diálogos, audio procedural, ES/EN. El juego 2D anterior sigue en `/?legacy`. **¿Vas a colaborar? Empieza por la [guía para colaboradores 3D](brain/06-Produccion/GUIA-COLABORADORES-3D.md).**
 
 Este espacio local empezó con la documentación y un historial Git propio. Reutiliza la planificación de octubre, cuyo origen está registrado en la [bitácora del 14 de noviembre](brain/08-Bitacora/2026-11-14.md).
 

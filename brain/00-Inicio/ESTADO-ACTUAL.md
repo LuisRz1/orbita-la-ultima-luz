@@ -1,7 +1,7 @@
 ---
 id: estado-actual
 type: estado
-status: reconstruccion-3d-tanda-3
+status: reconstruccion-3d-tanda-5
 updated: 2026-11-14
 tags: [orbita, continuidad]
 ---
@@ -9,7 +9,7 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
-**Fase activa: reconstrucción 3D en la rama local `feat/3d`.** Tandas 0 y 1 cerradas: `/` abre la Luna en gris, jugable en tercera persona con salto, doble salto, dash, seis objetivos, ocho ecos, títulos de zona y repliegue al perder el enlace ([niveles](../02-Diseno/NIVELES.md)). El juego 2D sigue completo en `/?legacy`. La tanda 2 añadió el bucle del reto NASA: consola de diseño del traje, energía en juego, repliegue, informe con causas y rediseño, con intentos guardados ([mecánicas](../02-Diseno/MECANICAS.md)). La tanda 3 añadió menú principal, pausa, ajustes (idioma, sensibilidad, movimiento reducido, calidad), diez [logros](../02-Diseno/LOGROS.md), diálogos de LUMA y Control, interfaz en español e inglés y créditos con fuentes NASA. Siguiente paso: tanda 4 (aspecto: luz horneada, toon, contornos y props) y una sesión del propietario para afinar movimiento y equilibrio. Leer [tandas](../06-Produccion/TANDAS.md) y [ADR 006](../03-Arquitectura/ADR/ADR-006.md).
+**Fase activa: reconstrucción 3D en la rama local `feat/3d`.** Tandas 0 y 1 cerradas: `/` abre la Luna en gris, jugable en tercera persona con salto, doble salto, dash, seis objetivos, ocho ecos, títulos de zona y repliegue al perder el enlace ([niveles](../02-Diseno/NIVELES.md)). El juego 2D sigue completo en `/?legacy`. La tanda 2 añadió el bucle del reto NASA: consola de diseño del traje, energía en juego, repliegue, informe con causas y rediseño, con intentos guardados ([mecánicas](../02-Diseno/MECANICAS.md)). La tanda 3 añadió menú principal, pausa, ajustes (idioma, sensibilidad, movimiento reducido, calidad), diez [logros](../02-Diseno/LOGROS.md), diálogos de LUMA y Control, interfaz en español e inglés y créditos con fuentes NASA. La tanda 4 dio el aspecto final: luz pintada en tres tonos, contornos de tinta, astronauta articulado, LUMA, props, rocas, polvo, halo del sol y Tierra ([guía visual 3D](../05-Arte/GUIA-VISUAL-3D.md)). La tanda 5 añadió [audio](../05-Arte/AUDIO.md) procedural grave, verificado con earshot, y un segundo pase visual: terreno con detalle por píxel, astronauta y LUMA detallados, texturas de props, huellas, Vía Láctea y grano. El despliegue en Vercel lo hace un compañero del equipo. Siguiente paso: tanda 6 (capítulo 1 en 3D) o pulir la Luna según la sesión del propietario; medir fps en Iris Xe. Leer [tandas](../06-Produccion/TANDAS.md) y [ADR 006](../03-Arquitectura/ADR/ADR-006.md).
 
 Primera luz (capítulo 1 en 2D) conserva sus seis misiones jugables y su entrega al nodo lunar; ahora se abre con `/?legacy&world=orbit`. La demo pública y la campaña completa siguen pendientes. Los cambios de `feat/3d` están sin commit: los hace el propietario.
 

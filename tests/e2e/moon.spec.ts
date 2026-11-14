@@ -36,6 +36,9 @@ test('the lunar sortie: prerequisites gate the terminal, all six points register
   let state = await call(page, 'state') as { completed: string[] };
   expect(state.completed).toEqual([]);
   await expect(page.locator('[data-prompt]')).toContainText('requiere');
+  // The mission panel names a doable objective with its distance, never the terminal while others are pending.
+  await expect(page.locator('[data-next]')).not.toContainText('vuelve al módulo');
+  await expect(page.locator('[data-mark]').first()).toBeVisible();
 
   for (const id of ['shelter', 'ridge', 'sample', 'archive', 'relay', 'terminal']) await visit(id);
   state = await call(page, 'state') as { completed: string[] };
@@ -87,6 +90,7 @@ test('running, the double jump and the dash all move the body as tuned', async (
 });
 
 test('design, fail, read the report, redesign and complete: the full mission loop through the interface', async ({ page }) => {
+  test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -112,8 +116,12 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   await settle(page);
   for (const id of ['sample', 'relay', 'archive']) await visit(id);
   expect((await call(page, 'state') as { completed: string[] }).completed).toEqual(['sample', 'relay']);
-  await call(page, 'setEnergy', 10.05);
-  await call(page, 'step', 200);
+  // Reaching the reserve starts the walk home; arriving at the lander ends the sortie as a safe recall.
+  await call(page, 'setEnergy', 6.05);
+  await call(page, 'step', 60);
+  await expect(page.locator('[data-next]')).toContainText('vuelve al módulo');
+  await call(page, 'teleport', 0, 67);
+  await call(page, 'step', 120);
   const report = page.getByRole('region', { name: 'Informe de salida' });
   await expect(report).toContainText('Repliegue con datos parciales');
   await expect(report.locator('[data-missed="archive"]')).toContainText('taladro');

@@ -22,10 +22,10 @@ export function MainMenu() {
       <p className="premise">{t('premise')}</p>
       <nav className="menu-list" aria-label="menu">
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
-        <button className={hasProgress ? '' : 'first'} data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
-        <button data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
-        <button data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
-        <button data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
+        <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
+        <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
+        <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
+        <button data-sfx="ui-open" data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
       </nav>
     </section>
     <aside className="panel data-card" aria-label={t('operation')}>
@@ -67,7 +67,7 @@ function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void })
       {sub === 'settings' && <Settings />}
       {sub === 'achievements' && <Achievements />}
       {sub === 'credits' && <Credits />}
-      <button className="back" data-back onClick={onBack}>← {t('back')}</button>
+      <button className="back" data-sfx="ui-close" data-back onClick={onBack}>← {t('back')}</button>
     </section>
   </div>;
 }
@@ -84,6 +84,11 @@ function Settings() {
     <label className="setting"><span>{t('sensitivity')} · {p.sensitivity.toFixed(2)}</span>
       <input type="range" min={0.3} max={3} step={0.05} value={p.sensitivity} onChange={e => prefs.setState({ sensitivity: Number(e.target.value) })} />
     </label>
+    {(['master', 'music', 'sfx'] as const).map(k => <label className="setting" key={k}>
+      <span>{t(k === 'master' ? 'volumeMaster' : k === 'music' ? 'volumeMusic' : 'volumeSfx')} · {Math.round(p[k] * 100)}%</span>
+      <input type="range" min={0} max={1} step={0.05} value={p[k]} data-volume={k} onChange={e => prefs.setState({ [k]: Number(e.target.value) })} />
+    </label>)}
+    <p className="setting-hint">{t('audioNote')}</p>
     <div className="setting"><span>{t('reduceMotion')}</span>
       <div className="choice">{[true, false].map(v => <button key={String(v)} className={p.reduceMotion === v ? 'on' : ''} onClick={() => prefs.setState({ reduceMotion: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
     </div>
