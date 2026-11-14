@@ -1,7 +1,7 @@
 ---
 id: estado-actual
 type: estado
-status: kit-jugable-local
+status: kit-publicado-en-github
 updated: 2026-11-14
 tags: [orbita, continuidad]
 ---
@@ -11,7 +11,7 @@ tags: [orbita, continuidad]
 
 **Fase activa: implementación del kit de mundos.** La Luna tiene un recorrido jugable de referencia; Órbita, Marte y Bennu son ensayos de integración. La demo completa y la campaña siguen pendientes.
 
-El 14 de noviembre se preparó una copia local con historial independiente y la documentación original de octubre. El [registro del arranque](../08-Bitacora/2026-11-14.md) identifica el origen y la revisión copiada. La copia no se publicó ni tiene remoto.
+El 14 de noviembre se preparó una copia con historial independiente y la documentación original de octubre. El código, los assets y las guías del kit se publican en [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz), rama main. El [registro del arranque](../08-Bitacora/2026-11-14.md) identifica la revisión de origen y la separación entre importación, desarrollo y publicación.
 
 Se abrió este desarrollo después del aviso de Cajamarca comunicado por el propietario. Lee primero el [kit de mundos](../06-Produccion/KIT-DE-MUNDOS.md) y el [catálogo](../05-Arte/ASSETS-COMPARTIDOS.md) antes de repartir mapas y objetivos.
 
@@ -55,7 +55,7 @@ Leer [historia principal — spoilers](../02-Diseno/HISTORIA-PRINCIPAL.md), [cam
 
 1. Confirmar quién lleva cada destino y quién integra el motor. Probar la Luna antes de abrir ramas individuales.
 2. Revisar el enunciado completo y la entrega local ([PREP-03](https://github.com/LuisRz1/nasa-orbita/issues/3) y [PREP-04](https://github.com/LuisRz1/nasa-orbita/issues/4)); el horario de apertura ya está registrado según el aviso comunicado al dueño.
-3. Completar primero crucero y aproximación comunes en [JAM-08](https://github.com/LuisRz1/nasa-orbita/issues/14), y ampliar Luna con fuentes y planificación de misión. La campaña, el mando, la exportación de guardado, el audio y la publicación requieren trabajo adicional.
+3. Completar primero crucero y aproximación comunes en [JAM-08](https://github.com/LuisRz1/nasa-orbita/issues/14), y ampliar Luna con fuentes y planificación de misión. La campaña, el mando, la exportación de guardado, el audio y el despliegue jugable requieren trabajo adicional.
 4. Integrar cada entrega siguiendo el [handoff vigente](../08-Bitacora/HANDOFF-2026-11-14.md) y su ficha de mundo.
 
 Consulta [backlog](../06-Produccion/BACKLOG.md) para IDs, dependencias y enlaces a Issues.

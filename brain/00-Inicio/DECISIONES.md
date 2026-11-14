@@ -2,7 +2,7 @@
 id: decisiones-propietario
 type: decisiones
 status: acordado
-updated: 2026-10-14
+updated: 2026-11-14
 tags: [orbita, producto]
 ---
 # Decisiones del propietario
@@ -23,7 +23,7 @@ tags: [orbita, producto]
 | Después de la historia | Epílogo y mundo explorable con recuerdos y herramientas propias. |
 | Viaje espacial | Pilotaje directo 2.5D y trayectos largos acelerados. |
 | Coste de IA | Sin pagos por ahora; solo acceso gratuito disponible. |
-| Repositorio | Público en la cuenta LuisRz1. |
+| Repositorio | Código y assets en el repositorio público [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz). La planificación original y los Issues se conservan en nasa-orbita. |
 | Demo | Pública y jugable sin registro. |
 | Plataforma inicial | Navegador de PC; teclado, ratón y mando. |
 | Equipo | 2–3 personas, con ayuda de agentes. |

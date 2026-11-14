@@ -2,7 +2,7 @@
 
 ## Estado y autorización
 
-Este repositorio contiene investigación y planificación de **Órbita: La última luz**. El propietario eligió conservar la elegibilidad de NASA Space Apps 2026.
+Este repositorio contiene el kit de mundos y la planificación de **Órbita: La última luz**. El propietario eligió conservar la elegibilidad de NASA Space Apps 2026.
 
 **No implementar el juego, producir assets del reto, descargar/procesar datasets para la solución ni desplegar una versión jugable antes del inicio autorizado de la hackathon.** Tampoco usar ramas auxiliares para adelantar ese trabajo. Esta restricción deriva de la decisión expresa del propietario y de la FAQ enlazada en [requisitos NASA](brain/04-Ciencia/REQUISITOS-NASA.md).
 

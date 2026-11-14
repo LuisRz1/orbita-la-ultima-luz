@@ -75,7 +75,7 @@ No requiere plugins. Los enlaces también se pueden recorrer desde GitHub. Las p
 
 ## Colaborar y compartir
 
-Origen público de la documentación y los Issues: [LuisRz1/nasa-orbita](https://github.com/LuisRz1/nasa-orbita). Esta copia de trabajo tiene historial independiente y aún no tiene remoto.
+Código, assets y documentación del kit: [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz), con historial propio. El [repositorio de planificación](https://github.com/LuisRz1/nasa-orbita) conserva el trabajo de octubre y el seguimiento en [Issues](https://github.com/LuisRz1/nasa-orbita/issues).
 
 El trabajo se organizará con Issues, ramas y pull requests. Consulta [CONTRIBUTING](CONTRIBUTING.md) antes de empezar. Los responsables humanos de las tareas todavía están por asignar.
 
@@ -83,4 +83,4 @@ Proyecto independiente preparado para un reto de NASA Space Apps; no es un produ
 
 ## Licencias
 
-El código original que se incorpore se publicará bajo [MIT](LICENSE). La documentación y los recursos creativos originales se publican bajo [CC BY 4.0](LICENSE-CONTENT.md). El material de terceros conserva sus condiciones: [atribuciones y procedencia](THIRD-PARTY-NOTICES.md).
+El código original se publica bajo [MIT](LICENSE). La documentación y los recursos creativos originales se publican bajo [CC BY 4.0](LICENSE-CONTENT.md). El material de terceros conserva sus condiciones: [atribuciones y procedencia](THIRD-PARTY-NOTICES.md).

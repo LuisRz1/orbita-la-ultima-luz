@@ -6,6 +6,7 @@ Autoría para atribución: **LuisRz1 y colaboradores de Órbita: La última luz*
 
 - [Resumen de la licencia](https://creativecommons.org/licenses/by/4.0/)
 - [Texto legal](https://creativecommons.org/licenses/by/4.0/legalcode)
-- [Repositorio](https://github.com/LuisRz1/nasa-orbita)
+- [Repositorio de desarrollo](https://github.com/LuisRz1/orbita-la-ultima-luz)
+- [Planificación original](https://github.com/LuisRz1/nasa-orbita)
 
 El código y la configuración técnica originales se rigen por [MIT](LICENSE). Los recursos de terceros, marcas, citas, datos e imágenes externas conservan sus condiciones originales. Esta licencia no concede derechos sobre marcas de NASA ni sobre recursos externos enlazados.

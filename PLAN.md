@@ -136,7 +136,7 @@ Objetivos medibles, todavía no resultados: **60 FPS** en el equipo de referenci
 
 ## 4. Repositorio y cerebro
 
-Repositorio público **LuisRz1/nasa-orbita**, rama principal main, documentación en español y nombres de código en inglés.
+El kit y su desarrollo están en [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz), con historial independiente en la rama main, documentación en español y nombres de código en inglés. [LuisRz1/nasa-orbita](https://github.com/LuisRz1/nasa-orbita) conserva la planificación original y su backlog.
 
 El vault Obsidian estará en la carpeta **brain**, dentro del mismo repositorio. Usará Markdown y enlaces relativos compatibles con GitHub, sin plugins obligatorios.
 
