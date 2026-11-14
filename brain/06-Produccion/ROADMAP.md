@@ -36,4 +36,6 @@ La campaña de 12–20 horas no tiene fecha final comprometida. Los hitos se cie
 
 Cuatro capítulos de seis misiones. Se produce primero la demo lunar; se juega en orden órbita, Luna, Marte y Bennu. Ver [campaña](../02-Diseno/MUNDO-Y-CAMPANA.md).
 
+El 14 de noviembre, el propietario pidió trabajar Primera luz en una rama independiente mientras su equipo desarrolla Luna. La [transición de C1](../08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md) permite revisarlos por separado. Esta ejecución paralela adelanta un recorrido de C1; no adelanta la integración de los demás capítulos ni el despliegue.
+
 La [historia principal — spoilers](../02-Diseno/HISTORIA-PRINCIPAL.md) fija el objetivo del rescate, las revelaciones y el desenlace. Cambiar una ruta o condición de cierre exige sincronizar ficha de capítulo, contratos, guardado, QA e Issue. El calendario narrativo sigue pendiente de validar junto con las ventanas de vuelo.

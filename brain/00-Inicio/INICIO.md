@@ -25,6 +25,7 @@ Este vault reúne las decisiones y el punto de continuación del proyecto. Puede
 | Ciencia | [Realismo](../04-Ciencia/DATOS-Y-REALISMO.md), [fuentes](../04-Ciencia/FUENTES.md), [requisitos NASA](../04-Ciencia/REQUISITOS-NASA.md) |
 | Arte | [Guía visual](../05-Arte/GUIA-VISUAL.md), [animación y audio](../05-Arte/ANIMACIONES-Y-AUDIO.md) |
 | Kit de mundos | [Integración](../06-Produccion/KIT-DE-MUNDOS.md), [assets](../05-Arte/ASSETS-COMPARTIDOS.md), [ADR 005](../03-Arquitectura/ADR/ADR-005.md), [plantilla de mundo](../09-Plantillas/MUNDO.md) |
+| Primera luz | [Entrega de Órbita a Luna](../08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md) y [contraste con el reto](../04-Ciencia/REQUISITOS-NASA.md) |
 | Producción | [Backlog](../06-Produccion/BACKLOG.md), [equipo y agentes](../06-Produccion/EQUIPO-Y-AGENTES.md), [entorno](../06-Produccion/ENTORNO.md) |
 | Calidad | [Aceptación](../07-Calidad/ACEPTACION-Y-PRUEBAS.md), [riesgos](../07-Calidad/RIESGOS.md), [demo](../07-Calidad/DEMO-Y-ENTREGA.md) |
 | Continuidad | [Registro del arranque](../08-Bitacora/2026-11-14.md), [handoff vigente](../08-Bitacora/HANDOFF-2026-11-14.md), [bitácora de octubre](../08-Bitacora/2026-10-14.md), [plantilla de tarea](../09-Plantillas/TAREA.md), [plantilla de handoff](../09-Plantillas/HANDOFF.md), [ADR](../09-Plantillas/ADR.md) |

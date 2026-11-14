@@ -1,13 +1,15 @@
 ---
 id: viaje-espacial
 type: diseno
-status: especificado-sin-implementar
-updated: 2026-10-14
+status: modelo-local-en-c1
+updated: 2026-11-14
 tags: [orbita, vuelo, navegacion]
 ---
 # Viaje espacial y pilotaje 2.5D
 
 El propietario eligió **pilotaje directo en maniobras y aproximaciones, con trayectos largos acelerados**.
+
+C1 implementa teclado y mandos en pantalla, asistencia, reintentos y crucero persistente. La aproximación horizontal de cada destino usa un marco local; el ascenso se proyecta en diagonal. No se han añadido controles de mando, reasignación, ventanas físicas operativas ni pilotaje a C2.
 
 La ruta de la historia es Tierra → Luna → Marte → Bennu → Tierra. El nodo marciano permite reabastecer y configurar la evacuación de Aurora. Cada salida tiene un objetivo narrativo y un plan de llegada o retorno; el regreso final lleva a los supervivientes a la Tierra. Ver [historia principal — spoilers](HISTORIA-PRINCIPAL.md).
 

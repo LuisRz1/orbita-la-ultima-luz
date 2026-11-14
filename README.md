@@ -19,6 +19,8 @@ pnpm dev
 
 Abre la URL local de Vite. Para integradores: `pnpm test`, `pnpm build` y `pnpm test:e2e` (la prueba en Windows reutiliza Chrome instalado).
 
+En `feat/world-orbit`, elige **Órbita** para jugar **Primera luz** desde el diseño de la misión hasta el nodo lunar. Puedes abrir directamente Vite con `?world=orbit`. Consulta [cómo probar C1 e integrarlo con Luna](brain/08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md).
+
 ## Empieza aquí
 
 | Necesitas… | Abre… |

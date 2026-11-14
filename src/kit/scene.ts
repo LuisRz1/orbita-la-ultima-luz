@@ -9,7 +9,9 @@ type ArtKey = keyof typeof art;
 type Sprite = Phaser.GameObjects.Sprite;
 type SceneHooks = { onNear: (poi:POI|null)=>void; onSelect: (id:string)=>void; onReady:()=>void;
   onUse:(id:string|undefined,at:Point,scan:boolean)=>void; onStop:(at:Point)=>void };
-type SceneStatus = { active:boolean; completed:ReadonlySet<string>; focus:string|null };
+type SceneStatus = { active:boolean; completed:ReadonlySet<string>; focus:string|null;
+  companionVisible?:boolean; available?:ReadonlySet<string> };
+type SurfaceOptions = { tethered?:boolean };
 
 export class Surface extends Phaser.Scene {
   private actor!:Sprite;
@@ -33,8 +35,9 @@ export class Surface extends Phaser.Scene {
   private tileScale:number;
   private origin:Point;
   private scenery!:Phaser.GameObjects.Container;
+  private tether?:Phaser.GameObjects.Graphics;
 
-  constructor(private world:World, saved:Point, private hooks:SceneHooks) {
+  constructor(private world:World, saved:Point, private hooks:SceneHooks, private options:SurfaceOptions = {}) {
     super('surface');
     this.cell={...saved};
     this.companion={...saved};
@@ -69,10 +72,12 @@ export class Surface extends Phaser.Scene {
     const terrain = ('floor-'+this.world.id) as ArtKey;
     const rock = ('rock-'+this.world.id) as ArtKey;
     const hazard=new Set(this.world.hazards.map(pointKey));
+    const hullVoid=new Set(this.options.tethered?this.world.blocked.map(pointKey):[]);
     const grid = this.add.graphics().setDepth(-1);
     for(let z=0;z<this.world.width+this.world.height;z++) for(let x=0;x<this.world.width;x++){
       const y=z-x; if(y<0||y>=this.world.height) continue;
       const k={x,y}, s=this.screen(k);
+      if(hullVoid.has(pointKey(k)))continue;
       this.graphicSprite(terrain,k,(x*11+y*7+x*y)%4).setDepth(-500+z);
       if(hazard.has(pointKey(k))){
         grid.fillStyle(0x201a40,.51).fillPoints([
@@ -81,7 +86,8 @@ export class Surface extends Phaser.Scene {
         ],true);
       }
     }
-    for(const p of this.world.blocked) this.graphicSprite(rock,p).setDepth(p.x+p.y+1);
+    if(this.options.tethered)this.tether=this.add.graphics().setDepth(-.5);
+    else for(const p of this.world.blocked) this.graphicSprite(rock,p).setDepth(p.x+p.y+1);
     for(const p of this.world.points) {
       const key=p.prop==='rock'?rock:p.prop;
       const sprite=this.graphicSprite(key,p.position).setDepth(p.position.x+p.position.y+1);
@@ -89,7 +95,9 @@ export class Surface extends Phaser.Scene {
       const w=this.screen(p.position);
       const marker=this.add.sprite(w.x,w.y-(art[key].frame[1]*.74+12)*this.tileScale,'markers',0)
         .setDepth(100).setScale(1.12).setInteractive({useHandCursor:true});
-      marker.on('pointerdown',()=>{ if(this.status.active){ this.hooks.onSelect(p.id); this.goTo(p.id); } });
+      marker.on('pointerdown',()=>{ if(this.status.active&&this.isAvailable(p.id)){
+        this.hooks.onSelect(p.id); this.goTo(p.id);
+      } });
       this.markers.set(p.id,marker);
     }
     this.targetMarker=this.add.ellipse(0,0,32,16).setStrokeStyle(1,0xe6cf88,.9).setDepth(-.2).setVisible(false);
@@ -144,15 +152,20 @@ export class Surface extends Phaser.Scene {
     if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){
       event.preventDefault();this.path=[];this.held.add(k);
     } else if((k==='e'||k==='r')&&!event.repeat){
-      const selected=this.world.points.find(p=>p.id===this.status.focus && distance(this.cell,p.position)<=approachRange);
+      const selected=this.world.points.find(p=>p.id===this.status.focus && this.isAvailable(p.id) && distance(this.cell,p.position)<=approachRange);
       event.preventDefault();this.hooks.onUse(selected?.id??this.near,this.cell,k==='r');
     }
   };
   private keyUp=(event:KeyboardEvent)=>this.held.delete(event.key.toLowerCase());
+  private isAvailable(id:string){return this.status.available?.has(id)??true;}
   setStatus(s:SceneStatus) {
+    const changed=this.status.available!==s.available;
     this.status=s;
     if(!s.active){this.held.clear();this.path=[];}
-    if(this.ready) this.paintStatus();
+    if(this.ready){
+      this.paintStatus();
+      if(changed)this.reportNear();
+    }
   }
   setPaused(pause:boolean){this.paused=pause;this.held.clear();if(pause)this.path=[];}
   current() {return this.cell;}
@@ -162,26 +175,29 @@ export class Surface extends Phaser.Scene {
     if(this.ready){this.actors(0);this.reportNear();}
   }
   goTo(id:string) {
-    if(!this.ready||this.paused||!this.status.active) return;
+    if(!this.ready||this.paused||!this.status.active||!this.isAvailable(id)) return;
     const p=this.world.points.find(p=>p.id===id);
     if(p){ this.path=route(this.world,this.step??this.cell,p.position)??[]; this.held.clear(); }
   }
   private paintStatus(){
     const types=['scan','salvage','service','upload'];
+    this.luma.setVisible(this.status.companionVisible??true);
+    this.lumaShadow.setVisible(this.status.companionVisible??true);
     for(const p of this.world.points){
       this.markers.get(p.id)?.setFrame(this.status.completed.has(p.id)?4:types.indexOf(p.action))
+        .setVisible(this.isAvailable(p.id))
         .setAlpha(this.status.focus===p.id?1:this.status.completed.has(p.id)?.63:.88);
     }
-    const focus=this.world.points.find(p=>p.id===this.status.focus);
+    const focus=this.world.points.find(p=>p.id===this.status.focus&&this.isAvailable(p.id));
     if(focus){
       const p=this.screen(focus.position);
       this.targetMarker.setPosition(p.x,p.y).setVisible(true);
     } else this.targetMarker.setVisible(false);
   }
   private reportNear(){
-    const current=this.world.points.filter(p=>distance(this.cell,p.position)<=approachRange)
+    const current=this.world.points.filter(p=>this.isAvailable(p.id)&&distance(this.cell,p.position)<=approachRange)
       .sort((a,b)=>distance(this.cell,a.position)-distance(this.cell,b.position)).find(p=>!this.status.completed.has(p.id))
-      ?? this.world.points.find(p=>distance(this.cell,p.position)<=approachRange);
+      ?? this.world.points.find(p=>this.isAvailable(p.id)&&distance(this.cell,p.position)<=approachRange);
     if(current?.id===this.near) return;
     this.near=current?.id; this.hooks.onNear(current??null);
   }
@@ -189,6 +205,10 @@ export class Surface extends Phaser.Scene {
     const k=this.step?Math.min(1,this.elapsed/188):0;
     const p=this.step?{x:this.cell.x+(this.step.x-this.cell.x)*k,y:this.cell.y+(this.step.y-this.cell.y)*k}:this.cell;
     const position=this.screen(p), visual=this.screen(this.companion);
+    if(this.tether){
+      const anchor=this.screen(this.world.spawn);
+      this.tether.clear().lineStyle(1.5,0xf2cf92,.8).lineBetween(anchor.x,anchor.y,position.x,position.y);
+    }
     this.actor.setPosition(position.x,position.y).setDepth(p.x+p.y+.65)
       .setFrame(this.facing*4+(this.step?Math.min(3,Math.floor(k*4)):0));
     this.shadow.setPosition(position.x,position.y+2).setDepth(p.x+p.y+.3);
@@ -229,7 +249,7 @@ export class Surface extends Phaser.Scene {
   }
 }
 
-export function mountSurface(parent:HTMLElement,scene:Surface) {
+export function mountSurface(parent:HTMLElement,scene:Phaser.Scene) {
   return new Phaser.Game({
     type:Phaser.AUTO, parent, width:WIDTH, height:HEIGHT, backgroundColor:'#10151e',
     render:{pixelArt:true,antialias:false,roundPixels:true},

@@ -11,6 +11,8 @@ IndexedDB mediante Dexie será el almacenamiento principal. El usuario podrá ex
 
 El kit local ya usa Dexie para reanudar los hitos de cada escenario con una clave de misión y una versión. Su [contrato v1](ADR/ADR-005.md) no implementa todavía exportación, migración de campaña ni guardado de evidencias globales.
 
+C1 conserva su propia versión y tabla en `orbita-chapters`. La reanudación valida el diseño, el orden de los acoples, los puntos de cada región, las reservas y el progreso de crucero. La entrega lunar se calcula a partir del capítulo archivado, sin escribir ni migrar el registro `c2-reference`. No hay todavía un guardado global de campaña.
+
 ## Contenido persistente
 
 Versión de esquema y contenido; perfil local; progreso de misiones; recursos estables; IDs de hallazgos; mejoras; semillas necesarias; memoria y decisiones escritas de LUMA; opciones.

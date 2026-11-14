@@ -9,6 +9,12 @@ tags: [orbita, demo]
 
 El [nivel de referencia](../06-Produccion/KIT-DE-MUNDOS.md) ya cubre el tramo de superficie, los seis lugares y el informe local. No acredita todavía crucero, vuelo, una duración de 15–25 minutos ni la entrega al jurado.
 
+## Evidencia alternativa del ciclo completo: Primera luz
+
+En `feat/world-orbit`, abrir `?world=orbit`. Mostrar una carga incompatible, contrastar dos propuestas viables y explicar por qué más ciencia exige mejor potencia o enlace. Recorrer el lanzamiento, el acople, la validación de la cápsula y la EVA; luego comparar una ruta rápida y otra de ahorro. Cerrar en el nodo lunar con el informe de coste, ciencia, datos, tiempo y reservas. Para enseñar el fallo recuperable se puede salir del corredor y abrir el informe del intento.
+
+Esta ruta demuestra el objetivo central del [enunciado completo](../04-Ciencia/REQUISITOS-NASA.md) aunque el equipo de Luna aún esté integrando su nivel. No reemplaza los criterios de la demo lunar, la duración prevista ni la verificación del sitio público.
+
 ## Recorrido normal: 15–25 minutos
 
 Planificar → resolver tramo acelerado → pilotar aproximación breve con asistencia → desplegar astronauta y LUMA → investigar seis lugares → gestionar incidencia → regresar → revisar resultados.

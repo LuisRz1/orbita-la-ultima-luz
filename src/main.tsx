@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { type Language, type Localized, type Point, type POI, type World, distance, isWalkable } from './kit/contract.ts';
 import { applyAction, approachRange, begin, budget, cost, initial, restore, type Failure, type Loadout, type MissionState } from './kit/mission.ts';
 import { artUrl, mountSurface, Surface } from './kit/scene.ts';
 import { readSlot, writeSlot } from './kit/storage.ts';
 import { moon, worlds } from './worlds/index.ts';
+import type { LunarHandoff } from './worlds/orbit/progress.ts';
 import './style.css';
 
+const OrbitChapter=lazy(()=>import('./worlds/orbit/OrbitChapter.tsx').then(module=>({default:module.OrbitChapter})));
 const pack = (es:string,en:string):Localized => ({es,en});
 const plans = [
   {id:'survey', title:pack('Exploración','Survey'), desc:pack('Más reserva y escaneo eficiente','More reserve and efficient scans')},
@@ -211,21 +213,55 @@ function Expedition({world,lang}: {world:World;lang:Language}) {
 }
 
 function App() {
-  const [world,setWorld]=useState(moon);
+  const [world,setWorld]=useState(()=> {
+    const id=new URLSearchParams(window.location.search).get('world');
+    return worlds.find(w=>w.id===id)??moon;
+  });
+  const [handoff,setHandoff]=useState<LunarHandoff|null>(null);
   const [lang,setLang]=useState<Language>('es');
   const t=(es:string,en:string)=>lang==='es'?es:en;
+  const selectWorld=useCallback((selected:World, arrival:LunarHandoff|null=null)=>{
+    const url=new URL(window.location.href);
+    if(selected.id==='orbit'||arrival)url.searchParams.set('world',selected.id);
+    else url.searchParams.delete('world');
+    if(arrival)url.searchParams.set('arrival','orbit');
+    else url.searchParams.delete('arrival');
+    window.history.replaceState(window.history.state,'',url);
+    setHandoff(arrival);
+    setWorld(selected);
+  },[]);
+  const continueToMoon=useCallback((arrival:LunarHandoff)=>selectWorld(moon,arrival),[selectWorld]);
+  useEffect(()=>{
+    if(world.id!=='moon'||new URLSearchParams(window.location.search).get('arrival')!=='orbit')return;
+    let current=true;
+    import('./worlds/orbit/storage.ts').then(({readLunarHandoff})=>readLunarHandoff()).then(arrival=>{
+      if(current&&new URLSearchParams(window.location.search).get('arrival')==='orbit')setHandoff(arrival);
+    }).catch(()=>{});
+    return()=>{current=false;};
+  },[world.id]);
   return <div className="app">
     <header className="topbar">
       <div className="brand"><span className="logomark" aria-hidden="true"><i/></span><span><b>ÓRBITA</b><small>LA ÚLTIMA LUZ</small></span></div>
       <nav aria-label={t('Mundos de referencia','Reference worlds')}>
         {worlds.map(w=><button key={w.id} aria-current={w.id===world.id?'page':undefined}
-          onClick={()=>setWorld(w)}>{({orbit:t('Órbita','Orbit'),moon:t('Luna','Moon'),mars:t('Marte','Mars'),bennu:'Bennu'})[w.id]}</button>)}
+          onClick={()=>selectWorld(w)}>{({orbit:t('Órbita','Orbit'),moon:t('Luna','Moon'),mars:t('Marte','Mars'),bennu:'Bennu'})[w.id]}</button>)}
       </nav>
       <button className="language" aria-label={t('Cambiar idioma a inglés','Switch language to Spanish')} onClick={()=>{
         document.documentElement.lang=other(lang);setLang(other(lang));
       }}>{lang.toUpperCase()} <span>⌄</span></button>
     </header>
-    <main><Expedition key={world.id} world={world} lang={lang}/></main>
+    <main>{world.id==='orbit'
+      ?<Suspense fallback={<p role="status">{t('Cargando Órbita…','Loading Orbit…')}</p>}>
+        <OrbitChapter lang={lang} onContinue={continueToMoon}/>
+      </Suspense>
+      :<>
+        {world.id==='moon'&&handoff?<section className="signal-card" aria-label={t('Entrega desde Órbita','Handoff from Orbit')}>
+          <div><span className="mini">{t('NODO LUNAR / INFORME DE ÓRBITA','LUNAR NODE / ORBIT REPORT')}</span>
+            <p>{handoff.evidence.join(' · ')} · {t('Pruebas validadas. Siguiente hito: preparar el descenso al archivo lunar.',
+              'Evidence validated. Next milestone: prepare the descent to the lunar archive.')}</p></div>
+        </section>:null}
+        <Expedition key={world.id} world={world} lang={lang}/>
+      </>}</main>
     <footer className="site-footer"><span>ÓRBITA / {t('EXPLORACIÓN ESPACIAL','SPACE EXPLORATION')}</span><span>{t('Simulación educativa · Valores de juego','Educational simulation · Gameplay values')}</span></footer>
   </div>;
 }
