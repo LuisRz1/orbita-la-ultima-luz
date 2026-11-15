@@ -40,7 +40,7 @@ export const strings = {
   suitStatus: s('Estado del traje', 'Suit status'), freeEnergy: s('energía libre', 'free energy'), use: s('Usar', 'Use'),
   confirmKey: s('Confirmar · E', 'Confirm · E'),
   overMass: s('ajusta otra pieza antes de salir', 'adjust another part before leaving'),
-  shipHint: s('WASD moverse · E usar el puesto iluminado · ratón para mirar', 'WASD move · E use the lit station · mouse to look'),
+  shipHint: s('WASD moverse · E usar el puesto iluminado', 'WASD move · E use the lit station'),
   stBattery: s('Soporte de baterías', 'Battery rack'), stThruster: s('Propulsores', 'Thrusters'), stAntenna: s('Antenas', 'Antennas'),
   stInstruments: s('Banco de instrumentos', 'Instrument bench'), stLocker: s('Taquilla', 'Locker'), stAirlock: s('Esclusa', 'Airlock'),
   why_battery: s('Más batería = más tiempo fuera, pero pesa y te hace saltar menos.', 'More battery = more time outside, but it is heavy and you jump lower.'),
