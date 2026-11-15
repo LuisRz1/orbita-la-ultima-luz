@@ -5,9 +5,11 @@ import { sound, type Sfx } from '../engine/audio.ts';
 import { debugEnabled } from '../engine/debug.ts';
 import { webglAvailable } from '../engine/renderer.ts';
 import { resetTuning, setTuning, tuning } from '../engine/tuning.ts';
-import { AchievementToast, CinematicCard, Compass, DialogueBox, Fade, LumaCard, PhotoHint, Visor, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
+import { AchievementToast, CinematicCard, Compass, DialogueBox, Fade, LumaCard, PhotoHint, ViewChip, Visor, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
 import { useT } from './i18n.ts';
 import { MainMenu, PauseMenu } from './screens/menu.tsx';
+import { Prologue } from './screens/prologue.tsx';
+import { LoadingScreen } from './screens/loading.tsx';
 import { SortieReport } from './screens/sortie-report.tsx';
 import { Epilogue } from './screens/epilogue.tsx';
 import { ShipScreen } from './screens/ship.tsx';
@@ -69,21 +71,24 @@ function Screens() {
   const { phase, report, saveError, paused } = useStore(hud);
   const cinematic = useStore(hud, s => !!s.cinematic);
   const photo = useStore(hud, s => s.photo);
+  const prologue = useStore(hud, s => s.prologue);
   const [epilogue, setEpilogue] = useState(false);
   let body = null;
-  if (phase === 'menu') body = <MainMenu />;
-  else if (phase === 'ship') body = <ShipScreen />;
+  if (phase === 'menu') body = prologue ? <Prologue /> : <MainMenu />;
+  else if (phase === 'ship') body = <><ShipScreen /><ViewChip /></>;
   else if (phase === 'report' && report) body = epilogue ? <Epilogue onClose={() => setEpilogue(false)} />
     : <SortieReport report={report} onRedesign={() => commands.redesign()} onRetry={() => commands.retry()} onEpilogue={() => setEpilogue(true)} />;
   else if (phase === 'eva' && cinematic) body = <CinematicCard />;
   else if (phase === 'eva' && photo) body = <PhotoHint />;
   else if (phase === 'eva') body = <>
-    <Visor /><MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt />
+    <Visor /><MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt /><ViewChip />
     {paused && <PauseMenu />}
   </>;
+  // On the title screen the reel's dips to black sit under the menu, so the text never blinks.
   return <>
+    {phase === 'menu' && <Fade />}
     {body}
-    <Fade />
+    {phase !== 'menu' && <Fade />}
     {!(phase === 'eva' && paused) && <DialogueBox />}
     <AchievementToast />
     {saveError && <p className="save-error">{t('saveError')}</p>}
@@ -108,6 +113,12 @@ export function App() {
   const { t } = useT();
   const [error, setError] = useState<string | null>(null);
   const ready = useStore(hud, s => s.ready);
+  // The loading screen stays a moment even on a fast load, then fades out over the title screen.
+  const [held, setHeld] = useState(!debugEnabled());
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => { if (!held) return; const id = setTimeout(() => setHeld(false), 2600); return () => clearTimeout(id); }, [held]);
+  const loaded = ready && !held;
+  useEffect(() => { if (!loaded || debugEnabled()) return; setLeaving(true); const id = setTimeout(() => setLeaving(false), 900); return () => clearTimeout(id); }, [loaded]);
   if (!webglAvailable() || error) {
     return <main className="fallback">
       <h1>Órbita: La última luz</h1>
@@ -118,8 +129,8 @@ export function App() {
   return <div className="orbita">
     <GameCanvas onError={setError} />
     <div className="film" aria-hidden="true" />
-    {!ready && <p className="loading">{t('loading')}</p>}
-    {ready && <Screens />}
+    {(!loaded || leaving) && <LoadingScreen leaving={loaded} />}
+    {loaded && <Screens />}
     {ready && debugEnabled() && <><PerfPanel /><TuningPanel /></>}
   </div>;
 }

@@ -3,6 +3,7 @@ import { useStore } from 'zustand';
 import { achievements, type AchievementId } from '../core/achievements.ts';
 import { reserve } from '../core/suit.ts';
 import { debugEnabled } from '../engine/debug.ts';
+import { prefs } from './prefs.ts';
 import { useT } from './i18n.ts';
 import { commands, hud } from './store.ts';
 
@@ -104,6 +105,17 @@ export function Visor() {
       <span>{t({ es: 'enlace', en: 'link' })} <b>{Math.round(signal * 100)}%</b></span>
     </div>
   </div>;
+}
+
+/** Always-visible key chip: V switches between the shoulder camera and the helmet view, live. */
+export function ViewChip() {
+  const { t } = useT();
+  const view = useStore(hud, s => s.view);
+  const wanted = useStore(prefs, s => s.view);
+  const first = view === 'first' || wanted === 'first';
+  return <p className="view-chip" data-view-chip={first ? 'first' : 'third'}><kbd>V</kbd>{first
+    ? t({ es: 'vista de casco · V: tercera persona', en: 'helmet view · V: third person' })
+    : t({ es: 'tercera persona · V: vista de casco', en: 'third person · V: helmet view' })}</p>;
 }
 
 /** Photo mode: everything hidden but a one-line reminder of the controls. */

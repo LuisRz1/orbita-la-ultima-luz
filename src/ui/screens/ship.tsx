@@ -109,9 +109,17 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
   </section>;
 }
 
+const tourOrder: StationId[] = ['battery', 'thruster', 'antenna', 'instruments', 'locker', 'airlock'];
+
 export function ShipScreen() {
   const { t } = useT();
   const { ship, objectives, notice, now, attempts } = useStore(hud);
+  useEffect(() => {
+    if (!ship?.guided || ship.open) return;
+    const key = (e: KeyboardEvent) => { if (e.code === 'KeyQ') { e.preventDefault(); commands.quickSuit(); } };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [ship?.guided, ship?.open]);
   if (!ship) return null;
   const showNotice = notice && now - notice.at < 7;
   return <div className="screen ship-screen">
@@ -124,6 +132,15 @@ export function ShipScreen() {
       </li>)}</ol>
     </section>}
     {ship.open && ship.open !== 'locker' && ship.open !== 'airlock' && <StationPanel id={ship.open} draft={ship.draft} objectives={objectives} />}
+    {ship.guided && !ship.open && <section className="panel guide-step" data-guide-step aria-live="polite">
+      {ship.next ? <>
+        <span className="panel-title">{t({ es: 'PREPARACIÓN', en: 'SUIT-UP' })} · {Math.min(tourOrder.length, tourOrder.indexOf(ship.next) + 1)}/{tourOrder.length}</span>
+        <p><b>{t(stationName[ship.next])}</b> — {t({ es: 'camina al anillo iluminado y pulsa E.', en: 'walk to the lit ring and press E.' })}</p>
+      </> : null}
+      <button className="quick" data-quick-suit data-sfx="ui-confirm" onClick={() => commands.quickSuit()}>
+        <kbd>Q</kbd> {t({ es: 'Usar el traje recomendado y salir', en: 'Wear the recommended suit and head out' })}
+      </button>
+    </section>}
     {!ship.open && <div className="center-bottom">
       {showNotice && <p className={'notice ' + notice.tone} key={notice.at}><span>{t('noticeSystem')}</span>{t(notice.text)}</p>}
       {ship.near && <p className="prompt" data-prompt><kbd>E</kbd> {t('use')} · <b>{t(stationName[ship.near])}</b></p>}

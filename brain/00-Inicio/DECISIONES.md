@@ -47,4 +47,4 @@ Cambiar una decisión de producto requiere registrarlo aquí y actualizar el pla
 
 ## 15 de noviembre: aspecto por encima del coste de GPU
 
-El propietario indicó en la sesión del 15-nov-2026 («olvida mi gráfica, no te limites») que el aspecto visual tiene prioridad sobre el presupuesto de Iris Xe. Se permite posproceso y efectos de mayor coste en calidad media y alta; la calidad baja debe seguir siendo usable en equipos débiles. Ver [ADR-006](../03-Arquitectura/ADR/ADR-006.md).
+El propietario indicó en la sesión del 15-nov-2026 («olvida mi gráfica, no te limites») que el aspecto visual tiene prioridad sobre el presupuesto de Iris Xe. Se permite posproceso y efectos de mayor coste en calidad media y alta; la calidad baja debe seguir siendo usable en equipos débiles. Ese mismo día pidió que los gráficos arranquen al máximo por defecto (calidad alta, cielo pintado y efectos) para causar impacto en el jurado. Ver [ADR-006](../03-Arquitectura/ADR/ADR-006.md).

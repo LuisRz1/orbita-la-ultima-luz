@@ -10,6 +10,14 @@ import { useT, type StringKey } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
+/** New expedition: chapter 1 opens with the narrated prologue (skipped in browser tests unless ?prologue). */
+function startNewExpedition() {
+  const query = new URLSearchParams(window.location.search);
+  const tested = query.has('debug') && !query.has('prologue');
+  if (hud.getState().levelId === 'orbit' && !tested && prefs.getState().cinematics) hud.setState({ prologue: true });
+  else commands.newGame();
+}
+
 type Sub = 'settings' | 'controls' | 'achievements' | 'journal' | 'science' | 'credits' | null;
 
 export function MainMenu() {
@@ -30,7 +38,7 @@ export function MainMenu() {
       </ol>
       <nav className="menu-list" aria-label="menu">
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
-        <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
+        <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => startNewExpedition()}>{t('newExpedition')}</button>
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-sfx="ui-open" data-menu="controls" onClick={() => setSub('controls')}>{t('controls')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
@@ -195,7 +203,7 @@ const sources = [
 ];
 
 const keys: [string, StringKey][] = [
-  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'], ['V', 'keyView'], ['P', 'keyPhoto'],
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'], ['V', 'keyView'], ['P', 'keyPhoto'], ['Q', 'keyQuick'],
   ['🖱', 'keyLook'], ['Esc', 'keyPause'],
 ];
 

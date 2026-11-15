@@ -97,6 +97,7 @@ export const strings = {
   effects: s('efectos de imagen (resplandor, rayos, desenfoque)', 'image effects (bloom, light shafts, blur)'),
   cinematics: s('toma de llegada', 'arrival shot'),
   viewMode: s('cámara de salida', 'sortie camera'), viewThird: s('tercera persona', 'third person'), viewFirst: s('casco', 'helmet'),
+  keyQuick: s('en el módulo, durante la preparación guiada: traje recomendado y salir', 'in the lander, during the guided suit-up: recommended suit and head out'),
   keyView: s('cambiar entre tercera persona y la vista del casco', 'switch between third person and the helmet view'),
   keyPhoto: s('modo foto: oculta la interfaz y libera la cámara', 'photo mode: hides the interface and frees the camera'),
   keyLuma: s('LUMA: rastrea lo más cercano o alcanza un eco en una repisa', 'LUMA: track the nearest find or fetch an echo from a ledge'),

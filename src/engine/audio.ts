@@ -437,17 +437,20 @@ export class GameAudio {
   }
 
   /** Plays a recorded line (LUMA's translated voice). Lines load on first use; music dips while it speaks. */
-  voice(url: string) {
+  voice(url: string) { void this.narrate(url); }
+
+  /** Plays a recorded line and resolves with its length in seconds once it starts (0 when it cannot play). */
+  narrate(url: string): Promise<number> {
     const ctx = this.ctx;
-    if (!ctx) return;
+    if (!ctx) return Promise.resolve(0);
     let buffer = this.voices.get(url);
     if (!buffer) {
       buffer = fetch(url).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
         .then(b => ctx.decodeAudioData(b)).catch(() => null);
       this.voices.set(url, buffer);
     }
-    void buffer.then(buf => {
-      if (!buf || this.ctx !== ctx) return;
+    return buffer.then(buf => {
+      if (!buf || this.ctx !== ctx) return 0;
       this.stopVoice();
       const source = ctx.createBufferSource();
       source.buffer = buf;
@@ -456,6 +459,7 @@ export class GameAudio {
       this.speaking = source;
       this.music.gain.setTargetAtTime(this.volumes.music * 0.4, ctx.currentTime, 0.12);
       source.onended = () => { if (this.speaking === source) { this.speaking = null; this.music.gain.setTargetAtTime(this.volumes.music, ctx.currentTime, 0.4); } };
+      return buf.duration;
     });
   }
 

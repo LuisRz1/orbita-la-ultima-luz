@@ -426,6 +426,19 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (ship.guided && next) tell(stationHints[next], 'system');
     publish(true);
   };
+  commands.quickSuit = () => {
+    if (phase !== 'ship' || ship.exiting > 0) return;
+    // The recommended design for this destination: the first proposal unless the save already holds a working one.
+    const pick = ship.guided ? proposals[0].design : ship.draft;
+    if (assessSuit(pick).problems.length) return;
+    input.endStep();
+    ship.draft = pick; ship.open = null;
+    for (const st of tour) ship.done.add(st);
+    view.astronaut.setLoadout(pick);
+    audio.play('ui-confirm');
+    ship.exiting = 0.9;
+    publish(true);
+  };
   commands.closeStation = () => { input.endStep(); ship.open = null; audio.play('ui-close'); publish(true); };
   commands.toMenu = () => { cine = null; phase = 'menu'; paused = false; dialogue = null; hud.setState({ report: null }); if (document.pointerLockElement) document.exitPointerLock(); publish(true); };
   commands.resume = () => { paused = false; publish(true); };
@@ -833,9 +846,16 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     wasLocked = locked;
     if (dialogue && !paused && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
     else if (phase === 'eva' && input.wasPressed('pause') && !lostLock && !photo) { paused = !paused; publish(true); }
-    if (phase === 'eva' && !cine && !dialogue && !paused && input.wasPressed('view')) {
-      prefs.setState({ view: prefs.getState().view === 'first' ? 'third' : 'first' });
+    // V switches the camera live at any moment of a sortie, story lines included; in the lander it is remembered for
+    // the next sortie (the room camera stays fixed so the station panels stay readable).
+    if ((phase === 'eva' || phase === 'ship') && !paused && input.wasPressed('view')) {
+      const next = prefs.getState().view === 'first' ? 'third' : 'first';
+      prefs.setState({ view: next });
       audio.play('ui-tic');
+      if (phase === 'ship') tell(next === 'first' ? say('Vista de casco lista: se activa al salir por la esclusa. V para volver.', 'Helmet view set: it starts once you leave the airlock. V to switch back.')
+        : say('Vista en tercera persona al salir.', 'Third-person view outside.'), 'system');
+      else if (cine) beginSortie();
+      publish(true);
     }
     if (phase === 'eva' && !cine && !dialogue && (input.wasPressed('photo') || (photo && input.wasPressed('pause')))) {
       photo = !photo;
@@ -945,6 +965,65 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     });
   }
 
+  // Title reel geometry: the destination's centre and landmarks, measured once.
+  const reelMarks = level.points.filter(p => p.required).map(p => new Vector3(p.position.x, heightAt(hf, p.position.x, p.position.z), p.position.z));
+  // The centre's height is the landmarks' own (on a station the middle of the map can be open space).
+  const reelCenter = [...reelMarks, new Vector3(level.spawn.x, heightAt(hf, level.spawn.x, level.spawn.z), level.spawn.z)]
+    .reduce((a, b) => a.add(b), new Vector3()).divideScalar(reelMarks.length + 1);
+  const reelRadius = Math.min(140, Math.max(40, ...reelMarks.map(m => Math.hypot(m.x - reelCenter.x, m.z - reelCenter.z))) + 18);
+  const reelShot = 11;
+  let prologueStart = -1;
+  const ease = (u: number) => u * u * (3 - 2 * u);
+  const clearOf = (v: Vector3, lift: number) => { v.y = Math.max(v.y, heightAt(hf, v.x, v.z) + lift); return v; };
+  function menuCamera(t: number, prologue: boolean) {
+    const pos = shotFrame.position, look = shotFrame.look;
+    const c = reelCenter, R = reelRadius;
+    if (prologue) {
+      if (prologueStart < 0) prologueStart = time;
+      const u = ease(Math.min(1, (time - prologueStart) / 34));
+      const sx = level.spawn.x, sz = level.spawn.z, gy = heightAt(hf, sx, sz);
+      pos.set(sx + 70 - 52 * u, gy + 34 - 24 * u, sz + 90 - 62 * u);
+      look.set(sx, gy + 2 + 4 * (1 - u), sz);
+      clearOf(pos, 3);
+      return;
+    }
+    prologueStart = -1;
+    const k = Math.floor(t / reelShot), u = (t % reelShot) / reelShot, e = ease(u);
+    // A short dip to black at each cut.
+    const edge = Math.min(u, 1 - u) * reelShot;
+    if (t > 0) fade = Math.max(fade, Math.max(0, 1 - edge / 0.45));
+    switch (k % 4) {
+      case 0: { // wide orbit
+        const a = 0.6 + k * 0.9 + u * 0.55;
+        pos.set(c.x + Math.sin(a) * R * 1.35, c.y + R * 0.42, c.z + Math.cos(a) * R * 1.35);
+        look.set(c.x, c.y + 4, c.z);
+        break;
+      }
+      case 1: { // low pass across the landing site
+        const sx = level.spawn.x, sz = level.spawn.z, gy = heightAt(hf, sx, sz);
+        pos.set(sx - 34 + 68 * e, gy + 4.5, sz + 20);
+        look.set(sx + (e - 0.5) * 10, gy + 2, sz - 6);
+        clearOf(pos, 3);
+        break;
+      }
+      case 2: { // push-in on a landmark
+        const m = reelMarks[Math.floor(k / 4) % Math.max(1, reelMarks.length)] ?? c;
+        const dx = c.x - m.x || 1, dz = c.z - m.z || 1, d = Math.hypot(dx, dz);
+        const dist = 42 - 24 * e;
+        pos.set(m.x + dx / d * dist, m.y + 14 - 8 * e, m.z + dz / d * dist);
+        look.set(m.x, m.y + 2, m.z);
+        clearOf(pos, 3);
+        break;
+      }
+      default: { // crane up and away
+        const a = 2.4 + k * 0.7;
+        pos.set(c.x + Math.sin(a) * (R * 0.35 + R * 0.4 * e), c.y + 6 + R * 0.75 * e, c.z + Math.cos(a) * (R * 0.35 + R * 0.4 * e));
+        look.set(c.x, c.y + 2, c.z);
+        clearOf(pos, 4);
+      }
+    }
+  }
+
   function render(alpha: number, frameMs: number) {
     viewport.tick(frameMs);
     const px = prev.x + (body.x - prev.x) * alpha, py = prev.y + (body.y - prev.y) * alpha, pz = prev.z + (body.z - prev.z) * alpha;
@@ -1021,10 +1100,11 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       camera.lookAt(target);
       camPos.copy(camera.position);
     } else if (phase === 'menu') {
-      // Slow cinematic orbit over the whole crater, as on the title screen.
-      const a = prefs.getState().reduceMotion ? 0.6 : time * 0.035;
-      camera.position.set(Math.sin(a) * 120, 46, Math.cos(a) * 120);
-      camera.lookAt(0, 4, 0);
+      // Title screen: a cinematic reel of the destination (wide orbit, low pass, push-in on a landmark, crane), or a
+      // slow push toward the lander while the prologue is narrated.
+      menuCamera(prefs.getState().reduceMotion ? 0 : time, hud.getState().prologue);
+      camera.position.copy(shotFrame.position);
+      camera.lookAt(shotFrame.look);
     } else if (phase === 'ship') {
       // Fixed diagonal camera from a high corner, like a small house in a top-down adventure: the whole room
       // stays readable and nothing large ever sits between the camera and the player.

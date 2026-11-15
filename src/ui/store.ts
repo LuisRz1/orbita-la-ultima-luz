@@ -81,6 +81,8 @@ export type HudState = {
   destinations: Destination[];
   /** Next destination, once this one has a completed sortie. */
   next: { id: string; name: Localized } | null;
+  /** Narrated prologue playing over the title scene (new expedition, chapter 1). */
+  prologue: boolean;
 };
 export type LumaHud = {
   state: 'ready' | 'cooldown' | 'busy' | 'carried' | 'gone';
@@ -96,7 +98,7 @@ export const hud = createStore<HudState>(() => ({
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
   paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null, luma: null, view: 'third', photo: false, cinematic: null,
-  levelId: 'moon', facts: null, outcome: null, destinations: [], next: null,
+  levelId: 'moon', facts: null, outcome: null, destinations: [], next: null, prologue: false,
 }));
 
 /** Commands the interface sends to the engine. The running game replaces these no-ops. */
@@ -116,6 +118,8 @@ export const commands = {
   advance: () => {},
   pick: (_draft: SuitDesign) => {},
   confirmStation: () => {},
+  /** Guided tour shortcut: wear the recommended suit and go straight out through the airlock. */
+  quickSuit: () => {},
   closeStation: () => {},
   /** Opens another unlocked destination (reloads the page with ?level=). */
   travel: (_id: string) => {},
