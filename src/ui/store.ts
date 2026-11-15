@@ -92,6 +92,8 @@ export const commands = {
   /** Shows a design on the astronaut while the player edits it. */
   preview: (_design: SuitDesign) => {},
   redesign: () => {},
+  /** Back to the lander wearing a suggested design from the report; the player still reviews and leaves. */
+  redesignWith: (_design: SuitDesign) => {},
   retry: () => {},
   newGame: () => {},
   continueGame: () => {},

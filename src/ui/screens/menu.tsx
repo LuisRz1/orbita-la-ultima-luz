@@ -5,40 +5,47 @@ import { useStore } from 'zustand';
 import { achievementIds, achievements } from '../../core/achievements.ts';
 import { patchIds, patches } from '../../core/patches.ts';
 import { tierIds } from '../../engine/quality.ts';
-import { useT } from '../i18n.ts';
+import { scienceRows } from '../../levels/science.ts';
+import { useT, type StringKey } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
-type Sub = 'settings' | 'achievements' | 'journal' | 'credits' | null;
+type Sub = 'settings' | 'controls' | 'achievements' | 'journal' | 'science' | 'credits' | null;
 
 export function MainMenu() {
   const { t } = useT();
   const { hasProgress, facts, destinations, collection } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
+  const demo = new URLSearchParams(window.location.search).has('demo');
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
-  const others = destinations.filter(d => !d.current);
   return <div className="screen menu-screen">
     <section className="menu-main">
       <h1 className="game-title">ÓRBITA</h1>
       <p className="game-subtitle">{t('subtitle')}</p>
       <p className="premise">{facts ? t(facts.premise) : t('premise')}</p>
+      <ol className="loop-strip" aria-label={t('loopTitle')} data-loop>
+        {(['loopDesign', 'loopExplore', 'loopReport', 'loopRedesign'] as const).map((k, i) => <li key={k}>
+          <b>{i + 1}</b><span>{t(k)}</span><small>{t((k + 'Hint') as StringKey)}</small>
+        </li>)}
+      </ol>
       <nav className="menu-list" aria-label="menu">
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
-        {others.length > 0 && <div className="route" aria-label={t('route')}>
-          <span className="route-label">{t('route')}</span>
-          <div className="route-list">
-            {others.map(d => d.unlocked
-              ? <button key={d.id} data-sfx="ui-confirm" data-travel={d.id} onClick={() => commands.travel(d.id)}>{t(d.name)} ↗</button>
-              : <button key={d.id} disabled data-travel-locked={d.id} title={t('routeLocked')}>{t(d.name)}</button>)}
-          </div>
-          {others.some(d => !d.unlocked) && <small className="route-note">{t('routeLockedNote')}</small>}
-        </div>}
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
+        <button data-sfx="ui-open" data-menu="controls" onClick={() => setSub('controls')}>{t('controls')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
         {collection.atlas.length + collection.pages.length > 0 && <button data-sfx="ui-open" data-menu="journal" onClick={() => setSub('journal')}>{t('journal')}</button>}
+        <button data-sfx="ui-open" data-menu="science" onClick={() => setSub('science')}>{t('science')}</button>
         <button data-sfx="ui-open" data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
       </nav>
+      {destinations.length > 1 && <nav className="route-strip" aria-label={t('route')}>
+        <span className="slot-label">{t('route')}{demo ? ' · ' + t('demoOpen') : ''}</span>
+        <ol>{destinations.map(d => <li key={d.id} className={d.current ? 'here' : d.unlocked ? 'open' : 'locked'}>
+          {d.current ? <span aria-current="location">{t(d.name)}</span>
+            : d.unlocked ? <button data-sfx="ui-confirm" data-travel={d.id} title={t('travelTo') + ' ' + t(d.name)} onClick={() => commands.travel(d.id)}>{t(d.name)} ↗</button>
+            : <span data-travel-locked={d.id} title={t('routeLocked')}>{t(d.name)}</span>}
+        </li>)}</ol>
+      </nav>}
     </section>
     {facts && <aside className="panel data-card" aria-label={t('operation')}>
       <dl>
@@ -65,6 +72,7 @@ export function PauseMenu() {
       <nav className="menu-list">
         <button className="first" data-pause="resume" onClick={() => commands.resume()}>{t('resume')}</button>
         <button onClick={() => setSub('settings')}>{t('settings')}</button>
+        <button data-pause="controls" onClick={() => setSub('controls')}>{t('controls')}</button>
         <button data-pause="abandon" onClick={() => commands.abandon()}>{t('abandon')}</button>
         <button data-pause="menu" onClick={() => commands.toMenu()}>{t('mainMenu')}</button>
       </nav>
@@ -75,10 +83,12 @@ export function PauseMenu() {
 function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void }) {
   const { t } = useT();
   return <div className="screen sub-screen">
-    <section className="panel sub" role="dialog" aria-label={t(sub === 'settings' ? 'settings' : sub === 'achievements' ? 'achievements' : sub === 'journal' ? 'journal' : 'credits')}>
+    <section className={'panel sub' + (sub === 'science' ? ' wide' : '')} role="dialog" aria-label={t(sub)}>
       {sub === 'settings' && <Settings />}
       {sub === 'achievements' && <Achievements />}
       {sub === 'journal' && <Journal />}
+      {sub === 'science' && <Science />}
+      {sub === 'controls' && <Controls />}
       {sub === 'credits' && <Credits />}
       <button className="back" data-sfx="ui-close" data-back onClick={onBack}>← {t('back')}</button>
     </section>
@@ -177,6 +187,43 @@ const sources = [
   { url: 'https://science.nasa.gov/resource/dust-devils-on-mars/', name: 'NASA · Dust devils on Mars', use: { es: 'Remolinos de polvo observados por los rovers; la tormenta que provoca el relé es ficción de juego.', en: 'Dust devils seen by the rovers; the storm set off by the relay is game fiction.' }, kind: 'fiction' as const },
   { url: 'https://science.nasa.gov/solar-system/planets/mars/what-does-a-sunrise-sunset-look-like-on-mars/', name: 'NASA · Sunrises and sunsets on Mars', use: { es: 'Cielo diurno anaranjado y halo azul junto al Sol por el polvo fino.', en: 'Orange daytime sky and a blue halo near the Sun from fine dust.' }, kind: 'observed' as const },
 ];
+
+const keys: [string, StringKey][] = [
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'],
+  ['🖱', 'keyLook'], ['Esc', 'keyPause'],
+];
+
+/** Keys and what the HUD shows, for anyone who missed the hint line. */
+function Controls() {
+  const { t } = useT();
+  return <>
+    <span className="panel-title">{t('controls').toUpperCase()}</span>
+    <dl className="controls-list">{keys.map(([k, what]) => <div key={what}><dt><kbd>{k}</kbd></dt><dd>{t(what)}</dd></div>)}</dl>
+    <span className="slot-label">{t('hudHelp')}</span>
+    <ul className="insights">
+      {(['hudCompass', 'hudBattery', 'hudReserve', 'hudSignal', 'hudDialogue'] as const).map(k => <li key={k}>{t(k)}</li>)}
+    </ul>
+  </>;
+}
+
+/** Model and reality: each mechanic next to the NASA data it stands on, with its label and source. */
+function Science() {
+  const { t } = useT();
+  return <>
+    <span className="panel-title">{t('science').toUpperCase()}</span>
+    <p className="science-intro">{t('scienceIntro')}</p>
+    <div className="science-legend">{(['observed', 'simplified', 'fiction'] as const).map(b => <span key={b} className={'basis ' + b}>{t(b)}<small>{t((b + 'Means') as StringKey)}</small></span>)}</div>
+    <ul className="science-list">
+      {scienceRows.map(r => <li key={r.id} data-science={r.id} data-basis={r.basis}>
+        <div className="science-head"><b>{t(r.topic)}</b><span className={'basis ' + r.basis}>{t(r.basis)}</span></div>
+        <div className="science-cols">
+          <p><small>{t('realData')}</small>{t(r.real)}{r.source && <> <a href={r.source.url} target="_blank" rel="noreferrer">{r.source.name} ↗</a></>}</p>
+          <p><small>{t('inGame')}</small>{t(r.game)}</p>
+        </div>
+      </li>)}
+    </ul>
+  </>;
+}
 
 function Credits() {
   const { t, lang } = useT();

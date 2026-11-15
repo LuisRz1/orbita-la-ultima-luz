@@ -33,3 +33,19 @@ ID interno; título; institución y autor; URL del producto concreto; versión; 
 Una página de catálogo no sustituye la ficha del producto que termine utilizando el juego.
 
 Las fuentes de reseñas están en [investigación](../01-Producto/INVESTIGACION-JUEGOS.md); no son fuentes científicas para parametrizar la simulación.
+
+## Pantalla «Ciencia: modelo y realidad» (15-nov-2026)
+
+El menú incluye una pantalla que pone cada mecánica junto al dato de la NASA en que se apoya, con la etiqueta observación, simplificación o ficción. Los datos están en [science.ts](../../src/levels/science.ts). Cada cifra se leyó en su página el 15 de noviembre:
+
+| Dato | Página |
+| --- | --- |
+| Luna 1,62 m/s² (0,165 g) | [NSSDCA Moon Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) |
+| Marte 3,73 m/s² de media (0,380 g), CO₂ 95,1 %, 6,36 mbar | [NSSDCA Mars Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) |
+| Luna +127 °C / −173 °C; hielo en cráteres polares en sombra | [NASA Moon Facts](https://science.nasa.gov/moon/facts/) |
+| Tormentas de polvo que cubren gran parte de Marte | [NASA Mars Facts](https://science.nasa.gov/mars/facts/) |
+| Bennu: medio kilómetro, 4,3 h, sin atmósfera, partículas expulsadas, 121,6 g traídos por OSIRIS-REx | [NASA Bennu Facts](https://science.nasa.gov/solar-system/asteroids/101955-bennu/facts/) |
+| EVA −250 … 250 °F, refrigeración por agua, la mochila da electricidad y oxígeno | [NASA Spacewalk Spacesuit Basics](https://www.nasa.gov/centers-and-facilities/johnson/spacewalk-spacesuit-basics/) |
+| Estación: ~90 min por vuelta, 16 al día, 5 millas/s | [NASA Space Station Facts and Figures](https://www.nasa.gov/international-space-station/space-station-facts-and-figures/) |
+
+Nota: NASA Mars Facts no da la gravedad; el valor 3,71 m/s² del indicador de Marte es el redondeo habitual y la fuente comprobada es la ficha NSSDCA (3,73 de media, 3,69 en el ecuador). La página de la estación tampoco da la altitud de 400 km que usa el menú del capítulo 1.

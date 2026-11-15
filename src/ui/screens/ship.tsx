@@ -10,6 +10,7 @@ import {
   type InstrumentId, type SuitDesign,
 } from '../../core/suit.ts';
 import { useT, type StringKey } from '../i18n.ts';
+import { MissionBrief } from './mission-brief.tsx';
 import { commands, hud, type Objective, type StationId } from '../store.ts';
 
 type Slot = 'battery' | 'thruster' | 'antenna';
@@ -115,6 +116,7 @@ export function ShipScreen() {
   const showNotice = notice && now - notice.at < 7;
   return <div className="screen ship-screen">
     <TopBar draft={ship.draft} done={ship.done} objectives={objectives} />
+    <MissionBrief draft={ship.draft} />
     {attempts.length > 0 && !ship.open && <section className="panel history" aria-label={t('attempts')}>
       <span className="panel-title">{t('attempts').toUpperCase()} · {attempts.length}</span>
       <ol>{attempts.slice(-5).reverse().map((a, i) => <li key={attempts.length - i} className={a.outcome}>

@@ -8,16 +8,24 @@ const key = 'orbita-3d-prefs';
 
 const volume = (v: unknown, fallback: number) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : fallback);
 
+/** First visit: ?lang=es|en if given, else the browser language (Spanish for any es-*, English otherwise). */
+function firstLanguage(): Language {
+  const asked = new URLSearchParams(window.location.search).get('lang');
+  if (asked === 'es' || asked === 'en') return asked;
+  return (navigator.language ?? '').toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+
 function load(): Prefs {
   const base: Prefs = {
-    lang: 'es', sensitivity: 1,
+    lang: firstLanguage(), sensitivity: 1,
     reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: false, patch: null,
   };
   try {
     const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as Partial<Prefs> | null;
     if (!saved) return base;
     return {
-      lang: saved.lang === 'en' || saved.lang === 'es' ? saved.lang : base.lang,
+      // An explicit ?lang= in the link wins over the saved choice, so a shared link opens in its language.
+      lang: new URLSearchParams(window.location.search).has('lang') ? base.lang : saved.lang === 'en' || saved.lang === 'es' ? saved.lang : base.lang,
       sensitivity: typeof saved.sensitivity === 'number' && saved.sensitivity >= 0.3 && saved.sensitivity <= 3 ? saved.sensitivity : 1,
       reduceMotion: typeof saved.reduceMotion === 'boolean' ? saved.reduceMotion : base.reduceMotion,
       quality: saved.quality === 'auto' || tierIds.includes(saved.quality as Tier) ? saved.quality as Prefs['quality'] : 'auto',

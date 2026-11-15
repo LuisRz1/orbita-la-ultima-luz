@@ -124,6 +124,9 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   for (const id of ['battery', 'thruster', 'antenna']) await station(id);
   await station('instruments', '[data-instrument="drill"]');
   await expect(page.locator('.ship-bar .goals b.bad')).toHaveAttribute('title', 'Caché de Aurora');
+  // The requirements panel says the same before leaving, with the cost of each objective for this suit.
+  await expect(page.locator('[data-brief-row="archive"]')).toHaveClass(/bad/);
+  await expect(page.locator('[data-brief-row="relay"]')).toContainText('12 u.');
   await leave();
   await settle(page);
   for (const id of ['sample', 'relay', 'archive']) await visit(id);
@@ -137,6 +140,12 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   const report = page.getByRole('region', { name: 'Informe de salida' });
   await expect(report).toContainText('Repliegue con datos parciales');
   await expect(report.locator('[data-missed="archive"]')).toContainText('taladro');
+  // The debrief: battery chart with the two objectives done, the decision table and a concrete proposal.
+  await expect(report.locator('[data-chart-point]')).toHaveCount(2);
+  await expect(report.locator('[data-chart-mark="reserve"]')).toHaveCount(1);
+  await expect(report.locator('[data-link="instruments"]')).toHaveClass(/bad/);
+  await expect(report.locator('[data-advice="instrument"]')).toContainText('taladro');
+  await expect(report.locator('[data-compare]')).toHaveCount(0);
   await settle(page);
 
   // Second attempt: redesign toward the science proposal (bigger battery, drill instead of kit) and complete.
@@ -152,6 +161,8 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   await settle(page);
   await expect(report).toContainText('Transmisión recibida');
   await expect(report).toContainText('4/4');
+  await expect(report.locator('[data-compare] [data-change="battery"]')).toContainText('Batería extendida');
+  await expect(report.locator('[data-compare]')).toContainText('2 → 4');
 
   // Attempts survive a reload.
   await page.reload();
@@ -159,6 +170,25 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   await expect(page.locator('.history')).toContainText('2', { timeout: 30_000 });
   await expect(page.locator('.history')).toContainText('completa', { timeout: 30_000 });
   await expect(page.locator('.history')).toContainText('repliegue');
+  expect(errors).toEqual([]);
+});
+
+test('a proposal from the report loads into the lander and the suit can leave with it', async ({ page }) => {
+  const errors = await open(page, { battery: 'standard', thruster: 'compact', antenna: 'medium', instruments: ['camera', 'kit'] });
+  await call(page, 'setEnergy', 6.05);
+  await call(page, 'step', 60);
+  await call(page, 'teleport', 0, 67);
+  await call(page, 'step', 120);
+  await settle(page);
+  const report = page.getByRole('region', { name: 'Informe de salida' });
+  await expect(report).toContainText('Repliegue con datos parciales');
+  await report.locator('[data-apply="instrument"]').click();
+  expect((await call(page, 'state') as { phase: string }).phase).toBe('ship');
+  await expect(page.locator('.ship-bar .goals b.bad')).toHaveCount(0);
+  await call(page, 'pause', false);
+  await call(page, 'station', 'locker');
+  await call(page, 'station', 'airlock');
+  await page.waitForFunction(() => (window.__orbita as unknown as Api).state().phase === 'eva', null, { timeout: 15_000 });
   expect(errors).toEqual([]);
 });
 
