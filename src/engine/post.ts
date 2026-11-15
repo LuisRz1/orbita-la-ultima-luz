@@ -8,9 +8,16 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { FXAAPass } from 'three/addons/postprocessing/FXAAPass.js';
+import { look } from './look.ts';
 import type { Tier } from './quality.ts';
 
-export type PostSettings = { bloom: number; shafts: number; tint: string };
+export type PostSettings = { bloom: number; shafts: number; tint: string;
+  /** Realistic look: ambient-occlusion radius in metres (0 = no AO pass). */
+  ao?: number;
+  /** Luminance above which a pixel blooms (scene-referred), and the blur radius. Defaults: the illustrated look's. */
+  threshold?: number; radius?: number };
 export type Post = {
   /** Whether frames go through the composer (false on low quality or when the player turns effects off). */
   active: boolean;
@@ -77,18 +84,28 @@ export function createPost(renderer: WebGLRenderer, scene: Scene, camera: Camera
   const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType });
   const composer = new EffectComposer(renderer, target);
   const renderPass = new RenderPass(scene, camera);
-  const bloom = new UnrealBloomPass(new Vector2(256, 256), settings.bloom, 0.55, 0.78);
+  const bloom = new UnrealBloomPass(new Vector2(256, 256), settings.bloom, settings.radius ?? 0.55, settings.threshold ?? 0.78);
   const shafts = new ShaderPass(shaftShader);
   shafts.uniforms.uTint.value = new Color(settings.tint);
   const bokeh = tier === 'high' ? new BokehPass(scene, camera, { focus: 8, aperture: 0.0012, maxblur: 0.004 }) : null;
   const grade = new ShaderPass(gradeShader);
   const output = new OutputPass();
   composer.addPass(renderPass);
+  // Realistic look: ground-truth AO grounds rocks, props and boots where the shadow map is too coarse to.
+  const gtao = look.real && settings.ao ? new GTAOPass(scene, camera, 1, 1) : null;
+  if (gtao) {
+    gtao.updateGtaoMaterial({ radius: settings.ao, distanceExponent: 1.5, thickness: 1.2, scale: 1.1, samples: tier === 'high' ? 16 : 8 });
+    gtao.blendIntensity = 0.9;
+    composer.addPass(gtao);
+  }
   if (bokeh) { bokeh.enabled = false; composer.addPass(bokeh); }
   composer.addPass(bloom);
   if (tier === 'high' && settings.shafts > 0) composer.addPass(shafts);
   composer.addPass(grade);
   composer.addPass(output);
+  // The HDR target has no multisampling: smooth the hard sunlit edges after tone mapping.
+  if (look.real) composer.addPass(new FXAAPass());
+  if (look.real) grade.uniforms.uVignette.value = 0.2;
 
   const sunDir = new Vector3(0, 1, 0), projected = new Vector3();
   let kick = 0;
@@ -96,6 +113,7 @@ export function createPost(renderer: WebGLRenderer, scene: Scene, camera: Camera
     active: true, stats: { calls: 0, triangles: 0 },
     render(s, c, dt) {
       renderPass.scene = s; renderPass.camera = c;
+      if (gtao) { gtao.scene = s; gtao.camera = c; }
       if (bokeh) { (bokeh as unknown as { scene: Scene; camera: Camera }).scene = s; (bokeh as unknown as { camera: Camera }).camera = c; }
       // Shafts only when the Sun is in front of the camera.
       projected.copy(c.position).addScaledVector(sunDir, 400).project(c);
@@ -119,7 +137,7 @@ export function createPost(renderer: WebGLRenderer, scene: Scene, camera: Camera
     },
     sun(d) { sunDir.set(d[0], d[1], d[2]).normalize(); },
     kick(amount) { kick = Math.max(kick, amount); },
-    dispose() { composer.dispose(); target.dispose(); bloom.dispose(); bokeh?.dispose(); },
+    dispose() { composer.dispose(); target.dispose(); bloom.dispose(); bokeh?.dispose(); gtao?.dispose(); },
   };
   return post;
 }

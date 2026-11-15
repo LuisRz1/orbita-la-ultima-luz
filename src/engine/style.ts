@@ -1,8 +1,11 @@
 // Shared look: three-tone toon shading, ink outlines and textures generated in code (no image files to load).
+// In the realistic look (look.ts) the same entry points hand out physically based materials and no ink.
 import {
   BackSide, CanvasTexture, Color, DataTexture, MeshBasicMaterial, MeshToonMaterial, NearestFilter, RedFormat,
-  RepeatWrapping, SRGBColorSpace, type ColorRepresentation, type Texture,
+  RepeatWrapping, SRGBColorSpace, type ColorRepresentation, type Material, type Texture,
 } from 'three';
+import { look } from './look.ts';
+import { surface, type SurfaceHint } from './surfaces.ts';
 
 /** Biome palette for the Moon («Nácar»): lavender and pearl under an indigo sky, violet shadows instead of grey. */
 const nacar = {
@@ -23,6 +26,26 @@ const nacar = {
   luma: '#ffb05c', lumaCore: '#fff2c4',
   /** Painted-sky nebula colours (optional setting); null where the sky is daytime and no nebula would show. */
   nebula: ['#7a4fb0', '#ff9ec7'] as [string, string] | null,
+  /**
+   * Realistic look. Albedos are sRGB colours whose linear value is the measured reflectance; the Sun's intensity
+   * scales with the inverse square of the distance (8 at 1 au, an engine unit); `exposure` stands in for a camera's
+   * auto-exposure. Sources and labels: brain/04-Ciencia/FUENTES.md («Aspecto realista»).
+   */
+  real: {
+    sun: '#fff5ea', sunIntensity: 8, exposure: 3.4,
+    /** Mean ground and rock albedo: lunar regolith reflects about 12 % of sunlight. */
+    ground: '#625f5b', rock: '#6b6864',
+    /** Radiance of the sky itself (black without air) and its colours for the dome and the environment. */
+    skyFill: '#000000', skyZenith: '#000000', skyHorizon: '#000000',
+    /** Earthshine or planetshine reaching the shade, as a fraction of sunlight (0 where no planet fills the sky). */
+    planetshine: 0.0012, planetColor: '#9db8e8',
+    /** Apparent radius of the Sun's disc in degrees. */
+    sunRadius: 0.267,
+    /** Height fog (dusty air): density at the base (1/m), scale height (m), colours away from and toward the Sun. */
+    fog: null as null | { density: number; scale: number; base: number; color: string; sunColor: string },
+    /** Bloom strength and the AO radius in metres for the post chain. */
+    bloom: 0.07, aoRadius: 1.2,
+  },
 };
 export type Biome = typeof nacar;
 
@@ -42,6 +65,16 @@ const terracota: Biome = {
   air: 1.4, wind: 1,
   luma: '#e8553f', lumaCore: '#ffd2b8',
   nebula: null,
+  real: {
+    // Mars is 1.52 au from the Sun: 43 % of the sunlight at Earth, reddened a little by the dust it crosses.
+    sun: '#ffe9d2', sunIntensity: 3.4, exposure: 2.6,
+    ground: '#a5714e', rock: '#8a5a44',
+    skyFill: '#6b5540', skyZenith: '#8f7458', skyHorizon: '#c9a47c',
+    planetshine: 0, planetColor: '#000000',
+    sunRadius: 0.175,
+    fog: { density: 0.0022, scale: 900, base: 0, color: '#b89472', sunColor: '#d9c4b0' },
+    bloom: 0.09, aoRadius: 1.4,
+  },
 };
 
 /**
@@ -60,6 +93,17 @@ const quirofano: Biome = {
   air: 0, wind: 0,
   luma: '#ffe2a0', lumaCore: '#ffffff',
   nebula: ['#2f5fa8', '#7fe3e0'],
+  real: {
+    sun: '#fff5ea', sunIntensity: 8, exposure: 0.62,
+    // White thermal paint on the decks.
+    ground: '#c9ccd0', rock: '#9aa0a8',
+    skyFill: '#000000', skyZenith: '#000000', skyHorizon: '#000000',
+    // Earth fills half the sky from low orbit: strong blue-white fill from below.
+    planetshine: 0.09, planetColor: '#a9c4ee',
+    sunRadius: 0.267,
+    fog: null,
+    bloom: 0.07, aoRadius: 0.9,
+  },
 };
 
 /**
@@ -78,6 +122,16 @@ const carbono: Biome = {
   air: 0, wind: 0,
   luma: '#cfe6ff', lumaCore: '#ffffff',
   nebula: ['#3b3f8a', '#9fb8ff'],
+  real: {
+    // Bennu reflects about 4.4 % of sunlight: among the darkest bodies visited. Sunlight at 1.13 au.
+    sun: '#fff5ea', sunIntensity: 6.3, exposure: 6.5,
+    ground: '#3a3a3c', rock: '#403f40',
+    skyFill: '#000000', skyZenith: '#000000', skyHorizon: '#000000',
+    planetshine: 0, planetColor: '#000000',
+    sunRadius: 0.236,
+    fog: null,
+    bloom: 0.06, aoRadius: 1.2,
+  },
 };
 
 export const biomes = { nacar, terracota, quirofano, carbono };
@@ -112,7 +166,9 @@ const toonCache = new Map<string, MeshToonMaterial>();
  * Toon material whose dark band is tinted toward the biome shade instead of going grey: the single change that
  * makes shadows read as painted colour.
  */
-export function toon(color: ColorRepresentation, emissive: ColorRepresentation = '#000000') {
+export function toon(color: ColorRepresentation, emissive: ColorRepresentation = '#000000', hint?: SurfaceHint): Material {
+  // Realistic look: the same call hands out a physically based material; `hint` says what the surface is made of.
+  if (look.real) return surface(hint?.kind ?? 'paint', color, { ...hint, emissive: hint?.emissive ?? (new Color(emissive).getHex() ? emissive : undefined) });
   const key = String(color) + String(emissive);
   let m = toonCache.get(key);
   if (!m) { m = tintShadows(new MeshToonMaterial({ color, emissive, gradientMap: toonGradient() })); toonCache.set(key, m); }
@@ -136,6 +192,18 @@ function tintShadows<T extends MeshToonMaterial>(m: T): T {
   return m;
 }
 
+/** Whether meshes get an ink outline hull: only in the illustrated look. */
+export const inked = () => !look.real;
+
+/**
+ * Unlit colour for lamps, beams and screens. In the realistic look the colour is scene-referred: `strength` is its
+ * radiance (lamps 2–4, beams up to 1.5), so it stays bright next to sunlit ground and blooms a little.
+ */
+export function glowColor(color: ColorRepresentation, strength = 2) {
+  const c = new Color(color);
+  return look.real ? c.multiplyScalar(strength) : c;
+}
+
 const outlineCache = new Map<number, MeshBasicMaterial>();
 /**
  * Inverted-hull outline: back faces pushed out along their normals in the vertex shader. Works for any mesh,
@@ -145,6 +213,8 @@ export function outlineMaterial(thickness = 0.035) {
   let m = outlineCache.get(thickness);
   if (m) return m;
   m = new MeshBasicMaterial({ color: ink, side: BackSide });
+  // No ink in the realistic look: builders skip the hull (see `inked`), and a stray one never draws.
+  m.visible = !look.real;
   m.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>',
       `#include <begin_vertex>\n transformed += normalize(normal) * ${thickness.toFixed(4)};`);
@@ -214,97 +284,10 @@ export function stripeTexture() {
   });
 }
 
-/** Shared toon material that takes a texture map. */
-export function toonMapped(map: Texture, color: ColorRepresentation = '#ffffff') {
+/** Shared toon material that takes a texture map. In the realistic look the map becomes the albedo of `hint`'s surface. */
+export function toonMapped(map: Texture, color: ColorRepresentation = '#ffffff', hint?: SurfaceHint): Material {
+  if (look.real) return surface(hint?.kind ?? 'paint', color, { ...hint, map });
   return tintShadows(new MeshToonMaterial({ color, map, gradientMap: toonGradient() }));
-}
-
-/**
- * Terrain look on top of the baked vertex light: per-pixel regolith detail (multi-scale noise and small pits,
- * no visible tiling) and rock strata on steep faces, fading with distance.
- * `octaves` trades detail for cost on low-end GPUs.
- */
-export function terrainMaterial(octaves: number, plating = false) {
-  const m = new MeshBasicMaterial({ vertexColors: true, toneMapped: false });
-  if (plating) {
-    // Station deck: panel seams every 3 m, rivet rows and a faint brushed variation instead of regolith.
-    m.onBeforeCompile = shader => {
-      shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vWorld;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-      shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vWorld;\nfloat h2(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }')
-        .replace('#include <color_fragment>', `#include <color_fragment>
-{
-  // The void under the decks is not drawn: each deck reads as a 1.5 m slab floating over Earth.
-  if (vWorld.y < -1.5) discard;
-  vec2 cell = vWorld.xz / 3.0;
-  vec2 f = abs(fract(cell) - 0.5);
-  float seam = smoothstep(0.47, 0.495, max(f.x, f.y));
-  vec2 r = abs(fract(cell * 4.0) - 0.5);
-  float rivet = (1.0 - smoothstep(0.06, 0.1, length(r))) * step(0.4, max(f.x, f.y));
-  float tone = 0.94 + (h2(floor(cell)) - 0.5) * 0.08;
-  diffuseColor.rgb *= tone * (1.0 - seam * 0.35) * (1.0 - rivet * 0.25);
-}`);
-    };
-    m.customProgramCacheKey = () => 'plating';
-    return m;
-  }
-  m.onBeforeCompile = shader => {
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWorld;\nvarying vec3 vN;\nvarying float vDist;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvN = normalize(mat3(modelMatrix) * normal);')
-      .replace('#include <project_vertex>', '#include <project_vertex>\nvDist = -mvPosition.z;');
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>
-varying vec3 vWorld;
-varying vec3 vN;
-varying float vDist;
-float h2(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), u.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0)), u.x), u.y);
-}
-float fbm(vec2 p) {
-  float s = 0.0, a = 0.5;
-  for (int i = 0; i < ${Math.max(1, Math.round(octaves))}; i++) { s += a * vnoise(p); p = p * 2.03 + 7.1; a *= 0.5; }
-  return s;
-}
-// Distance to the nearest small crater, normalised by its own radius (< 1 inside). Only some cells hold one,
-// with varied sizes, so the pattern never reads as a grid.
-float pits(vec2 p) {
-  vec2 i = floor(p), f = fract(p); float d = 8.0;
-  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
-    vec2 o = vec2(float(x), float(y));
-    float k = h2(i + o + 3.7);
-    if (k < 0.62) continue;
-    vec2 r = o + vec2(h2(i + o), h2(i + o + 17.0)) * 0.7 + 0.15 - f;
-    float radius = 0.08 + (k - 0.62) * 0.55;
-    d = min(d, length(r) / radius);
-  }
-  return d;
-}`)
-      .replace('#include <color_fragment>', `#include <color_fragment>
-{
-  vec2 xz = vWorld.xz;
-  float near = 1.0 - smoothstep(28.0, 85.0, vDist);
-  // Large soft albedo variation plus fine grain.
-  float broad = fbm(xz * 0.045);
-  float grain = vnoise(xz * 3.1) - 0.5;
-  float albedo = 0.9 + (broad - 0.5) * 0.22 + grain * 0.08 * near;
-  // Small pits: a darker bowl with a lit rim, only close to the camera.
-  float c = pits(xz * 0.32 + broad * 1.5);
-  albedo *= 1.0 - near * (smoothstep(1.0, 0.45, c) * 0.18 - smoothstep(1.25, 1.0, c) * smoothstep(0.85, 1.0, c) * 0.12);
-  // Steep faces show layered rock.
-  float steep = smoothstep(0.35, 0.6, 1.0 - vN.y);
-  float strata = 0.93 + 0.07 * sin(vWorld.y * 3.2 + broad * 6.0 + vnoise(xz * 0.4) * 3.0);
-  float mid = 1.0 - smoothstep(60.0, 150.0, vDist);
-  albedo *= mix(1.0, strata * 0.92, steep * (0.35 + 0.65 * mid));
-  diffuseColor.rgb *= albedo;
-}`);
-  };
-  m.customProgramCacheKey = () => 'terrain' + octaves;
-  return m;
 }
 
 /** Helmet visor: deep indigo glass reflecting a cyan horizon band and a pink highlight. */

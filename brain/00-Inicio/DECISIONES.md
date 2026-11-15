@@ -48,3 +48,7 @@ Cambiar una decisión de producto requiere registrarlo aquí y actualizar el pla
 ## 15 de noviembre: aspecto por encima del coste de GPU
 
 El propietario indicó en la sesión del 15-nov-2026 («olvida mi gráfica, no te limites») que el aspecto visual tiene prioridad sobre el presupuesto de Iris Xe. Se permite posproceso y efectos de mayor coste en calidad media y alta; la calidad baja debe seguir siendo usable en equipos débiles. Ese mismo día pidió que los gráficos arranquen al máximo por defecto (calidad alta, cielo pintado y efectos) para causar impacto en el jurado. Ver [ADR-006](../03-Arquitectura/ADR/ADR-006.md).
+
+## 15 de noviembre: aspecto realista
+
+El 15-nov-2026 el propietario pidió pasar del aspecto ilustrado (tinta y sombreado en tres tonos) a uno realista, inspirado en las técnicas de [Valle Morta](https://github.com/Leonxlnx/valle-morta) (MIT), y conservar el ilustrado como ajuste. Decidido: realista por defecto en calidad media y alta; la calidad baja usa el ilustrado salvo `?look=realista`. Se reimplementan las ideas; no se copian recursos. Ver [ADR-006](../03-Arquitectura/ADR/ADR-006.md).

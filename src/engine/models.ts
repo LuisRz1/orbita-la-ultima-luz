@@ -7,7 +7,7 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Prop } from '../core/contract/level-v2.ts';
 import type { SuitDesign } from '../core/suit.ts';
-import { biome, foilTexture, glyphTexture, hullTexture, outlineMaterial, stripeTexture, toon, toonMapped, visorTexture } from './style.ts';
+import { biome, foilTexture, glyphTexture, hullTexture, inked, outlineMaterial, stripeTexture, toon, toonMapped, visorTexture } from './style.ts';
 
 /** Suit colour blocking for the Nácar biome. */
 export const suitColors = {
@@ -20,10 +20,10 @@ export const colors = {
   foil: '#f2c14e', hull: '#e4e0d4', rock: '#c7bcdc', rockDark: '#7f71a6', screen: '#7fe3e0', luma: '#ffb05c', lumaCore: '#fff2c4',
 };
 
-/** A mesh with an ink outline that shares its geometry. */
+/** A mesh with an ink outline that shares its geometry (no outline in the realistic look). */
 export function part(geo: BufferGeometry, mat: Material, outline = 0.03) {
   const mesh = new Mesh(geo, mat);
-  if (outline > 0) mesh.add(new Mesh(geo, outlineMaterial(outline)));
+  if (outline > 0 && inked()) mesh.add(new Mesh(geo, outlineMaterial(outline)));
   return mesh;
 }
 
@@ -128,7 +128,7 @@ export function buildAstronaut(): Astronaut {
   const visor = new Mesh(new SphereGeometry(0.258, 26, 16, Math.PI * 1.1, Math.PI * 0.8, Math.PI * 0.22, Math.PI * 0.42),
     new MeshBasicMaterial({ map: visorTexture() }));
   visor.position.set(0, 1.58, -0.012);
-  visor.add(new Mesh(visor.geometry, outlineMaterial(0.012)));
+  if (inked()) visor.add(new Mesh(visor.geometry, outlineMaterial(0.012)));
 
   // Equipment slots, filled by setLoadout.
   const antenna = new Group();
@@ -146,7 +146,7 @@ export function buildAstronaut(): Astronaut {
   // Cosmetic patch: a small round badge on the outside of the right shoulder.
   const patch = new Mesh(new CylinderGeometry(0.07, 0.07, 0.02, 16), toon('#ffffff'));
   patch.position.set(0.43, 1.36, 0); patch.rotation.z = Math.PI / 2; patch.visible = false;
-  patch.add(new Mesh(patch.geometry, outlineMaterial(0.01)));
+  if (inked()) patch.add(new Mesh(patch.geometry, outlineMaterial(0.01)));
   rig.add(patch);
   rig.add(hips, torso, ...shoulders, chest, ...knobs, chestLight, backpack, frame, gaugeFrame, ...cells, neck, helmet, visor, antenna, nozzles, camera);
 

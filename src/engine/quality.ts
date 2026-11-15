@@ -13,12 +13,22 @@ export type TierSpec = {
   lightSize: 512 | 1024;
   /** Density multiplier for instanced scenery. */
   scatter: number;
+  /** Realistic look only. Edge of the sun's shadow map in texels; 0 = no shadow map (baked sun visibility instead). */
+  shadow: 0 | 1024 | 2048 | 4096;
+  /** Half-width in metres of the shadow volume centred on the viewer. */
+  shadowRange: number;
+  /** Screen-space ambient occlusion: off, half resolution or full resolution. */
+  ao: 0 | 1 | 2;
+  /** Edge of the procedural tile sets (ground, rock, hull) generated at load. */
+  tile: 256 | 512 | 1024;
+  /** Anisotropic filtering for tiled ground textures (clamped to what the GPU offers). */
+  aniso: number;
 };
 
 export const tiers: Record<Tier, TierSpec> = {
-  low: { maxPixels: 1280 * 720, minScale: 0.6, antialias: false, lightSize: 512, scatter: 0.5 },
-  medium: { maxPixels: 1600 * 900, minScale: 0.62, antialias: true, lightSize: 1024, scatter: 0.8 },
-  high: { maxPixels: 1920 * 1080, minScale: 0.7, antialias: true, lightSize: 1024, scatter: 1 },
+  low: { maxPixels: 1280 * 720, minScale: 0.6, antialias: false, lightSize: 512, scatter: 0.5, shadow: 0, shadowRange: 0, ao: 0, tile: 256, aniso: 1 },
+  medium: { maxPixels: 1600 * 900, minScale: 0.62, antialias: true, lightSize: 1024, scatter: 0.8, shadow: 2048, shadowRange: 70, ao: 1, tile: 512, aniso: 4 },
+  high: { maxPixels: 1920 * 1080, minScale: 0.7, antialias: true, lightSize: 1024, scatter: 1, shadow: 4096, shadowRange: 110, ao: 2, tile: 1024, aniso: 8 },
 };
 
 type Hints = { deviceMemory?: number; hardwareConcurrency?: number; touch?: boolean };

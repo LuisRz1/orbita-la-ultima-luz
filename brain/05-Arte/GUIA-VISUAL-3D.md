@@ -46,6 +46,18 @@ Aspecto del juego 3D: 80 % de las referencias de mundo pequeño y cel-shading, 2
 | Efectos breves | [fx.ts](../../src/engine/fx.ts) | Rastro de LUMA (cristales instanciados que se encienden a su paso), halo cálido de su brillo en el frío, anillos de escáner (R), de aterrizaje y del módulo al posarse. |
 | Cámaras | [cinematic.ts](../../src/engine/cinematic.ts), game.ts | Toma de llegada con barras y título; dash que abre el campo de visión; sacudida corta en aterrizajes duros; vista de casco con visor y lectura proyectada; modo foto. Con «reducir movimiento» no hay toma, ni sacudida, ni cambio de campo de visión. |
 
+## Aspecto realista (15 de noviembre)
+
+Desde el 15-nov-2026 el aspecto por defecto en calidad media y alta es el **realista**; el ilustrado descrito arriba sigue disponible en Ajustes → Aspecto y es el único en calidad baja. Reglas del realista:
+
+1. Sin contornos de tinta ni bandas: materiales físicos (`surface()`), un Sol duro y sombras reales.
+2. La sombra en mundos sin aire es oscura: solo la rellenan el rebote del suelo y la luz de la Tierra. No añadir luces de relleno de color.
+3. El brillo es escaso: solo emisores (lámparas 2–4, núcleo de LUMA 4–6, haces ≤ 1,5, en radiancia de escena) y el Sol.
+4. Las pistas de juego (haces de objetivo, balizas, rocas del atlas, rastro de LUMA) se leen por emisión, no por tinta.
+5. Los colores del suelo son albedos medidos, no la paleta pastel. Ver [fuentes](../04-Ciencia/FUENTES.md#aspecto-realista-15-nov-2026).
+
+Detalle técnico en [ADR-006](../03-Arquitectura/ADR/ADR-006.md).
+
 ## Presupuesto medido (render por software, 1280×720)
 
 - 90–150 llamadas de dibujo y unos 165 000 triángulos en la Luna.

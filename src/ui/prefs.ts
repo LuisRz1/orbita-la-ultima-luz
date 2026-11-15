@@ -2,6 +2,7 @@
 import { createStore } from 'zustand/vanilla';
 import type { Language } from '../core/contract/grid-v1.ts';
 import { debugEnabled } from '../engine/debug.ts';
+import { lookIds, type Look } from '../engine/look.ts';
 import { tierIds, type Tier } from '../engine/quality.ts';
 
 export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean; quality: 'auto' | Tier; master: number; music: number; sfx: number; paintedSky: boolean; patch: string | null;
@@ -11,6 +12,8 @@ export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean
   cinematics: boolean;
   /** Sortie camera: behind the shoulder or from inside the helmet. */
   view: 'third' | 'first';
+  /** Look of the 3D world on medium and high quality (low always uses the illustrated one). Applied on reload. */
+  look: Look;
   /** Defaults revision: 2 = showcase graphics (high quality, painted sky, effects) for every player. */
   rev: number;
 };
@@ -31,7 +34,7 @@ function load(): Prefs {
   const base: Prefs = {
     lang: firstLanguage(), sensitivity: 1,
     // Showcase defaults: maximum graphics. Browser tests (?debug) keep the light defaults so software rendering stays fast.
-    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: showcase ? 'high' : 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: showcase, patch: null, effects: true, cinematics: true, view: 'third', rev: currentRev,
+    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: showcase ? 'high' : 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: showcase, patch: null, effects: true, cinematics: true, view: 'third', look: 'realista', rev: currentRev,
   };
   try {
     const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as Partial<Prefs> | null;
@@ -47,7 +50,8 @@ function load(): Prefs {
       master: volume(saved.master, base.master), music: volume(saved.music, base.music), sfx: volume(saved.sfx, base.sfx),
       paintedSky: upgrade ? base.paintedSky : saved.paintedSky === true,
       patch: typeof saved.patch === 'string' ? saved.patch : null,
-      effects: upgrade || saved.effects !== false, cinematics: saved.cinematics !== false, view: saved.view === 'first' ? 'first' : 'third', rev: currentRev,
+      effects: upgrade || saved.effects !== false, cinematics: saved.cinematics !== false, view: saved.view === 'first' ? 'first' : 'third',
+      look: lookIds.includes(saved.look as Look) ? saved.look as Look : base.look, rev: currentRev,
     };
   } catch { return base; }
 }

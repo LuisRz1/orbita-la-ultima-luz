@@ -77,7 +77,7 @@ export const strings = {
   silent: s('en silencio', 'silent'), searchHalted: s('búsqueda suspendida', 'search called off'),
   paused: s('Pausa', 'Paused'), resume: s('Continuar', 'Resume'), abandon: s('Abandonar salida (no cuenta como intento)', 'Abandon sortie (not counted as an attempt)'),
   mainMenu: s('Menú principal', 'Main menu'), language: s('Idioma', 'Language'), sensitivity: s('Sensibilidad del ratón', 'Mouse sensitivity'),
-  reduceMotion: s('Reducir movimiento', 'Reduce motion'), quality: s('Calidad gráfica', 'Graphics quality'), auto: s('auto', 'auto'),
+  reduceMotion: s('Reducir movimiento', 'Reduce motion'), quality: s('Calidad gráfica', 'Graphics quality'), look: s('Aspecto', 'Look'), lookReal: s('realista', 'realistic'), lookInk: s('ilustrado', 'illustrated'), lookNote: s('El aspecto realista necesita calidad media o alta; en calidad baja se usa el ilustrado.', 'The realistic look needs medium or high quality; low quality uses the illustrated one.'), auto: s('auto', 'auto'),
   applyReload: s('Se aplica al recargar.', 'Applies after reloading.'), reloadNow: s('Recargar ahora', 'Reload now'),
   volumeMaster: s('Volumen general', 'Master volume'), volumeMusic: s('Música', 'Music'), volumeSfx: s('Efectos', 'Effects'),
   audioNote: s('Audio generado en tiempo real: grave y lento, como se oye a través del traje.', 'Audio generated live: low and slow, as heard through the suit.'),

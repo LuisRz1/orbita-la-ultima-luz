@@ -5,6 +5,7 @@ import { useStore } from 'zustand';
 import { achievementIds, achievements } from '../../core/achievements.ts';
 import { patchIds, patches } from '../../core/patches.ts';
 import { tierIds } from '../../engine/quality.ts';
+import { lookIds } from '../../engine/look.ts';
 import { scienceRows } from '../../levels/science.ts';
 import { useT, type StringKey } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
@@ -107,6 +108,7 @@ function Settings() {
   const { t } = useT();
   const p = useStore(prefs);
   const [initialQuality] = useState(p.quality);
+  const [initialLook] = useState(p.look);
   return <>
     <span className="panel-title">{t('settings').toUpperCase()}</span>
     <div className="setting"><span>{t('language')}</span>
@@ -135,7 +137,11 @@ function Settings() {
     <div className="setting"><span>{t('quality')}</span>
       <div className="choice">{(['auto', ...tierIds] as const).map(q => <button key={q} className={p.quality === q ? 'on' : ''} onClick={() => prefs.setState({ quality: q })}>{q === 'auto' ? t('auto') : q}</button>)}</div>
     </div>
-    {p.quality !== initialQuality && <p className="setting-note">{t('applyReload')} <button onClick={() => window.location.reload()}>{t('reloadNow')}</button></p>}
+    <div className="setting"><span>{t('look')}</span>
+      <div className="choice">{lookIds.map(l => <button key={l} data-look={l} className={p.look === l ? 'on' : ''} onClick={() => prefs.setState({ look: l })}>{t(l === 'realista' ? 'lookReal' : 'lookInk')}</button>)}</div>
+    </div>
+    <p className="setting-hint">{t('lookNote')}</p>
+    {(p.quality !== initialQuality || p.look !== initialLook) && <p className="setting-note">{t('applyReload')} <button onClick={() => window.location.reload()}>{t('reloadNow')}</button></p>}
   </>;
 }
 

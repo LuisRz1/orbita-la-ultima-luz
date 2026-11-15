@@ -1,4 +1,5 @@
-import { ACESFilmicToneMapping, SRGBColorSpace, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, AgXToneMapping, SRGBColorSpace, WebGLRenderer } from 'three';
+import { look } from './look.ts';
 import { budgetRatio, ResolutionGovernor, tiers, type Tier } from './quality.ts';
 
 export type Viewport = {
@@ -27,7 +28,8 @@ export function createViewport(host: HTMLElement, tier: Tier): Viewport {
   const spec = tiers[tier];
   const renderer = new WebGLRenderer({ antialias: spec.antialias, powerPreference: 'high-performance', stencil: false });
   renderer.outputColorSpace = SRGBColorSpace;
-  renderer.toneMapping = ACESFilmicToneMapping;
+  // Realistic look: AgX keeps hue in blown highlights (white suits under a hard Sun) where ACES skews them.
+  renderer.toneMapping = look.real ? AgXToneMapping : ACESFilmicToneMapping;
   renderer.domElement.className = 'game-canvas';
   host.appendChild(renderer.domElement);
 

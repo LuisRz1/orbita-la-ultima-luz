@@ -21,6 +21,7 @@ import { Input, type Actions } from './input.ts';
 import { Loop } from './loop.ts';
 import { detectTier, tierIds, tiers, type Tier } from './quality.ts';
 import { createViewport } from './renderer.ts';
+import { look, resolveLook, setLook } from './look.ts';
 import { tuning } from './tuning.ts';
 import { buildInterior, type StationId } from './interior.ts';
 import { buildWorldView, palette } from './world-view.ts';
@@ -65,16 +66,17 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const levelId = requestedLevel(window.location.search);
   const { level, dialogue: baseScript, facts, biome: biomeId, personalize } = await levels[levelId]();
   let script = baseScript;
-  // The palette must be chosen before any material, texture or model is built.
+  // The look and the palette must be chosen before any material, texture or model is built.
+  const tier = startingTier();
+  setLook(resolveLook(window.location.search, prefs.getState().look, tier));
   setBiome(biomeId);
   audio.setWind(biome.wind);
   audio.palette(level.id);
   audio.setStorm(0);
-  const tier = startingTier();
   const viewport = createViewport(host, tier);
   const hf = buildHeightfield(level.terrain.size, level.terrain.res, level.terrain.height);
   const ground: Ground = { height: (x, z) => heightAt(hf, x, z), slope: (x, z) => slopeAt(hf, x, z), solids: level.props.map(p => p.solid) };
-  const view = buildWorldView(level, hf, tiers[tier].scatter, tier === 'low' ? 3 : 4);
+  const view = buildWorldView(level, hf, tier, viewport.renderer);
   const interior = buildInterior();
   const vfx = createFx(view.scene);
   // Post-processing follows the quality tier and the «effects» setting; switching the setting rebuilds it.
@@ -84,7 +86,11 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const wanted = prefs.getState().effects ? tier : 'low';
     if (wanted === postFor && post) return post;
     post?.dispose();
-    post = createPost(viewport.renderer, view.scene, camera, wanted, {
+    post = createPost(viewport.renderer, view.scene, camera, wanted, look.real ? {
+      // Realistic look: only emitters and the Sun bloom, and barely (the big glow is what reads as a cartoon).
+      bloom: biome.real.bloom, threshold: 2.2 / biome.real.exposure, radius: 0.4, ao: tiers[tier].ao ? biome.real.aoRadius : 0,
+      shafts: biome.air > 0 ? 0.35 : 0, tint: biome.real.sun,
+    } : {
       bloom: tier === 'high' ? 0.62 : 0.5,
       // Shafts read as light through dust; on airless worlds only a faint streak remains (art choice).
       shafts: biome.air > 0 ? 0.55 : 0.16, tint: biome.sunColor,
@@ -1035,7 +1041,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     view.lumaModel.animate(time, idleFor > 2, Math.max(0, Math.min(1, (alertUntil - time) * 2)));
     view.luma.visible = lumaHere();
     view.player.visible = !(firstPerson() && !photo);
-    view.shadow.visible = view.player.visible;
+    // The blob stays where no shadow map reaches: low quality, the illustrated look and the lander's interior.
+    view.shadow.visible = view.player.visible && (!view.lighting.shadows || phase === 'ship');
     view.dust.update(frameDt);
     view.ambience.update(frameDt, camera.position, time);
 
@@ -1148,6 +1155,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     for (const lamp of view.blinkers) lamp.visible = Math.sin(time * 2.4 - lamp.position.x * 0.2) > -0.5;
     for (const [id, m] of view.echoes) if (m.visible) m.rotation.y = time * 1.5 + id.length;
 
+    view.tick(camera.position, calm ? 0 : time);
+    // One exposure per destination stands in for a camera's auto-exposure; the lander's interior is lit for 1.
+    viewport.renderer.toneMappingExposure = look.real ? (phase === 'ship' ? 1 : biome.real.exposure) : 1;
     const p = ensurePost();
     p.focus(cine && phase === 'eva' ? shotFrame.focus : null);
     p.render(phase === 'ship' ? interior.scene : view.scene, camera, frameDt);
@@ -1157,7 +1167,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
   const loop = new Loop({ update, render });
   const hideDebug = exposeDebug({
-    state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
+    state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, look: look.id, shadows: view.lighting.shadows, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
       zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
       completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls, falls: sortie.session.falls,
       signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length,

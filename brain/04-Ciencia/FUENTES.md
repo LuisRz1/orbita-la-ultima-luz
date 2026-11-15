@@ -49,3 +49,19 @@ El menú incluye una pantalla que pone cada mecánica junto al dato de la NASA e
 | Estación: ~90 min por vuelta, 16 al día, 5 millas/s | [NASA Space Station Facts and Figures](https://www.nasa.gov/international-space-station/space-station-facts-and-figures/) |
 
 Nota: NASA Mars Facts no da la gravedad; el valor 3,71 m/s² del indicador de Marte es el redondeo habitual y la fuente comprobada es la ficha NSSDCA (3,73 de media, 3,69 en el ecuador). La página de la estación tampoco da la altitud de 400 km que usa el menú del capítulo 1.
+
+## Aspecto realista (15-nov-2026)
+
+Valores de `Biome.real` en `src/engine/style.ts`. Consultados el 15-nov-2026.
+
+| Valor en el juego | Dato y fuente | Etiqueta |
+| --- | --- | --- |
+| Albedo del regolito lunar ≈ 0,12 (`#625f5b`) | Albedo geométrico 0,12 y de Bond 0,11: [NSSDCA Moon Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) | observación |
+| Sol a 1 ua = 8 unidades del motor (Luna y órbita) | Irradiancia solar 1361,0 W/m²: misma ficha. La unidad «8» es arbitraria | simplificación |
+| Sol en Marte = 3,4 (43 % del de la Tierra) | Irradiancia 586,2 W/m², razón 0,431; semieje 1,524 ua: [NSSDCA Mars Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) | observación |
+| Albedo de Marte ≈ 0,25 con tinte rojizo (`#a5714e`) | Albedo de Bond 0,250: misma ficha. El tono es una elección de arte | simplificación |
+| Sol en Bennu = 6,3 (79 %) | Distancia media 168 millones de km (1,12 ua): [NASA Bennu Facts](https://science.nasa.gov/solar-system/asteroids/101955-bennu/facts/); inverso del cuadrado | simplificación |
+| Albedo de Bennu ≈ 0,044 (`#3a3a3c`) | Albedo geométrico 0,044 ± 0,002 (Lauretta et al. 2019), leído en la fuente secundaria [Wikipedia: 101955 Bennu](https://en.wikipedia.org/wiki/101955_Bennu) | observación (fuente secundaria) |
+| Exposición por destino (0,62–6,5) | Sustituye a la exposición automática de una cámara; sin fuente | ficción técnica |
+| Relleno de sombras (rebote × 0,7, luz terrestre) y niebla de Marte | Ajuste a ojo para que la sombra sea jugable; sin medida | simplificación |
+| Rocas del atlas con brillo menta | Marca de juego | ficción |
