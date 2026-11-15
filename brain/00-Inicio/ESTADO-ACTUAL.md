@@ -13,6 +13,8 @@ tags: [orbita, continuidad]
 
 - Luna: atlas de 6 rocas con fuentes NASA, misión secundaria «Balizas de Aurora», ruinas R1–R3 con páginas del diario y entrada «Atlas y diario» en el menú ([Nácar](../02-Diseno/LUNA-NACAR.md)).
 - Bennu jugable, capítulo 4 M02–M03: anclaje, voz, dos accesos, archivo, muestra y refugio con AUR-E06 y el reencuentro; microgravedad estilizada con línea de anclaje; atlas de 5 rocas ([Carbono](../02-Diseno/BENNU-CARBONO.md)).
+- Epílogo «Las cosas que quedan» (C4-M06 contado) tras la evacuación.
+- Accesorios del traje: Forro térmico y Panel solar de muñeca, desde las ruinas.
 - Evacuación y despedida de LUMA (C4-M04–M05) en `/?level=extraction`, con recuerdos reales y muerte definitiva.
 - Cielo pintado opcional en ajustes (nebulosa por shader, apagado por defecto).
 - Voces de LUMA: Luna ES/EN, Órbita ES/EN y Marte ES en el juego. En generación: Marte EN, retakes de 6 líneas y Bennu ES/EN.

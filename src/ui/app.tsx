@@ -9,6 +9,7 @@ import { AchievementToast, Compass, DialogueBox, Fade, MissionPanel, Prompt, Tel
 import { useT } from './i18n.ts';
 import { MainMenu, PauseMenu } from './screens/menu.tsx';
 import { SortieReport } from './screens/sortie-report.tsx';
+import { Epilogue } from './screens/epilogue.tsx';
 import { ShipScreen } from './screens/ship.tsx';
 import { commands, hud } from './store.ts';
 import './ui.css';
@@ -66,10 +67,12 @@ function TuningPanel() {
 function Screens() {
   const { t } = useT();
   const { phase, report, saveError, paused } = useStore(hud);
+  const [epilogue, setEpilogue] = useState(false);
   let body = null;
   if (phase === 'menu') body = <MainMenu />;
   else if (phase === 'ship') body = <ShipScreen />;
-  else if (phase === 'report' && report) body = <SortieReport report={report} onRedesign={() => commands.redesign()} onRetry={() => commands.retry()} />;
+  else if (phase === 'report' && report) body = epilogue ? <Epilogue onClose={() => setEpilogue(false)} />
+    : <SortieReport report={report} onRedesign={() => commands.redesign()} onRetry={() => commands.retry()} onEpilogue={() => setEpilogue(true)} />;
   else if (phase === 'eva') body = <>
     <MissionPanel /><Compass /><Telemetry /><ZoneTitle /><Prompt /><Fade />
     {paused && <PauseMenu />}

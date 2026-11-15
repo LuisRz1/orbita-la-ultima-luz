@@ -47,7 +47,7 @@ Nivel aparte, `/?level=extraction` («Todavía hay camino»), sobre el mismo ter
 5. Despedida escrita: pocas palabras y un silencio. Recuerda como mucho dos cosas que el jugador registró de verdad (página 3 del diario, las cuatro balizas, el atlas, los ecos; `Memories`). Cambian el matiz, nunca el desenlace. Sin voz grabada a propósito.
 6. `farewell: true`: tras completarlo, LUMA no vuelve a aparecer ni a hablar en ese destino.
 
-M06 (regreso y recepción, AUR-E07) se cuenta en el resultado hasta que exista el vuelo 3D: simplificación de producción.
+M06 (regreso y recepción, AUR-E07) se cuenta en la pantalla de **epílogo** «Las cosas que quedan», que se abre desde el informe final: regreso con todos, recepción de los cuatro, entrega de archivo, muestra e informe, totales de lo registrado y el lugar de recuerdo de LUMA. Sin líneas nuevas de LUMA. El regreso pilotado espera al vuelo 3D (simplificación de producción declarada en pantalla).
 
 ## Pendiente
 

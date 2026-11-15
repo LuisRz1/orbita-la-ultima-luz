@@ -621,6 +621,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         pages: (level.ruins ?? []).map(r => ({ id: r.id, title: r.page.title, text: progress.ruins.includes(r.id) ? r.page.text : null })),
       },
       accessories: unlockedAccessories(ruinsEverywhere()),
+      finale: level.farewell && completedHere() ? { memories: gatherMemories([...[...saves.values()].filter(p => p?.level !== level.id), progress]) } : null,
       pages: { found: progress.ruins.length, total: level.ruins?.length ?? 0 },
       beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },
       atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },

@@ -5,9 +5,9 @@ import { useT } from '../i18n.ts';
 import { commands, hud } from '../store.ts';
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export function SortieReport({ report, onRedesign, onRetry }: { report: Report; onRedesign(): void; onRetry(): void }) {
+export function SortieReport({ report, onRedesign, onRetry, onEpilogue }: { report: Report; onRedesign(): void; onRetry(): void; onEpilogue(): void }) {
   const { t } = useT();
-  const { outcome, next } = useStore(hud);
+  const { outcome, next, finale } = useStore(hud);
   const done = report.outcome === 'complete';
   const keys = (Object.keys(report.ledger) as LedgerKey[]).filter(k => report.ledger[k] > 0.05).sort((a, b) => report.ledger[b] - report.ledger[a]);
   return <div className="screen report-screen">
@@ -36,7 +36,8 @@ export function SortieReport({ report, onRedesign, onRetry }: { report: Report; 
       <ul className="insights">{report.insights.map((s, i) => <li key={i}>{t(s)}</li>)}</ul>
       <div className="actions">
         <button className={done ? '' : 'primary'} data-redesign onClick={onRedesign}>{t('redesign')}</button>
-        <button className={done && !next ? 'primary' : ''} data-retry onClick={onRetry}>{t('retry')}</button>
+        <button className={done && !next && !finale ? 'primary' : ''} data-retry onClick={onRetry}>{t('retry')}</button>
+        {done && finale && <button className="primary" data-sfx="ui-confirm" data-epilogue-open onClick={onEpilogue}>{t('epilogue')} ↗</button>}
         {done && next && <button className="primary" data-sfx="ui-confirm" data-next={next.id} onClick={() => commands.travel(next.id)}>{t('continueTo')} {t(next.name)} ↗</button>}
       </div>
       <p className="model-note">{t('modelNote')}</p>

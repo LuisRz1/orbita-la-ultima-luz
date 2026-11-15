@@ -43,6 +43,11 @@ test('extraction: everyone aboard, the undocking jams, LUMA frees it, is carried
   await call(page, 'step', 90);
   await expect(page.locator('[data-dialogue]')).toContainText('caliente');
   await settle(page);
+  // The report opens the epilogue (M06 told): every survivor received, AUR-E07.
+  await call(page, 'step', 200);
+  await page.locator('[data-epilogue-open]').click();
+  await expect(page.locator('[data-epilogue]')).toContainText('AUR-E07');
+  await page.locator('[data-epilogue-close]').click();
   // Death is permanent: a new sortie on this destination has no LUMA.
   await call(page, 'step', 200);
   await open();
