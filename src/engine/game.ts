@@ -144,6 +144,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   let body: Body = createBody(level.spawn.x, level.spawn.z, ground);
   const prev = { x: body.x, y: body.y, z: body.z };
   let time = 0, zone: string | null = null, lostFor = 0, fade = 0, recalling = false, idleFor = 0, ending = 0;
+  /** Recent grounded spots on a station deck; the safety tether reels the player back to the oldest one. */
+  let safeSpots: { x: number; z: number }[] = [], safeClock = 0, fallBack: { x: number; z: number } | null = null;
   let endReason: 'reserve' | null = null, returning = false, lowWarned = false;
   let notice: Notice | null = null;
   const lumaPos = new Vector3(body.x + 1, body.y + 1.6, body.z + 1);
@@ -194,6 +196,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   function teleport(x: number, z: number) {
     body = createBody(x, z, activeGround);
     Object.assign(prev, { x: body.x, y: body.y, z: body.z });
+    safeSpots = []; safeClock = 0;
     lumaPos.set(x + 1, body.y + 1.6, z + 1);
   }
 
@@ -223,7 +226,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     enterWorld('surface');
     teleport(level.spawn.x, level.spawn.z);
     input.look.yaw = 0; input.look.pitch = 0.32;
-    zone = null; lostFor = 0; fade = 1; recalling = false; ending = 0; endReason = null; returning = false; lowWarned = false;
+    zone = null; lostFor = 0; fade = 1; recalling = false; ending = 0; safeSpots = []; safeClock = 0; fallBack = null; endReason = null; returning = false; lowWarned = false;
     setStorm(false);
     resetPointsView();
     phase = 'eva'; paused = false;
@@ -549,9 +552,19 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       }
     }
 
-    // Off the edge of a station deck: the safety tether stops the fall and reels the player back.
+    // Off the edge of a station deck: the safety tether stops the fall and reels the player back to where they last
+    // stood (about a second earlier), not to the dock. It is not a link loss, so the report does not blame the antenna.
+    if (level.fallLimit !== undefined) {
+      safeClock += dt;
+      if (body.grounded && !frozen && body.y > level.fallLimit && (safeClock >= 0.4 || !safeSpots.length)) {
+        safeClock = 0;
+        safeSpots.push({ x: body.x, z: body.z });
+        if (safeSpots.length > 3) safeSpots.shift();
+      }
+    }
     if (level.fallLimit !== undefined && body.y < level.fallLimit && !recalling && !endReason) {
       recalling = true; audio.play('recall');
+      fallBack = safeSpots[0] ?? { x: level.spawn.x, z: level.spawn.z };
       tell(say('Fuera de la cubierta. El cable de seguridad te recoge.', 'Off the deck. The safety tether reels you in.'), 'warn');
     }
 
@@ -577,7 +590,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       fade = Math.min(1, fade + dt * 1.6);
       if (fade >= 1) {
         if (endReason) { finish(); return; }
-        teleport(level.spawn.x, level.spawn.z); sortie.session.recalls++; recalling = false; lostFor = 0;
+        if (fallBack) { teleport(fallBack.x, fallBack.z); sortie.session.falls++; }
+        else { teleport(level.spawn.x, level.spawn.z); sortie.session.recalls++; }
+        recalling = false; lostFor = 0; fallBack = null; safeSpots = [];
       }
     } else fade = Math.max(0, fade - dt * 1.2);
     if (ending > 0) { ending -= dt; if (ending <= 0) { finish(); return; } }
@@ -794,7 +809,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const hideDebug = exposeDebug({
     state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
       zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
-      completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
+      completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls, falls: sortie.session.falls,
       signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length }),
     step: (count: number) => loop.step(count),
     pause: (value: boolean) => { loop.paused = value; },

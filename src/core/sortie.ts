@@ -79,7 +79,7 @@ export type Report = {
   outcome: Outcome; completed: string[]; required: number; requiredDone: number;
   missed: { id: string; title: Localized; cause: Localized }[];
   ledger: Record<LedgerKey, number>; capacity: number; used: number; left: number; time: number;
-  insights: Localized[]; echoes: number; recalls: number; emergency: boolean;
+  insights: Localized[]; echoes: number; recalls: number; falls: number; emergency: boolean;
 };
 
 /** Explains the sortie in terms of the design: every missed objective gets the decision that caused it. */
@@ -116,11 +116,13 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
     ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
     : t('Volviste al módulo con la reserva de retorno: repliegue seguro.', 'You walked back to the lander on the return reserve: a safe recall.'));
   if (s.session.recalls > 0) insights.push(t(`${antennas[s.design.antenna].name.es} (${s.stats.commsRadius} m): perdiste el enlace ${s.session.recalls} vez/veces.`, `${antennas[s.design.antenna].name.en} (${s.stats.commsRadius} m): link lost ${s.session.recalls} time(s).`));
+  if (s.session.falls > 0) insights.push(t(`El cable de seguridad te recogió ${s.session.falls} vez/veces al salir de la cubierta (no es culpa de la antena).`,
+    `The safety tether caught you ${s.session.falls} time(s) off the deck (not the antenna's fault).`));
   const required = level.points.filter(p => p.required);
   return {
     outcome, completed: [...s.session.completed], required: required.length, requiredDone: required.filter(p => done.has(p.id)).length,
     missed, ledger: { ...s.ledger }, capacity: s.stats.capacity, used, left: s.energy, time: s.time, insights,
-    echoes: s.session.collected.length, recalls: s.session.recalls, emergency: s.emergency,
+    echoes: s.session.collected.length, recalls: s.session.recalls, falls: s.session.falls, emergency: s.emergency,
   };
 }
 

@@ -122,3 +122,13 @@ test('the repair kit halves the relay cost', () => {
   const relay = moonLevel.points.find(p => p.id === 'relay')!;
   assert.equal(actionCost(relay.power, 'service', proposals[0].design), actionCost(relay.power, 'service', proposals[1].design) / 2);
 });
+
+test('a fall off the deck is reported as the safety tether, not as a link loss of the antenna', () => {
+  const s = startSortie(proposals[0].design);
+  s.session.falls = 1;
+  const report = buildReport(orbitLevel, s);
+  assert.equal(report.falls, 1);
+  assert.equal(report.recalls, 0);
+  assert.ok(report.insights.some(i => /cable de seguridad/.test(i.es) && /safety tether/.test(i.en)));
+  assert.ok(!report.insights.some(i => /perdiste el enlace/.test(i.es)));
+});
