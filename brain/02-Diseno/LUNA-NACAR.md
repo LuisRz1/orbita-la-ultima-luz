@@ -188,13 +188,13 @@ Las opciones nuevas van en una cuarta ranura, `accessories`, con un máximo de 1
 
 - **8 ecos ámbar.** Los que ya existen.
 - **3 páginas rosas.** Una en cada ruina.
-- **6 rocas del atlas en menta.** Se escanean con la cámara a 1 u. cada una y dan una tarjeta con su fuente:
+- **6 rocas del atlas en menta** (implementado el 15-nov: `src/levels/moon/atlas.ts`, se cataloga con `E`). Se escanean con la cámara a 1 u. cada una y dan una tarjeta con su fuente:
   1. Anortosita, en (−10, 18).
   2. Brecha, en (−38,5; −24).
   3. Perlas de vidrio naranja, en (34, 46). Es el «suelo naranja» del Apollo 17.
   4. Basalto, en (50, −66).
   5. Escarcha, en (52, −14). Se basa en el hielo de agua en sombra permanente confirmado por LCROSS.
-  6. Roca con microimpactos, en (−68, 2).
+  6. Roca con microimpactos, en (−77, −2): al pie oeste de la cresta. Se movió de (−68, 2) porque allí solo se llegaba saltando.
 - **3 parches de misión.** Cosméticos para el traje.
 
 **Misiones secundarias.** Empiezan solo al tocar su objeto disparador.

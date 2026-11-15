@@ -14,6 +14,8 @@ export const progressSchema = z.object({
   achievements: z.array(z.string()).default([]),
   /** Dialogue sequences already shown, so each plays once per save. */
   seen: z.array(z.string()).default([]),
+  /** Rock atlas entries scanned, kept even if the sortie ends in a recall. */
+  atlas: z.array(z.string()).default([]),
 }).strict();
 export type Attempt = z.infer<typeof attemptSchema>;
 export type Progress = z.infer<typeof progressSchema>;
@@ -25,7 +27,7 @@ class Saves extends Dexie {
 let db: Saves | null = null;
 const open = () => (db ??= new Saves());
 
-export const emptyProgress = (level: string, design: SuitDesign): Progress => ({ version: 1, level, design, attempts: [], echoes: [], achievements: [], seen: [] });
+export const emptyProgress = (level: string, design: SuitDesign): Progress => ({ version: 1, level, design, attempts: [], echoes: [], achievements: [], seen: [], atlas: [] });
 
 /** Returns null when nothing is saved, and 'invalid' when the stored data does not match the schema. */
 export async function readProgress(level: string): Promise<Progress | null | 'invalid'> {

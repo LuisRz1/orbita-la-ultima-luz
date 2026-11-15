@@ -336,3 +336,4 @@
 .orbita .station-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
 .orbita .station-foot .primary { width: auto; margin: 0; padding: 8px 18px; }
 @media (max-width: 640px) { .orbita .options { grid-template-columns: 1fr; } }
+.mission .atlas { color: #9dffc8; }

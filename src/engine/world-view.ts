@@ -25,7 +25,9 @@ export type Footprints = { place(x: number, y: number, z: number, facing: number
 export type Dust = { burst(x: number, y: number, z: number, count: number, spread: number): void; update(dt: number): void };
 export type WorldView = {
   scene: Scene; player: Group; astronaut: Astronaut; luma: Group; lumaModel: Luma; shadow: Mesh; beacon: Mesh;
-  points: Map<string, PointView>; echoes: Map<string, Mesh>; dust: Dust; footprints: Footprints; ambience: Ambience;
+  points: Map<string, PointView>; echoes: Map<string, Mesh>;
+  /** Atlas rocks (mint). `setScanned` dims one once it is in the atlas. */
+  specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void; dust: Dust; footprints: Footprints; ambience: Ambience;
   /** Lamps that blink in sequence (ramp markers). */
   blinkers: Mesh[];
   sun: [number, number, number];
@@ -452,6 +454,21 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
     echoes.set(c.id, m);
   }
 
+  // Atlas rocks: a single mint accent (LUNA-NACAR.md) so they read as catalogue targets, never as loot or hazards.
+  const specimens = new Map<string, Mesh>();
+  const rockGeo = new DodecahedronGeometry(0.6, 0);
+  const rockFresh = toon('#9dffc8', '#1d4a36'), rockDone = toon('#6f8f82');
+  for (const sp of level.specimens ?? []) {
+    const m = new Mesh(rockGeo, rockFresh);
+    m.add(new Mesh(rockGeo, outlineMaterial(0.05)));
+    m.position.set(sp.position.x, heightAt(hf, sp.position.x, sp.position.z) + 0.2, sp.position.z);
+    m.rotation.set(0.4, sp.position.x, 0.2);
+    m.scale.set(1, 0.7, 0.85);
+    scene.add(m);
+    specimens.set(sp.id, m);
+  }
+  const setScanned = (id: string, scanned: boolean) => { const m = specimens.get(id); if (m) m.material = scanned ? rockDone : rockFresh; };
+
   const astronaut = buildAstronaut();
   const player = astronaut.group;
   const lumaModel = buildLuma();
@@ -464,7 +481,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, dust, footprints, ambience, blinkers, sun,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, dust, footprints, ambience, blinkers, sun,
     dispose() {
       const seen = new Set<unknown>();
       scene.traverse(o => {

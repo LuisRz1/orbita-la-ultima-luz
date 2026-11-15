@@ -17,6 +17,8 @@ Logros opcionales de la Luna y Marte. Premian explorar, moverse bien y aprender 
 | dust | Entre remolinos | Cruzar las dunas de Marte. |
 | first-echo | Primer eco | Encontrar un eco de Aurora. |
 | all-echoes | Todas sus huellas | Encontrar todos los ecos de un destino. |
+| first-rock | Ojo de geóloga | Escanear una roca del atlas. |
+| full-atlas | Atlas completo | Escanear todas las rocas del atlas de un destino. |
 | complete | Transmisión recibida | Completar una misión de superficie. |
 | tight-reserve | Al límite | Completar con 5 u. o menos sobre la reserva. |
 | no-recall | Enlace firme | Completar sin perder el enlace. |

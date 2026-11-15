@@ -1,6 +1,7 @@
 // Moon level, grey-box. Point texts and mission rules come from the v1 lunar world, so the 2D and 3D
 // versions describe the same mission; only positions and the terrain are new.
 import type { LevelPoint, LevelV2, Prop } from '../../core/contract/level-v2.ts';
+import { moonSpecimens } from './atlas.ts';
 import { moon } from '../../core/worlds/moon.ts';
 import { landmarks, moonHeight } from './terrain.ts';
 
@@ -79,6 +80,7 @@ export const moonLevel: LevelV2 = {
     { id: 'rift', title: t('La grieta', 'The rift'), center: { x: 0, z: landmarks.riftZ }, radius: 16 },
     { id: 'archive', title: t('Archivo norte', 'North archive'), center: landmarks.archive, radius: 15 },
   ],
+  specimens: moonSpecimens,
   collectibles: [
     { ...above(0), id: 'echo-lander' },
     { ...above(5), id: 'echo-pillar-north' },

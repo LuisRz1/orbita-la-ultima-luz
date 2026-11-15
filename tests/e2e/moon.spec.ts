@@ -161,3 +161,20 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   await expect(page.locator('.history')).toContainText('repliegue');
   expect(errors).toEqual([]);
 });
+
+test('an atlas rock is catalogued with the camera for one unit and stays dim once scanned', async ({ page }) => {
+  const errors = await open(page);
+  // Anorthosite, west of the landing site (LUNA-NACAR.md).
+  await call(page, 'teleport', -10, 19.5);
+  await call(page, 'step', 2);
+  await settle(page);
+  await expect(page.locator('[data-prompt]')).toContainText('Anortosita');
+  const before = (await call(page, 'state') as { energy: number }).energy;
+  await call(page, 'press', 'interact');
+  await call(page, 'step', 2);
+  await expect(page.locator('[data-atlas]')).toContainText('1/6');
+  const after = (await call(page, 'state') as { energy: number }).energy;
+  expect(before - after).toBeGreaterThanOrEqual(1);
+  await expect(page.locator('[data-prompt]')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

@@ -25,6 +25,7 @@ export type HudState = {
   zone: Localized | null; zoneAt: number;
   objectives: Objective[];
   echoes: { found: number; total: number };
+  atlas: { found: number; total: number };
   prompt: Prompt | null;
   notice: Notice | null;
   signal: number;
@@ -62,7 +63,7 @@ export type Destination = { id: string; name: Localized; current: boolean; unloc
 
 export const hud = createStore<HudState>(() => ({
   ready: false, phase: 'loading', tier: 'medium', frameMs: 0, renderScale: 1, drawCalls: 0, triangles: 0,
-  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, prompt: null, notice: null,
+  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
   paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,

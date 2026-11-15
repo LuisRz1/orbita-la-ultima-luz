@@ -16,6 +16,14 @@ export type Hazard = 'cold' | 'dust' | 'sun';
 export type Surge = { after: string; drain: number; warning: Localized };
 export type Zone = { id: string; title: Localized; center: Vec2; radius: number; drain?: number; hazard?: Hazard; surge?: Surge };
 export type Collectible = { id: string; position: Vec2; y?: number };
+/**
+ * A rock the spectral camera can catalogue for the atlas. `basis` says whether the card states a sampled fact
+ * (`observation`) or a game simplification of one (`simplification`); `source` links the NASA reference.
+ */
+export type Specimen = {
+  id: string; position: Vec2; title: Localized; fact: Localized;
+  basis: 'observation' | 'simplification'; source: { name: string; url: string };
+};
 export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover'
   | 'capsule' | 'module' | 'panel';
 export type Prop = { kind: PropKind; solid: Solid };
@@ -35,6 +43,8 @@ export type LevelV2 = {
   companionAfter?: string;
   /** Below this height the safety tether pulls the player back to the spawn (orbital decks over the void). */
   fallLimit?: number;
+  /** Optional rock atlas: scanning each one costs energy and never blocks the mission. */
+  specimens?: Specimen[];
 };
 
 /**
@@ -56,6 +66,12 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
   }
   for (const z of level.zones) if (z.surge && !level.points.some(p => p.id === z.surge!.after)) problems.push('surge after unknown point in ' + z.id);
   if (level.companionAfter && !level.points.some(p => p.id === level.companionAfter && p.required)) problems.push('companion joins after an unknown or optional point');
+  for (const sp of level.specimens ?? []) {
+    if (ids.has(sp.id)) problems.push('duplicate id ' + sp.id);
+    ids.add(sp.id);
+    if (slopeAt(hf, sp.position.x, sp.position.z) > maxSlope) problems.push('specimen on a steep slope: ' + sp.id);
+    if (!/^https:\/\//.test(sp.source.url)) problems.push('specimen without an https source: ' + sp.id);
+  }
   const exit = level.points.find(p => p.id === level.exit);
   if (!exit || exit.action !== 'upload' || !exit.required) problems.push('exit must be a required upload point');
 

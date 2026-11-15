@@ -2,6 +2,8 @@ import { PerspectiveCamera, Vector3, type MeshBasicMaterial } from 'three';
 import { buildHeightfield, heightAt, slopeAt } from '../core/heightfield.ts';
 import { createBody, groundAt, stepBody, type Body, type Ground } from '../core/movement.ts';
 import { emptyProgress, readProgress, writeProgress, type Progress } from '../core/save/progress3d.ts';
+import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
+import type { Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
 import { buildReport, dashCost, drain, sortieInteract, spend, spendable, startSortie, type Sortie } from '../core/sortie.ts';
 import { actionCost, assessSuit, instrumentFor, instruments, proposals, suitMovement, type SuitDesign } from '../core/suit.ts';
@@ -186,6 +188,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       v.beam.scale.y = done ? 0.15 : 1;
     }
     for (const [id, m] of view.echoes) m.visible = !progress.echoes.includes(id);
+    for (const id of view.specimens.keys()) view.setScanned(id, progress.atlas.includes(id));
   }
 
   function start(design: SuitDesign) {
@@ -311,6 +314,29 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   commands.advance = advance;
   commands.travel = travel;
 
+  /** Atlas scan: optional, costs one unit above the reserve and is saved at once, even if the sortie ends in a recall. */
+  function scanSpecimen(rock: Specimen) {
+    const check = canScan(sortie.design, spendable(sortie));
+    if (!check.ok) {
+      audio.play('blocked');
+      tell(check.error === 'instrument'
+        ? say('Sin cámara espectral no puedo catalogar esta roca.', 'Without the spectral camera this rock cannot be catalogued.')
+        : say(`Escanear cuesta ${scanCost} u. y no puedes tocar la reserva de retorno.`, `A scan costs ${scanCost} u and the return reserve is off limits.`), 'warn');
+      return;
+    }
+    spend(sortie, 'actions', scanCost);
+    audio.play('scan');
+    progress = { ...progress, atlas: [...progress.atlas, rock.id] };
+    void save();
+    view.setScanned(rock.id, true);
+    const total = level.specimens?.length ?? 0;
+    award({ kind: 'atlas', found: progress.atlas.length, total });
+    const basis = rock.basis === 'observation' ? say('observación', 'observation') : say('simplificación', 'simplification');
+    tell({ es: `Atlas ${progress.atlas.length}/${total} · ${rock.title.es}. ${rock.fact.es} [${basis.es} · ${rock.source.name}]`,
+      en: `Atlas ${progress.atlas.length}/${total} · ${rock.title.en}. ${rock.fact.en} [${basis.en} · ${rock.source.name}]` }, 'system');
+    publish(true);
+  }
+
   function updateEva(dt: number) {
     const params = suitMovement(tuning, sortie.stats);
     const k = input.look.yaw, fx = -Math.sin(k), fz = -Math.cos(k), rx = Math.cos(k), rz = -Math.sin(k);
@@ -350,7 +376,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         if (result.point.id === level.companionAfter) lumaPos.set(result.point.position.x, body.y + 1.2, result.point.position.z);
         play('point:' + result.point.id);
       } else if (result.error === 'none') {
-        // Nothing in reach: no feedback needed.
+        // No mission point in reach: maybe an atlas rock. Nothing at all needs no feedback.
+        const rock = specimenInReach(level, progress.atlas, body.x, body.z);
+        if (rock) scanSpecimen(rock);
       } else if (result.error === 'requirements') {
         audio.play('blocked');
         tell(say('Todavía no. Faltan pasos antes de esto: revisa la lista de objetivos.', 'Not yet. Other steps come first: check the objective list.'), 'warn');
@@ -493,6 +521,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     sincePublish = 0;
     const reach = phase === 'eva' ? pointInReach(level, sortie.session, body.x, body.z) : null;
     const needs = reach ? instrumentFor[reach.action] : undefined;
+    const rock = phase === 'eva' && !reach ? specimenInReach(level, progress.atlas, body.x, body.z) : null;
     const info = viewport.renderer.info.render;
     const here = level.zones.find(q => q.id === zone);
     const cold = zoneDrain(here, sortie.session.completed) > 0;
@@ -510,7 +539,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       echoes: { found: progress.echoes.length, total: level.collectibles.length },
       prompt: reach ? { verb: verbs[reach.action], title: reach.title, cost: actionCost(reach.power, reach.action, sortie.design),
         blocked: missingFor(level, sortie.session, reach).map(id => level.points.find(p => p.id === id)!.title),
-        missing: needs && !sortie.design.instruments.includes(needs) ? instruments[needs].name : null } : null,
+        missing: needs && !sortie.design.instruments.includes(needs) ? instruments[needs].name : null }
+        : rock ? { verb: say('Catalogar', 'Catalogue'), title: rock.title, cost: scanCost, blocked: [],
+          missing: sortie.design.instruments.includes('camera') ? null : instruments.camera.name } : null,
+      atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },
       notice, signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), fade, locked: input.locked,
       player: { x: body.x, y: body.y, z: body.z, speed: Math.hypot(body.vx, body.vz), grounded: body.grounded },
       realGravity: level.realGravity, elapsed: sortie.time, now: time,
