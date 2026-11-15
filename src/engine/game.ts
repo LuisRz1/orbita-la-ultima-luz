@@ -86,6 +86,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const onVisibility = () => audio.suspend(document.hidden);
   document.addEventListener('visibilitychange', onVisibility);
   let tetherWarned = false;
+  /** Time the rescued crew started walking to the vehicle, or null while they wait. */
+  let crewStart: number | null = null;
   let stepDistance = 0, lastLine: unknown = null, pendingZoneLine: string | null = null;
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
@@ -205,6 +207,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   function start(design: SuitDesign) {
     if (assessSuit(design).problems.length) return;
     sortie = startSortie(design);
+    crewStart = null;
     view.astronaut.setLoadout(design);
     sortie.session.collected = [...progress.echoes];
     progress = { ...progress, design };
@@ -423,6 +426,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         // Contingency: a point can set off a hazard (the relay repair on Mars brings a dust front over the dunes).
         const surge = level.zones.find(z => z.surge?.after === result.point.id)?.surge;
         if (surge) { setStorm(true); tell(surge.warning, 'warn'); play('storm'); }
+        if (result.point.id === level.crew?.boardAfter) crewStart = time;
         if (result.point.id === level.companionAfter) lumaPos.set(result.point.position.x, body.y + 1.2, result.point.position.z);
         play('point:' + result.point.id);
       } else if (result.error === 'none') {
@@ -630,6 +634,26 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     });
   }
 
+  /** Crew walk the route in single file at a calm pace and disappear into the vehicle at its end. */
+  function updateCrew() {
+    if (!level.crew) return;
+    level.crew.members.forEach((m, i) => {
+      const fig = view.crew.get(m.id)!;
+      const walked = crewStart === null ? 0 : Math.max(0, (time - crewStart) * 1.6 - i * 2.5);
+      const path = [m.at, ...level.crew!.route];
+      let left = walked, x = m.at.x, z = m.at.z, heading = fig.rotation.y, arrived = true;
+      for (let k = 1; k < path.length; k++) {
+        const a = path[k - 1], b = path[k], len = Math.hypot(b.x - a.x, b.z - a.z);
+        if (left <= len) { const f = left / len; x = a.x + (b.x - a.x) * f; z = a.z + (b.z - a.z) * f; heading = Math.atan2(b.x - a.x, b.z - a.z); arrived = false; break; }
+        left -= len;
+      }
+      fig.visible = !arrived || walked === 0;
+      const moving = walked > 0 && !arrived;
+      fig.position.set(x, heightAt(hf, x, z) + (moving && !prefs.getState().reduceMotion ? Math.abs(Math.sin(time * 5 + i)) * 0.06 : 0), z);
+      if (moving) fig.rotation.y = heading;
+    });
+  }
+
   function render(alpha: number, frameMs: number) {
     viewport.tick(frameMs);
     const px = prev.x + (body.x - prev.x) * alpha, py = prev.y + (body.y - prev.y) * alpha, pz = prev.z + (body.z - prev.z) * alpha;
@@ -698,6 +722,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     }
 
     view.tickSky(prefs.getState().reduceMotion ? 0 : time);
+    updateCrew();
     view.beacon.visible = Math.sin(time * 3) > -0.2;
     for (const lamp of view.blinkers) lamp.visible = Math.sin(time * 2.4 - lamp.position.x * 0.2) > -0.5;
     for (const [id, m] of view.echoes) if (m.visible) m.rotation.y = time * 1.5 + id.length;

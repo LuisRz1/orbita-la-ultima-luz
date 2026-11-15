@@ -400,3 +400,22 @@ export function buildProp(prop: Prop, base: number): Group {
   }
   return g;
 }
+
+/**
+ * A rescued crew member, kept to a handful of meshes so four of them stay cheap on integrated GPUs: Aurora suit,
+ * bubble helmet, backpack and a stripe (pink for the sister, as on her journal pages).
+ */
+export function buildCrewFigure(sister: boolean) {
+  const g = new Group();
+  const suit = toon('#e7e2d8'), stripe = toon(sister ? '#ff9ec7' : '#7fe3e0');
+  const body = part(new CapsuleGeometry(0.26, 0.75, 4, 10), suit, 0.025);
+  body.position.y = 0.75;
+  const helmet = part(new SphereGeometry(0.24, 14, 10), toon('#1f3f52', '#163040'), 0.02);
+  helmet.position.y = 1.48;
+  const pack = part(new RoundedBoxGeometry(0.42, 0.5, 0.2, 2, 0.05), toon('#d9d2c3'), 0.02);
+  pack.position.set(0, 1.0, 0.27);
+  const band = new Mesh(new CylinderGeometry(0.27, 0.27, 0.08, 12), stripe);
+  band.position.y = 1.05;
+  g.add(body, helmet, pack, band);
+  return g;
+}

@@ -65,6 +65,15 @@ export const extractionLevel: LevelV2 = {
   props,
   specimens: undefined,
   carryAfter: 'undock',
+  // Four survivors, the sister first; they take the stable west route to the vehicle.
+  crew: {
+    boardAfter: 'boarding',
+    members: [
+      { id: 'sister', sister: true, at: { x: -3, z: -59 } }, { id: 'crew-2', at: { x: 3, z: -60 } },
+      { id: 'crew-3', at: { x: -5, z: -62 } }, { id: 'crew-4', at: { x: 5, z: -63 } },
+    ],
+    route: [{ x: -24, z: -60 }, { x: -42, z: -42 }, { x: -46, z: -20 }, { x: -44, z: 14 }, { x: -30, z: 40 }, { x: -6, z: 72 }],
+  },
   farewell: true,
   zones: [
     ...bennuLevel.zones,

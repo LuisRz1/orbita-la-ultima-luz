@@ -58,6 +58,11 @@ export type LevelV2 = {
   movement?: Partial<Omit<MoveParams, 'radius' | 'maxSlope'>>;
   /** After this point the player carries LUMA (it no longer flies on its own). */
   carryAfter?: string;
+  /**
+   * People to rescue, drawn as simple figures. They wait at `at` and, once `boardAfter` is done, walk `route` to the
+   * vehicle in single file. Only the extraction uses it.
+   */
+  crew?: { members: { id: string; sister?: boolean; at: Vec2 }[]; boardAfter: string; route: Vec2[] };
   /** LUMA's last level: once a sortie here is complete, LUMA is gone for good and never reacts again. */
   farewell?: boolean;
   /** Anchor line: the player can rise at most this many metres above the ground before the line holds them. */

@@ -9,7 +9,7 @@ import {
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { LevelV2 } from '../core/contract/level-v2.ts';
 import { heightAt, normalAt, type Heightfield } from '../core/heightfield.ts';
-import { buildAstronaut, buildLuma, buildProp, colors, type Astronaut, type Luma } from './models.ts';
+import { buildAstronaut, buildCrewFigure, buildLuma, buildProp, colors, type Astronaut, type Luma } from './models.ts';
 import { biome, earthTexture, footprintTexture, glowTexture, marsMoonTexture, outlineMaterial, terrainMaterial, toon } from './style.ts';
 
 const fromBiome = () => ({
@@ -29,7 +29,9 @@ export type WorldView = {
   /** Atlas rocks (mint). `setScanned` dims one once it is in the atlas. */
   specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void;
   /** Side-mission beacons: a post with a lamp that lights up once repaired. */
-  beacons: Map<string, Mesh>; setBeacon(id: string, lit: boolean): void; dust: Dust; footprints: Footprints; ambience: Ambience;
+  beacons: Map<string, Mesh>; setBeacon(id: string, lit: boolean): void;
+  /** Rescued crew figures by id (empty unless the level has a crew). */
+  crew: Map<string, Group>; dust: Dust; footprints: Footprints; ambience: Ambience;
   /** Switches between the plain sky band and the painted nebula (setting); `tick` drifts the nebula. */
   setSky(painted: boolean): void; tickSky(time: number): void;
   /** Lamps that blink in sequence (ramp markers). */
@@ -548,6 +550,14 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
     lamp.getObjectByName('halo')!.visible = lit;
   };
 
+  const crew = new Map<string, Group>();
+  for (const m of level.crew?.members ?? []) {
+    const f = buildCrewFigure(!!m.sister);
+    f.position.set(m.at.x, heightAt(hf, m.at.x, m.at.z), m.at.z);
+    scene.add(f);
+    crew.set(m.id, f);
+  }
+
   const astronaut = buildAstronaut();
   const player = astronaut.group;
   const lumaModel = buildLuma();
@@ -560,7 +570,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon, crew,
     setSky(on: boolean) { if (!painted) return; painted.visible = on; band.visible = !on; },
     tickSky(t: number) { if (painted?.visible) (painted.material as ShaderMaterial).uniforms.uTime.value = t; },
     dust, footprints, ambience, blinkers, sun,

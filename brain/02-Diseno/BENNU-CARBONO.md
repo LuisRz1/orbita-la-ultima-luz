@@ -52,7 +52,7 @@ M06 (regreso y recepción, AUR-E07) se cuenta en el resultado hasta que exista e
 ## Pendiente
 
 - M01 (aproximación) y M06 pilotados, con el vuelo 3D.
-- Supervivientes visibles (modelos) durante el traslado.
+- Hecho: supervivientes visibles (figuras simples, la hermana con franja rosa) que caminan en fila por la ruta oeste tras el traslado (`crew`).
 - Hecho: en la Luna, al recuperar la caché, LUMA se mete por un hueco y suelta una traba (`point:archive`), en condiciones seguras.
 - Contenido secundario: 8 encargos y hallazgos del capítulo. Hecho: atlas de 5 rocas con la ficha NASA (`src/levels/bennu/atlas.ts`).
 - Voces de LUMA para Bennu.

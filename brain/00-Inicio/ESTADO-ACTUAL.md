@@ -17,7 +17,7 @@ tags: [orbita, continuidad]
 - Cielo pintado opcional en ajustes (nebulosa por shader, apagado por defecto).
 - Voces de LUMA: Luna ES/EN, Órbita ES/EN y Marte ES en el juego. En generación: Marte EN, retakes de 6 líneas y Bennu ES/EN.
 - **Verificado:** build, 63 pruebas de reglas y 20 recorridos en Brave; capturas de rocas, balizas, ruinas, cielo y Bennu.
-- **Pendiente:** M06 pilotado (regreso) y supervivientes visibles; interiores de ruinas y ranura `accessories`; vuelo 3D; fps en Iris Xe; equilibrio con jugadores.
+- **Pendiente:** M06 pilotado (regreso); interiores de ruinas y ranura `accessories`; vuelo 3D; fps en Iris Xe; equilibrio con jugadores.
 - **Siguiente paso:** procesar y verificar con Whisper las voces pendientes y hacer commit; luego vuelo 3D para M01/M06 y medir fps en Iris Xe.
 
 **El juego 3D va del nivel 1 al 3.** `/` abre la estación del capítulo 1 ([ficha](../02-Diseno/ESTACION-QUIROFANO.md)):
