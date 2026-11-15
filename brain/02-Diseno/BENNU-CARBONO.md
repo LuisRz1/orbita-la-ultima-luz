@@ -36,8 +36,23 @@ La hermana habla solo en la secuencia `complete`, después de validar AUR-E06 (h
 
 Bioma `carbono`: suelo carbón con luces arena, sombras azul profundo, cielo negro con muchas estrellas, la Tierra como un punto azul (`sky: 'deep'`) y LUMA en su fase blanco-azulada. Admite el cielo pintado (azul y lavanda).
 
+## Evacuación y despedida (M04–M05)
+
+Nivel aparte, `/?level=extraction` («Todavía hay camino»), sobre el mismo terreno. Se abre al completar Bennu. Código: [level.ts](../../src/levels/extraction/level.ts) y [dialogue.ts](../../src/levels/extraction/dialogue.ts).
+
+1. Trasladar a los supervivientes (refugio) y asegurar archivo y muestra.
+2. Soporte vital y reservas en el vehículo, con todos a bordo.
+3. Última desconexión en la instalación de servicio (ficción): el seguro se atasca y deja al jugador fuera; la liberación está tras un conducto donde el traje no cabe. LUMA decide cruzarlo («Quiero hacerlo»). No hay elección engañosa, requisito oculto ni culpa.
+4. El jugador lleva a LUMA en brazos (`carryAfter`) hasta el compartimento seguro, que es la salida.
+5. Despedida escrita: pocas palabras y un silencio. Recuerda como mucho dos cosas que el jugador registró de verdad (página 3 del diario, las cuatro balizas, el atlas, los ecos; `Memories`). Cambian el matiz, nunca el desenlace. Sin voz grabada a propósito.
+6. `farewell: true`: tras completarlo, LUMA no vuelve a aparecer ni a hablar en ese destino.
+
+M06 (regreso y recepción, AUR-E07) se cuenta en el resultado hasta que exista el vuelo 3D: simplificación de producción.
+
 ## Pendiente
 
-- M01, M04, M05 y M06 como secuencias.
+- M01 (aproximación) y M06 pilotados, con el vuelo 3D.
+- Supervivientes visibles (modelos) durante el traslado.
+- Mostrar antes, en la Luna, que LUMA cruza espacios estrechos (lo pide el arco).
 - Contenido secundario: 8 encargos y hallazgos del capítulo. Hecho: atlas de 5 rocas con la ficha NASA (`src/levels/bennu/atlas.ts`).
 - Voces de LUMA para Bennu.

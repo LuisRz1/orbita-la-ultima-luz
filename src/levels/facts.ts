@@ -48,3 +48,11 @@ export const bennuFacts: LevelFacts = {
     'The message from Mars pointed to Bennu: a half-kilometre pile of rock that spins every 4.3 hours. Aurora followed a beacon here. Anchor the vehicle, find a stable way and reach the refuge.'),
   source: { url: 'https://science.nasa.gov/solar-system/asteroids/101955-bennu/facts/', name: 'NASA · Bennu Facts' },
 };
+
+export const extractionFacts: LevelFacts = {
+  ...bennuFacts,
+  operation: 'AURORA / C4 · EVAC',
+  lastContact: t('supervivientes en el refugio', 'survivors at the refuge'), status: t('evacuación', 'evacuation'),
+  premise: t('Tu hermana está viva, y con ella otros tres. Queda lo más difícil: que todos suban, que la nave tenga lo necesario para volver y soltar el último amarre.',
+    'Your sister is alive, and three others with her. The hardest part is left: getting everyone aboard, making sure the ship has what it needs to return, and releasing the last mooring.'),
+};

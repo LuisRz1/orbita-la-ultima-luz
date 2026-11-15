@@ -5,6 +5,7 @@ import { emptyProgress, readProgress, writeProgress, type Progress } from '../co
 import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
 import { beaconCost, beaconInReach } from '../core/beacons.ts';
 import { ruinInReach } from '../core/ruins.ts';
+import { gatherMemories } from '../levels/memories.ts';
 import type { Ruin, Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
 import { buildReport, dashCost, drain, sortieInteract, spend, spendable, startSortie, type Sortie } from '../core/sortie.ts';
@@ -55,7 +56,8 @@ const angleLerp = (a: number, b: number, t: number) => {
 export async function createGame(host: HTMLElement): Promise<Game> {
   const { levels, requestedLevel, route, levelUrl } = await import('../levels/registry.ts');
   const levelId = requestedLevel(window.location.search);
-  const { level, dialogue: script, facts, biome: biomeId } = await levels[levelId]();
+  const { level, dialogue: baseScript, facts, biome: biomeId, personalize } = await levels[levelId]();
+  let script = baseScript;
   // The palette must be chosen before any material, texture or model is built.
   setBiome(biomeId);
   audio.setWind(biome.wind);
@@ -107,6 +109,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       saves.set(r.id, p && p !== 'invalid' ? p : null);
     } catch { saves.set(r.id, null); /* storage unavailable: only the current destination is listed */ }
   }
+  if (personalize) script = { ...baseScript, ...personalize(gatherMemories(saves.values())) };
   route.forEach((r, i) => {
     const own = saves.get(r.id), prior = i > 0 ? saves.get(route[i - 1].id) : null;
     if (own?.attempts.length || prior?.attempts.some(a => a.outcome === 'complete')) unlocked.add(r.id);
@@ -141,7 +144,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
   const untag = (v: string) => v.replace(/^LUMA:\s*/, '');
   /** LUMA is with the player unless the level makes it join later (chapter 1: once the protected bay is open). */
-  const lumaHere = () => !level.companionAfter || (phase === 'eva' && sortie.session.completed.includes(level.companionAfter));
+  // LUMA's death is permanent: after the farewell level is complete it never appears or speaks there again.
+  const lumaGone = () => !!level.farewell && progress.attempts.some(a => a.outcome === 'complete') && !dialogue;
+  const lumaHere = () => !lumaGone() && (!level.companionAfter || (phase === 'eva' && sortie.session.completed.includes(level.companionAfter)));
+  const carried = () => !!level.carryAfter && phase === 'eva' && sortie.session.completed.includes(level.carryAfter);
   const tell = (text: Notice['text'], tone: Notice['tone'] = 'luma') => {
     // Before LUMA has joined, its messages come from the suit system instead.
     if (tone === 'luma' && !lumaHere()) tone = 'system';
@@ -646,12 +652,16 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     // LUMA floats behind the player's shoulder; after a while idle it drifts toward the next pending point.
     const pending = level.points.find(p => p.required && !sortie.session.completed.includes(p.id) && !missingFor(level, sortie.session, p).length);
     const smooth = 1 - Math.exp(-frameMs / 1000 * 3.5);
-    if (phase === 'eva' && idleFor > 5 && pending) {
+    if (carried()) {
+      // Carried in the arms, on the right side so the camera behind still sees it: no floating, no drifting.
+      target.set(px + Math.cos(body.facing) * 0.55 - Math.sin(body.facing) * 0.2, py + 1.1, pz - Math.sin(body.facing) * 0.55 - Math.cos(body.facing) * 0.2);
+    } else if (phase === 'eva' && idleFor > 5 && pending) {
       const dx = pending.position.x - px, dz = pending.position.z - pz, d = Math.hypot(dx, dz) || 1;
       target.set(px + dx / d * 2.4, py + 1.8, pz + dz / d * 2.4);
     } else target.set(px - Math.sin(body.facing) * 1.2 + Math.cos(body.facing) * 0.9, py + 1.7, pz - Math.cos(body.facing) * 1.2 - Math.sin(body.facing) * 0.9);
     lumaPos.lerp(target, smooth);
-    view.luma.position.set(lumaPos.x, lumaPos.y + (prefs.getState().reduceMotion ? 0 : Math.sin(time * 2.2) * 0.12), lumaPos.z);
+    view.luma.position.set(lumaPos.x, lumaPos.y + (prefs.getState().reduceMotion || carried() ? 0 : Math.sin(time * 2.2) * 0.12), lumaPos.z);
+    view.luma.scale.setScalar(carried() ? 0.8 : 1);
     view.luma.rotation.y = Math.atan2(px - lumaPos.x, pz - lumaPos.z) + Math.PI;
 
     if (phase === 'menu') {

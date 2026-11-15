@@ -13,11 +13,12 @@ tags: [orbita, continuidad]
 
 - Luna: atlas de 6 rocas con fuentes NASA, misión secundaria «Balizas de Aurora», ruinas R1–R3 con páginas del diario y entrada «Atlas y diario» en el menú ([Nácar](../02-Diseno/LUNA-NACAR.md)).
 - Bennu jugable, capítulo 4 M02–M03: anclaje, voz, dos accesos, archivo, muestra y refugio con AUR-E06 y el reencuentro; microgravedad estilizada con línea de anclaje; atlas de 5 rocas ([Carbono](../02-Diseno/BENNU-CARBONO.md)).
+- Evacuación y despedida de LUMA (C4-M04–M05) en `/?level=extraction`, con recuerdos reales y muerte definitiva.
 - Cielo pintado opcional en ajustes (nebulosa por shader, apagado por defecto).
 - Voces de LUMA: Luna ES/EN, Órbita ES/EN y Marte ES en el juego. En generación: Marte EN, retakes de 6 líneas y Bennu ES/EN.
 - **Verificado:** build, 63 pruebas de reglas y 20 recorridos en Brave; capturas de rocas, balizas, ruinas, cielo y Bennu.
-- **Pendiente:** secuencias M04–M06 de Bennu (evacuación, incidente y sacrificio de LUMA, regreso); interiores de ruinas y ranura `accessories`; vuelo 3D; fps en Iris Xe; equilibrio con jugadores.
-- **Siguiente paso:** procesar y verificar con Whisper las voces pendientes y hacer commit; luego diseñar M04–M06 como secuencias.
+- **Pendiente:** M06 pilotado (regreso) y supervivientes visibles; interiores de ruinas y ranura `accessories`; vuelo 3D; fps en Iris Xe; equilibrio con jugadores.
+- **Siguiente paso:** procesar y verificar con Whisper las voces pendientes y hacer commit; luego vuelo 3D para M01/M06 y medir fps en Iris Xe.
 
 **El juego 3D va del nivel 1 al 3.** `/` abre la estación del capítulo 1 ([ficha](../02-Diseno/ESTACION-QUIROFANO.md)):
 

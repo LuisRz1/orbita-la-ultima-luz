@@ -5,7 +5,10 @@ import type { BiomeId } from '../engine/style.ts';
 import type { LevelFacts } from './facts.ts';
 import type { Line } from './moon/dialogue.ts';
 
-export type LevelModule = { level: LevelV2; dialogue: Record<string, Line[]>; facts: LevelFacts; biome: BiomeId };
+import type { Memories } from './memories.ts';
+
+/** `personalize` may rewrite sequences from what the player recorded elsewhere (only the farewell does). */
+export type LevelModule = { level: LevelV2; dialogue: Record<string, Line[]>; facts: LevelFacts; biome: BiomeId; personalize?: (m: Memories) => Record<string, Line[]> };
 
 export const levels: Record<string, () => Promise<LevelModule>> = {
   orbit: async () => {
@@ -24,6 +27,10 @@ export const levels: Record<string, () => Promise<LevelModule>> = {
     const [{ bennuLevel }, { bennuDialogue }, { bennuFacts }] = await Promise.all([import('./bennu/level.ts'), import('./bennu/dialogue.ts'), import('./facts.ts')]);
     return { level: bennuLevel, dialogue: bennuDialogue, facts: bennuFacts, biome: 'carbono' };
   },
+  extraction: async () => {
+    const [{ extractionLevel }, { extractionDialogue, farewell }, { extractionFacts }] = await Promise.all([import('./extraction/level.ts'), import('./extraction/dialogue.ts'), import('./facts.ts')]);
+    return { level: extractionLevel, dialogue: extractionDialogue, facts: extractionFacts, biome: 'carbono', personalize: m => ({ complete: farewell(m) }) };
+  },
 };
 
 /**
@@ -35,6 +42,7 @@ export const route = [
   { id: 'moon', name: { es: 'Luna', en: 'Moon' } },
   { id: 'mars', name: { es: 'Marte', en: 'Mars' } },
   { id: 'bennu', name: { es: 'Bennu', en: 'Bennu' } },
+  { id: 'extraction', name: { es: 'Bennu · evacuación', en: 'Bennu · evacuation' } },
 ] as const;
 
 export const defaultLevel = 'orbit';

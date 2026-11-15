@@ -40,7 +40,7 @@ export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'c
 export type Prop = { kind: PropKind; solid: Solid };
 
 export type LevelV2 = {
-  kitVersion: 2; id: 'orbit' | 'moon' | 'mars' | 'bennu'; mission: string;
+  kitVersion: 2; id: 'orbit' | 'moon' | 'mars' | 'bennu' | 'extraction'; mission: string;
   title: Localized; subtitle: Localized; briefing: Localized; arrival: Localized; outcome: Localized;
   terrain: { size: number; res: number; height(x: number, z: number): number };
   /** Real surface gravity, shown to the player next to the stylised value. */
@@ -56,6 +56,10 @@ export type LevelV2 = {
   fallLimit?: number;
   /** Stylised movement for this destination (microgravity on Bennu), merged over the tuned defaults. */
   movement?: Partial<Omit<MoveParams, 'radius' | 'maxSlope'>>;
+  /** After this point the player carries LUMA (it no longer flies on its own). */
+  carryAfter?: string;
+  /** LUMA's last level: once a sortie here is complete, LUMA is gone for good and never reacts again. */
+  farewell?: boolean;
   /** Anchor line: the player can rise at most this many metres above the ground before the line holds them. */
   tether?: number;
   /** Optional rock atlas: scanning each one costs energy and never blocks the mission. */
@@ -82,6 +86,7 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
     for (const pre of p.prerequisites) if (!level.points.some(q => q.id === pre)) problems.push('unknown prerequisite ' + pre);
   }
   for (const z of level.zones) if (z.surge && !level.points.some(p => p.id === z.surge!.after)) problems.push('surge after unknown point in ' + z.id);
+  if (level.carryAfter && !level.points.some(p => p.id === level.carryAfter && p.required)) problems.push('carry after an unknown or optional point');
   if (level.companionAfter && !level.points.some(p => p.id === level.companionAfter && p.required)) problems.push('companion joins after an unknown or optional point');
   for (const sp of level.specimens ?? []) {
     if (ids.has(sp.id)) problems.push('duplicate id ' + sp.id);
