@@ -26,6 +26,19 @@ export const instruments = {
   kit: { name: t('Kit de reparación', 'Repair kit'), mass: 3, enables: t('reparar a mitad de coste', 'repair at half cost') },
 } as const;
 
+/**
+ * Fourth slot, optional and found in ruins: never required, both proposals stay viable without it. The liner is
+ * based on real multilayer insulation; the wrist panel on small solar cells (gameplay values).
+ */
+export const accessories = {
+  liner: { name: t('Forro térmico', 'Thermal liner'), mass: 2, enables: t('frío en sombra ×0,5', 'cold in shadow ×0.5'), from: 'ruin-shelter' },
+  'wrist-panel': { name: t('Panel solar de muñeca', 'Wrist solar panel'), mass: 3, enables: t('+0,05 u./s parado fuera de la sombra', '+0.05 u/s standing still out of shadow'), from: 'ruin-dish' },
+} as const;
+export type AccessoryId = keyof typeof accessories;
+/** Accessories unlocked by the ruins opened in any save. */
+export const unlockedAccessories = (ruins: readonly string[]) =>
+  (Object.keys(accessories) as AccessoryId[]).filter(id => ruins.includes(accessories[id].from));
+
 export type BatteryId = keyof typeof batteries;
 export type ThrusterId = keyof typeof thrusters;
 export type AntennaId = keyof typeof antennas;
@@ -36,6 +49,7 @@ export const designSchema = z.object({
   thruster: z.enum(['none', 'compact', 'strong']),
   antenna: z.enum(['short', 'medium', 'long']),
   instruments: z.array(z.enum(['camera', 'drill', 'kit'])).max(3),
+  accessory: z.enum(['liner', 'wrist-panel']).optional(),
 }).strict();
 export type SuitDesign = z.infer<typeof designSchema>;
 
@@ -65,12 +79,16 @@ export const instrumentFor: Partial<Record<Action, InstrumentId>> = { scan: 'cam
 
 export function suitMass(d: SuitDesign) {
   return batteries[d.battery].mass + thrusters[d.thruster].mass + antennas[d.antenna].mass +
-    d.instruments.reduce((sum, id) => sum + instruments[id].mass, 0);
+    d.instruments.reduce((sum, id) => sum + instruments[id].mass, 0) + (d.accessory ? accessories[d.accessory].mass : 0);
 }
 
 export type SuitStats = {
   mass: number; capacity: number; jumpFactor: number; airJumps: number; airJumpCost: number;
   dashTimeFactor: number; commsRadius: number; problems: Localized[];
+  /** Multiplier on cold-zone drain (thermal liner). */
+  coldFactor: number;
+  /** Units per second recovered standing still out of shadow (wrist panel). */
+  solar: number;
 };
 
 export function assessSuit(d: SuitDesign): SuitStats {
@@ -83,6 +101,7 @@ export function assessSuit(d: SuitDesign): SuitStats {
     mass, capacity: batteries[d.battery].capacity, jumpFactor: Math.max(0.6, 1 - Math.max(0, mass - freeMass) * 0.015),
     airJumps: thruster.airJumps, airJumpCost: thruster.airJumpCost, dashTimeFactor: thruster.boost,
     commsRadius: antennas[d.antenna].radius, problems,
+    coldFactor: d.accessory === 'liner' ? 0.5 : 1, solar: d.accessory === 'wrist-panel' ? 0.05 : 0,
   };
 }
 

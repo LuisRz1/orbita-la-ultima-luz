@@ -9,7 +9,7 @@ import { gatherMemories } from '../levels/memories.ts';
 import type { Ruin, Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
 import { buildReport, dashCost, drain, sortieInteract, spend, spendable, startSortie, type Sortie } from '../core/sortie.ts';
-import { actionCost, assessSuit, instrumentFor, instruments, proposals, suitMovement, type SuitDesign } from '../core/suit.ts';
+import { accessories, actionCost, assessSuit, instrumentFor, instruments, proposals, suitMovement, unlockedAccessories, type AccessoryId, type SuitDesign } from '../core/suit.ts';
 import { unlocks, type GameEvent } from '../core/achievements.ts';
 import { prefs } from '../ui/prefs.ts';
 import { commands, hud, type DialogueLine, type Notice } from '../ui/store.ts';
@@ -111,6 +111,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       saves.set(r.id, p && p !== 'invalid' ? p : null);
     } catch { saves.set(r.id, null); /* storage unavailable: only the current destination is listed */ }
   }
+  const ruinsEverywhere = () => [...new Set([...[...saves.values()].flatMap(p => p?.ruins ?? []), ...progress.ruins])];
   if (personalize) script = { ...baseScript, ...personalize(gatherMemories(saves.values())) };
   route.forEach((r, i) => {
     const own = saves.get(r.id), prior = i > 0 ? saves.get(route[i - 1].id) : null;
@@ -363,6 +364,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     progress = { ...progress, ruins: [...progress.ruins, ruin.id] };
     void save();
     award({ kind: 'page', found: progress.ruins.length, total: level.ruins!.length });
+    const gained = (Object.keys(accessories) as AccessoryId[]).find(id => accessories[id].from === ruin.id);
+    if (gained) tell(say(`Nuevo accesorio para el traje: ${accessories[gained].name.es}. Equípalo en el puesto de instrumentos.`,
+      `New suit accessory: ${accessories[gained].name.en}. Fit it at the instruments station.`), 'system');
     if (ruin.card) {
       const basis = ruin.card.basis === 'observation' ? say('observación', 'observation') : say('simplificación', 'simplification');
       tell({ es: `${ruin.card.fact.es} [${basis.es} · ${ruin.card.source.name}]`, en: `${ruin.card.fact.en} [${basis.en} · ${ruin.card.source.name}]` }, 'system');
@@ -616,6 +620,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         atlas: (level.specimens ?? []).map(sp => { const got = progress.atlas.includes(sp.id); return { id: sp.id, title: got ? sp.title : say('Roca sin catalogar', 'Uncatalogued rock'), fact: got ? sp.fact : null, basis: sp.basis, source: got ? sp.source : null }; }),
         pages: (level.ruins ?? []).map(r => ({ id: r.id, title: r.page.title, text: progress.ruins.includes(r.id) ? r.page.text : null })),
       },
+      accessories: unlockedAccessories(ruinsEverywhere()),
       pages: { found: progress.ruins.length, total: level.ruins?.length ?? 0 },
       beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },
       atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },

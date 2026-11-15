@@ -45,7 +45,10 @@ export function drain(s: Sortie, level: LevelV2, dt: number, moving: boolean, zo
   if (moving) spend(s, 'move', moveDrain * dt);
   const here = level.zones.find(z => z.id === zone);
   const extra = zoneDrain(here, s.session.completed);
-  if (extra) spend(s, here?.hazard ?? 'cold', extra * dt);
+  const hazard = here?.hazard ?? 'cold';
+  if (extra) spend(s, hazard, extra * dt * (hazard === 'cold' ? s.stats.coldFactor : 1));
+  // Wrist panel: a trickle while standing still, except in shadowed cold zones.
+  if (s.stats.solar && !moving && !(extra && hazard === 'cold')) s.energy = Math.min(s.stats.capacity, s.energy + s.stats.solar * dt);
   return s.energy <= reserve;
 }
 

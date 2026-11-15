@@ -5,6 +5,7 @@ import { useStore } from 'zustand';
 import type { Localized } from '../../core/contract/grid-v1.ts';
 import { defaultParams } from '../../core/movement.ts';
 import {
+  accessories,
   actionCost, antennas, assessSuit, batteries, instrumentFor, instruments, jumpApex, lifeDrain, massLimit, reserve, thrusters,
   type InstrumentId, type SuitDesign,
 } from '../../core/suit.ts';
@@ -66,6 +67,7 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
     return () => window.removeEventListener('keydown', key);
   });
   const stats = assessSuit(draft);
+  const unlocked = useStore(hud, st => st.accessories);
   return <section className="panel station" role="dialog" aria-label={t(stationName[id])} data-station={id}>
     <span className="panel-title">{t(stationName[id]).toUpperCase()}</span>
     <p className="station-why">{t(('why_' + id) as StringKey)}</p>
@@ -83,6 +85,14 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
           <small>{t(instruments[inst].enables)} · {instruments[inst].mass} kg{unlocks.length ? ' · ' + unlocks.map(o => t(o.title)).join(', ') : ''}</small>
         </button>;
       })}
+      {!slot && unlocked.length > 0 && <>
+        <span className="panel-title accessory-title">{t('accessory')}</span>
+        {[undefined, ...unlocked].map(acc => <button key={acc ?? 'none'} data-accessory={acc ?? 'none'} aria-pressed={draft.accessory === acc} className={draft.accessory === acc ? 'on' : ''}
+          onClick={() => set({ ...draft, accessory: acc })}>
+          <b>{draft.accessory === acc ? '■ ' : '□ '}{acc ? t(accessories[acc].name) : t('noAccessory')}</b>
+          {acc && <small>{t(accessories[acc].enables)} · {accessories[acc].mass} kg</small>}
+        </button>)}
+      </>}
     </div>
     <div className="station-foot">
       <span className={stats.mass > massLimit ? 'bad' : ''}>{t('mass')} {stats.mass}/{massLimit} kg{stats.mass > massLimit ? ' · ' + t('overMass') : ''}</span>

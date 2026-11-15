@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import type { Localized } from '../core/contract/grid-v1.ts';
+import type { AccessoryId } from '../core/suit.ts';
 import type { Attempt } from '../core/save/progress3d.ts';
 import type { Report } from '../core/sortie.ts';
 import type { SuitDesign } from '../core/suit.ts';
@@ -28,6 +29,8 @@ export type HudState = {
   atlas: { found: number; total: number };
   beacons: { lit: number; total: number };
   pages: { found: number; total: number };
+  /** Suit accessories unlocked in ruins (any destination). */
+  accessories: AccessoryId[];
   /** Atlas cards and journal pages of the current destination, for the menu; unfound ones carry no text. */
   collection: {
     atlas: { id: string; title: Localized; fact: Localized | null; basis: 'observation' | 'simplification'; source: { name: string; url: string } | null }[];
@@ -70,7 +73,7 @@ export type Destination = { id: string; name: Localized; current: boolean; unloc
 
 export const hud = createStore<HudState>(() => ({
   ready: false, phase: 'loading', tier: 'medium', frameMs: 0, renderScale: 1, drawCalls: 0, triangles: 0,
-  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, pages: { found: 0, total: 0 }, collection: { atlas: [], pages: [] }, prompt: null, notice: null,
+  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, pages: { found: 0, total: 0 }, accessories: [], collection: { atlas: [], pages: [] }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
   paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,
