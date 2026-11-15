@@ -49,3 +49,29 @@ test('title menu, English, story dialogue, pause and an achievement', async ({ p
   await expect(page.locator('[data-achievement="first-dash"]')).toHaveClass(/got/);
   expect(errors).toEqual([]);
 });
+
+test('the title shows the design loop and the route; ?demo opens every destination without touching the saves', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/?quality=low');
+  await expect(page.locator('[data-loop] li')).toHaveCount(4, { timeout: 30_000 });
+  await expect(page.locator('[data-travel-locked="bennu"]')).toBeVisible();
+  await page.goto('/?demo&quality=low');
+  await expect(page.locator('[data-travel="bennu"]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-travel="extraction"]')).toBeVisible();
+  await page.locator('[data-travel="mars"]').click();
+  await expect(page).toHaveURL(/level=mars/);
+  await expect(page).toHaveURL(/demo/);
+  await expect(page.locator('[data-travel="orbit"]')).toBeVisible({ timeout: 30_000 });
+  const saved = await page.evaluate(() => new Promise<number>(resolve => {
+    const req = indexedDB.open('orbita-3d');
+    req.onsuccess = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('progress')) { resolve(0); return; }
+      const count = db.transaction('progress', 'readonly').objectStore('progress').count();
+      count.onsuccess = () => resolve(count.result);
+    };
+  }));
+  expect(saved).toBe(0);
+  expect(errors).toEqual([]);
+});

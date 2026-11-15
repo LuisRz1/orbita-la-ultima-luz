@@ -5,7 +5,7 @@ import { useStore } from 'zustand';
 import { achievementIds, achievements } from '../../core/achievements.ts';
 import { patchIds, patches } from '../../core/patches.ts';
 import { tierIds } from '../../engine/quality.ts';
-import { useT } from '../i18n.ts';
+import { useT, type StringKey } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
@@ -15,23 +15,34 @@ export function MainMenu() {
   const { t } = useT();
   const { hasProgress, facts, destinations, collection } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
+  const demo = new URLSearchParams(window.location.search).has('demo');
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
   return <div className="screen menu-screen">
     <section className="menu-main">
       <h1 className="game-title">ÓRBITA</h1>
       <p className="game-subtitle">{t('subtitle')}</p>
       <p className="premise">{facts ? t(facts.premise) : t('premise')}</p>
+      <ol className="loop-strip" aria-label={t('loopTitle')} data-loop>
+        {(['loopDesign', 'loopExplore', 'loopReport', 'loopRedesign'] as const).map((k, i) => <li key={k}>
+          <b>{i + 1}</b><span>{t(k)}</span><small>{t((k + 'Hint') as StringKey)}</small>
+        </li>)}
+      </ol>
       <nav className="menu-list" aria-label="menu">
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
-        {destinations.filter(d => !d.current).map(d => d.unlocked
-          ? <button key={d.id} data-sfx="ui-confirm" data-travel={d.id} onClick={() => commands.travel(d.id)}>{t('travelTo')} {t(d.name)} ↗</button>
-          : <button key={d.id} disabled data-travel-locked={d.id}>{t(d.name)} · {t('routeLocked')}</button>)}
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
         {collection.atlas.length + collection.pages.length > 0 && <button data-sfx="ui-open" data-menu="journal" onClick={() => setSub('journal')}>{t('journal')}</button>}
         <button data-sfx="ui-open" data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
       </nav>
+      {destinations.length > 1 && <nav className="route-strip" aria-label={t('route')}>
+        <span className="slot-label">{t('route')}{demo ? ' · ' + t('demoOpen') : ''}</span>
+        <ol>{destinations.map(d => <li key={d.id} className={d.current ? 'here' : d.unlocked ? 'open' : 'locked'}>
+          {d.current ? <span aria-current="location">{t(d.name)}</span>
+            : d.unlocked ? <button data-sfx="ui-confirm" data-travel={d.id} title={t('travelTo') + ' ' + t(d.name)} onClick={() => commands.travel(d.id)}>{t(d.name)} ↗</button>
+            : <span data-travel-locked={d.id} title={t('routeLocked')}>{t(d.name)}</span>}
+        </li>)}</ol>
+      </nav>}
     </section>
     {facts && <aside className="panel data-card" aria-label={t('operation')}>
       <dl>

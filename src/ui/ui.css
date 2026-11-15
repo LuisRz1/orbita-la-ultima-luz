@@ -399,3 +399,26 @@
 .orbita .advice .design-line { display: block; color: var(--dim); font-size: 11px; }
 .orbita .advice button { margin-top: 4px; padding: 5px 10px; border: 1px solid var(--accent); background: rgb(127 227 224 / 8%); color: var(--accent); }
 .orbita .advice button:hover, .orbita .advice button:focus-visible { background: rgb(127 227 224 / 18%); outline: none; }
+
+/* ---------- title menu: the design loop and the route ---------- */
+.orbita .menu-main { top: 8vh; }
+.orbita .game-title { font-size: clamp(44px, min(8vw, 11vh), 104px); }
+.orbita .game-subtitle { margin: 12px 0 20px; }
+.orbita .premise { margin-bottom: 18px; }
+.orbita .loop-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0 0 18px; padding: 0; list-style: none; max-width: 560px; }
+.orbita .loop-strip li { position: relative; display: grid; align-content: start; gap: 1px; padding: 6px 8px 7px; border-top: 2px solid var(--accent); background: rgb(11 15 20 / 55%); }
+.orbita .loop-strip li:not(:last-child)::after { content: '→'; position: absolute; right: -8px; top: 4px; color: var(--accent); font-size: 12px; }
+.orbita .loop-strip b { color: var(--accent); font-size: 11px; }
+.orbita .loop-strip span { color: var(--text); letter-spacing: 0.16em; text-transform: uppercase; font-size: 12px; }
+.orbita .loop-strip small { color: var(--dim); font-size: 10.5px; line-height: 1.35; }
+.orbita .menu-list button { padding: 10px 18px; }
+.orbita .route-strip { margin-top: 16px; max-width: 560px; }
+.orbita .route-strip .slot-label { margin: 0 0 6px; }
+.orbita .route-strip ol { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; margin: 0; padding: 0; list-style: none; }
+.orbita .route-strip li { display: flex; align-items: center; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+.orbita .route-strip li:not(:last-child)::after { content: '→'; margin: 0 8px; color: var(--dim); }
+.orbita .route-strip li.here span { padding: 3px 8px; border: 2px solid var(--accent); color: var(--accent); }
+.orbita .route-strip li.open button { padding: 3px 8px; border: 2px solid var(--frame); background: rgb(11 15 20 / 55%); color: var(--text); font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.orbita .route-strip li.open button:hover, .orbita .route-strip li.open button:focus-visible { border-color: var(--accent); outline: none; }
+.orbita .route-strip li.locked span { padding: 3px 8px; border: 2px dashed rgb(125 138 151 / 45%); color: var(--dim); }
+@media (max-width: 640px) { .orbita .loop-strip { grid-template-columns: 1fr 1fr; } }

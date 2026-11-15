@@ -122,6 +122,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const own = saves.get(r.id), prior = i > 0 ? saves.get(route[i - 1].id) : null;
     if (own?.attempts.length || prior?.attempts.some(a => a.outcome === 'complete')) unlocked.add(r.id);
   });
+  // ?demo opens every destination for a quick tour (judges, presentations). It writes nothing to the saves.
+  if (new URLSearchParams(window.location.search).has('demo')) for (const r of route) unlocked.add(r.id);
   const routeIndex = route.findIndex(r => r.id === levelId);
   const nextStop = routeIndex >= 0 && routeIndex < route.length - 1 ? route[routeIndex + 1] : null;
   const travel = (id: string) => { if (unlocked.has(id)) window.location.assign(levelUrl(id, window.location.search)); };
