@@ -189,7 +189,7 @@ const sources = [
 ];
 
 const keys: [string, StringKey][] = [
-  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'],
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'],
   ['🖱', 'keyLook'], ['Esc', 'keyPause'],
 ];
 
@@ -201,7 +201,7 @@ function Controls() {
     <dl className="controls-list">{keys.map(([k, what]) => <div key={what}><dt><kbd>{k}</kbd></dt><dd>{t(what)}</dd></div>)}</dl>
     <span className="slot-label">{t('hudHelp')}</span>
     <ul className="insights">
-      {(['hudCompass', 'hudBattery', 'hudReserve', 'hudSignal', 'hudDialogue'] as const).map(k => <li key={k}>{t(k)}</li>)}
+      {(['hudCompass', 'hudBattery', 'hudReserve', 'hudSignal', 'hudLuma', 'hudDialogue'] as const).map(k => <li key={k}>{t(k)}</li>)}
     </ul>
   </>;
 }

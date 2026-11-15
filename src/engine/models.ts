@@ -222,7 +222,8 @@ export function buildAstronaut(): Astronaut {
   };
 }
 
-export type Luma = { group: Group; animate(t: number, still: boolean): void };
+/** `alert` (0–1) flattens the ears and crouches the body: LUMA senses a hazard ahead. */
+export type Luma = { group: Group; animate(t: number, still: boolean, alert?: number): void };
 
 /** LUMA: compact, cubic alien creature with a warm core and a translator band. */
 export function buildLuma(): Luma {
@@ -250,10 +251,14 @@ export function buildLuma(): Luma {
   group.add(body, band, core, motes, ...eyes, ...shine, ...cheeks, ...ears);
   return {
     group,
-    animate(t, still) {
-      body.scale.y = 1 + Math.sin(t * 3) * 0.03;
-      core.scale.setScalar(1 + Math.sin(t * 4.5) * 0.18);
-      ears.forEach((e, i) => { e.rotation.x = Math.sin(t * 2 + i) * (still ? 0.25 : 0.08); });
+    animate(t, still, alert = 0) {
+      body.scale.y = 1 + Math.sin(t * 3) * 0.03 - alert * 0.12;
+      body.scale.x = body.scale.z = 1 + alert * 0.06;
+      core.scale.setScalar(1 + Math.sin(t * (4.5 + alert * 9)) * (0.18 + alert * 0.12));
+      ears.forEach((e, i) => {
+        e.rotation.x = Math.sin(t * 2 + i) * (still ? 0.25 : 0.08) * (1 - alert) + alert * 0.9;
+        e.rotation.z = -(i ? 1 : -1) * (0.35 + alert * 0.75);
+      });
       // Blink every few seconds.
       const blink = (t % 3.7) < 0.12;
       eyes.forEach(e => { e.scale.y = blink ? 0.15 : 1; });

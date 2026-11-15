@@ -47,10 +47,18 @@ test('extraction: everyone aboard, the undocking jams, LUMA frees it, is carried
   await call(page, 'step', 200);
   await page.locator('[data-epilogue-open]').click();
   await expect(page.locator('[data-epilogue]')).toContainText('AUR-E07');
+  await expect(page.locator('[data-absence]')).toContainText('Pulsas F por costumbre');
   await page.locator('[data-epilogue-close]').click();
   // Death is permanent: a new sortie on this destination has no LUMA.
   await call(page, 'step', 200);
   await open();
   expect((await call(page, 'state') as { luma: boolean }).luma).toBe(false);
+  // Its abilities went with it: the card stays as an empty place and F finds nobody.
+  await call(page, 'step', 2);
+  await expect(page.locator('[data-luma="gone"]')).toContainText('En memoria');
+  await call(page, 'press', 'luma');
+  await call(page, 'step', 2);
+  await expect(page.locator('.notice')).toContainText('Nadie corre delante');
+  expect((await call(page, 'state') as { lumaAbilities: { sniffs: number } }).lumaAbilities.sniffs).toBe(0);
   expect(errors).toEqual([]);
 });

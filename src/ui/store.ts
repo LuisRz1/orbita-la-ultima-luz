@@ -66,6 +66,13 @@ export type HudState = {
   achievements: string[];
   hasProgress: boolean;
   ship: ShipState | null;
+  /** LUMA's abilities during a sortie (luma-abilities.ts); null when it has not joined yet. */
+  luma: LumaHud | null;
+  /** View mode of the sortie camera and whether the photo mode hides the interface. */
+  view: 'third' | 'first';
+  photo: boolean;
+  /** Arrival shot running: title card on screen, interface hidden. */
+  cinematic: { title: Localized; subtitle: Localized; progress: number } | null;
   /** Destination being played, its title-screen card and the text that closes a completed mission. */
   levelId: string;
   facts: LevelFacts | null;
@@ -75,6 +82,12 @@ export type HudState = {
   /** Next destination, once this one has a completed sortie. */
   next: { id: string; name: Localized } | null;
 };
+export type LumaHud = {
+  state: 'ready' | 'cooldown' | 'busy' | 'carried' | 'gone';
+  /** Seconds left before the next trail, and the full cooldown. */
+  wait: number; cooldown: number;
+  fetches: number; canFetch: boolean; warm: boolean; alert: boolean;
+};
 export type Destination = { id: string; name: Localized; current: boolean; unlocked: boolean };
 
 export const hud = createStore<HudState>(() => ({
@@ -82,7 +95,7 @@ export const hud = createStore<HudState>(() => ({
   levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, pages: { found: 0, total: 0 }, accessories: [], patches: [], finale: null, collection: { atlas: [], pages: [] }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
-  paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,
+  paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null, luma: null, view: 'third', photo: false, cinematic: null,
   levelId: 'moon', facts: null, outcome: null, destinations: [], next: null,
 }));
 

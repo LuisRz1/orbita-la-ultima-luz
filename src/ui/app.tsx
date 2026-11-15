@@ -5,7 +5,7 @@ import { sound, type Sfx } from '../engine/audio.ts';
 import { debugEnabled } from '../engine/debug.ts';
 import { webglAvailable } from '../engine/renderer.ts';
 import { resetTuning, setTuning, tuning } from '../engine/tuning.ts';
-import { AchievementToast, Compass, DialogueBox, Fade, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
+import { AchievementToast, Compass, DialogueBox, Fade, LumaCard, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
 import { useT } from './i18n.ts';
 import { MainMenu, PauseMenu } from './screens/menu.tsx';
 import { SortieReport } from './screens/sortie-report.tsx';
@@ -74,7 +74,7 @@ function Screens() {
   else if (phase === 'report' && report) body = epilogue ? <Epilogue onClose={() => setEpilogue(false)} />
     : <SortieReport report={report} onRedesign={() => commands.redesign()} onRetry={() => commands.retry()} onEpilogue={() => setEpilogue(true)} />;
   else if (phase === 'eva') body = <>
-    <MissionPanel /><Compass /><Telemetry /><ZoneTitle /><Prompt /><Fade />
+    <MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt /><Fade />
     {paused && <PauseMenu />}
   </>;
   return <>

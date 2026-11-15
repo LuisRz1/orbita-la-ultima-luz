@@ -1,8 +1,8 @@
 ---
 id: luma
 type: diseno
-status: especificado-sin-implementar
-updated: 2026-10-14
+status: habilidades-implementadas
+updated: 2026-11-15
 tags: [orbita, companero, narrativa]
 ---
 # LUMA
@@ -16,6 +16,29 @@ Se expresa con sonidos, gestos y conducta. Un traductor ficticio convierte parte
 Viajó con la expedición de la hermana del protagonista. Reconoce personas y objetos, y aporta recuerdos cotidianos que dan contexto a la búsqueda. Las coordenadas y las pruebas proceden de registros y observaciones; LUMA no reemplaza el trabajo del jugador. Ver [historia principal — SPOILERS](HISTORIA-PRINCIPAL.md).
 
 LUMA acompaña, juega, busca cercanía, descansa y recuerda experiencias compartidas. Usa protección ambiental durante EVA y en superficie. Su origen no implica inmunidad al vacío o a la radiación. Las funciones científicas y de navegación pertenecen al equipo del jugador y la nave.
+
+## Habilidades en superficie
+
+Implementadas el 15 de noviembre en [luma-abilities.ts](../../src/core/luma-abilities.ts), con pruebas en `tests/core/luma-abilities.test.ts` y `tests/e2e/luma.spec.ts`. Son reglas deterministas del motor: la IA no las activa ni las modifica. Ayudan en el camino, pero no completan objetivos, no tocan la reserva de retorno ni revelan pruebas AUR-E0x. Todas las misiones y colecciones siguen teniendo solución con las herramientas del jugador ([arco](ARCO-LUMA-SPOILERS.md)).
+
+| Habilidad | Control | Qué hace | Decisión que plantea |
+| --- | --- | --- | --- |
+| Rastrear | F | Olfatea y corre hasta 48 m dejando un rastro luminoso hacia lo más cercano que queda de Aurora: eco, entrada en ruinas, roca sin catalogar o baliza apagada. Sin nada pendiente, hacia el siguiente objetivo que se puede hacer. Luego recupera el aliento. | Cuándo gastarlo; mientras corre, no te calienta. |
+| Brillo en el frío | Pasiva | En una zona de frío, si flota a menos de 4 m, ahorra una fracción del recargo de frío. Nunca reduce el soporte vital, el sol ni el polvo. El informe dice cuánto ahorró. | Mantenerlo cerca en la sombra o mandarlo a rastrear. |
+| Presentir | Pasiva | Al dirigirte hacia una zona que gasta batería, se encoge y gruñe una vez por zona y salida. También se agazapa antes del sismo cosmético de la red S1. | Rodear o entrar preparado. |
+| Alcanzar | F junto a una repisa | Una vez por salida, sube flotando hasta un eco cercano que el traje no alcanza de pie y lo trae. El resto sigue pidiendo salto o propulsor. Anticipa su gesto en la extracción, donde llega a lo que el traje no alcanza. | Usarlo aquí o guardarlo. |
+
+El desgaste de la historia lo hace más lento y débil por capítulo, nunca más fuerte:
+
+| Destino | Enfriamiento del rastreo | Brillo | Alcanzar |
+| --- | --- | --- | --- |
+| Órbita (tras unirse) | 16 s | 35 % | 1 |
+| Luna | 20 s | 30 % | 1 |
+| Marte | 26 s | 25 % | 1 |
+| Bennu | 32 s | 20 % | 1 |
+| Extracción | 40 s | 15 % | 0 |
+
+En la extracción, una vez lo llevas en brazos, ya no corre ni alcanza. Tras la despedida las habilidades desaparecen: la tarjeta de LUMA queda como «En memoria. Nadie corre delante.», F solo devuelve una nota grave y el aviso «Pulsas F por costumbre», y el epílogo nombra esa costumbre. No hay sustituto con su personalidad.
 
 ## Tres capas
 

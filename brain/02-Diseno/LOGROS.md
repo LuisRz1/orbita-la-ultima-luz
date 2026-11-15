@@ -2,7 +2,7 @@
 id: logros-3d
 type: diseno
 status: implementado-luna-marte
-updated: 2026-11-14
+updated: 2026-11-15
 tags: [orbita, diseno, logros, 3d]
 ---
 # Logros
@@ -23,6 +23,9 @@ Logros opcionales de la Luna y Marte. Premian explorar, moverse bien y aprender 
 | first-page | Su letra | Encontrar una página del diario de Aurora. |
 | all-pages | Diario completo | Encontrar todas las páginas del diario de un destino. |
 | seismic | Sismo | Completar la red sísmica de la Luna. |
+| luma-trail | Buen olfato | Pedir a LUMA que rastree (F). |
+| luma-fetch | Donde no llegas | LUMA sube a una repisa por un eco. |
+| luma-warmth | Calor compartido | El brillo de LUMA ahorra 1 u. de frío en la sombra. |
 | complete | Transmisión recibida | Completar una misión de superficie. |
 | tight-reserve | Al límite | Completar con 5 u. o menos sobre la reserva. |
 | no-recall | Enlace firme | Completar sin perder el enlace. |

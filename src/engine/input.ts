@@ -1,10 +1,11 @@
 // Keyboard and mouse. Keys are read by `code`, so the layout (QWERTY, AZERTY, Spanish) does not matter.
 
-export type Actions = 'up' | 'down' | 'left' | 'right' | 'jump' | 'dash' | 'interact' | 'scan' | 'log' | 'console' | 'pause';
+export type Actions = 'up' | 'down' | 'left' | 'right' | 'jump' | 'dash' | 'interact' | 'scan' | 'log' | 'console' | 'pause' | 'luma' | 'view' | 'photo';
 
 const bindings: Record<string, Actions> = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   Space: 'jump', ShiftLeft: 'dash', ShiftRight: 'dash', KeyE: 'interact', KeyR: 'scan', Tab: 'log', Slash: 'console', Escape: 'pause',
+  KeyF: 'luma', KeyV: 'view', KeyP: 'photo',
 };
 
 export class Input {

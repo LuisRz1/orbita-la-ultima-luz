@@ -26,6 +26,8 @@ export function Epilogue({ onClose }: { onClose(): void }) {
       </ul>
       <p className="remembrance">{t({ es: 'En la nave queda un hueco cálido junto a la ventana. Es el lugar de LUMA. Sus grabaciones están en el archivo, con fecha y nombre, como todo lo que trajimos.',
         en: 'On the ship there is a warm space by the window. It is LUMA’s place. Its recordings are in the archive, dated and named, like everything we brought back.' })}</p>
+      <p className="absence" data-absence>{t({ es: 'En la siguiente salida, al entrar en una sombra, esperas un brillo cálido junto al casco. Pulsas F por costumbre. Nadie corre delante a buscar nada: ahora el rastro lo sigues tú.',
+        en: 'On the next sortie, stepping into a shadow, you wait for a warm glow by your helmet. You press F out of habit. Nobody runs ahead to find anything: now you follow the trail yourself.' })}</p>
       <p className="model-note">{t({ es: 'El regreso pilotado (M06) aún no es jugable: aquí se cuenta.', en: 'The piloted return (M06) is not playable yet: it is told here.' })}</p>
       <button className="primary" data-epilogue-close onClick={onClose}>{t('back')}</button>
     </section>

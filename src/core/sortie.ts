@@ -25,6 +25,8 @@ export type Sortie = {
   traceStep: number;
   /** Zone and link-loss count already seen by the trace, to mark changes once. */
   traceZone: string | null; traceRecalls: number;
+  /** Cold surcharge LUMA's glow spared the suit this sortie (luma-abilities.ts). */
+  lumaWarmth: number;
 };
 export const traceLimit = 400;
 
@@ -38,7 +40,7 @@ export function startSortie(design: SuitDesign): Sortie {
   const stats = assessSuit(design);
   return { design, stats, energy: stats.capacity, ledger: { life: 0, move: 0, dash: 0, thruster: 0, actions: 0, cold: 0, dust: 0, sun: 0 },
     session: createSession(), time: 0, outcome: null, blocked: [], emergency: false,
-    trace: [{ t: 0, e: stats.capacity }], marks: [], traceStep: 1, traceZone: null, traceRecalls: 0 };
+    trace: [{ t: 0, e: stats.capacity }], marks: [], traceStep: 1, traceZone: null, traceRecalls: 0, lumaWarmth: 0 };
 }
 
 /** Records the current battery level; long sorties keep every other sample so the trace stays small. */
@@ -60,15 +62,23 @@ export function spend(s: Sortie, key: LedgerKey, amount: number) {
   s.ledger[key] += amount;
 }
 
-/** Continuous drain for one step. Returns true when the battery has reached the return reserve. */
-export function drain(s: Sortie, level: LevelV2, dt: number, moving: boolean, zone: string | null) {
+/**
+ * Continuous drain for one step. Returns true when the battery has reached the return reserve. `relief` is the
+ * fraction of a cold surcharge LUMA's glow saves (0 without it); it never applies to sun or dust.
+ */
+export function drain(s: Sortie, level: LevelV2, dt: number, moving: boolean, zone: string | null, relief = 0) {
   s.time += dt;
   spend(s, 'life', lifeDrain * dt);
   if (moving) spend(s, 'move', moveDrain * dt);
   const here = level.zones.find(z => z.id === zone);
   const extra = zoneDrain(here, s.session.completed);
   const hazard = here?.hazard ?? 'cold';
-  if (extra) spend(s, hazard, extra * dt * (hazard === 'cold' ? s.stats.coldFactor : 1));
+  if (extra) {
+    const full = extra * dt * (hazard === 'cold' ? s.stats.coldFactor : 1);
+    const spared = hazard === 'cold' ? full * Math.min(1, Math.max(0, relief)) : 0;
+    spend(s, hazard, full - spared);
+    s.lumaWarmth += spared;
+  }
   // Wrist panel: a trickle while standing still, except in shadowed cold zones.
   if (s.stats.solar && !moving && !(extra && hazard === 'cold')) s.energy = Math.min(s.stats.capacity, s.energy + s.stats.solar * dt);
   if (zone !== s.traceZone) {
@@ -153,6 +163,8 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
   ];
   if (s.ledger.thruster > 0) insights.push(t(`${thrusters[s.design.thruster].name.es}: ${Math.round(s.ledger.thruster)} u. en saltos en el aire.`, `${thrusters[s.design.thruster].name.en}: ${Math.round(s.ledger.thruster)} u on air jumps.`));
   if (s.ledger.cold > 0) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
+  if (s.lumaWarmth >= 0.5) insights.push(t(`El brillo de LUMA, a tu lado en la sombra, ahorró ${Math.round(s.lumaWarmth * 10) / 10} u. de frío.`,
+    `LUMA's glow, close by in the shadow, saved ${Math.round(s.lumaWarmth * 10) / 10} u of cold.`));
   if (s.ledger.dust > 0) insights.push(t(`Cruzar el polvo costó ${Math.round(s.ledger.dust)} u.: tras la contingencia, rodear las dunas suele salir más barato.`,
     `Crossing the dust cost ${Math.round(s.ledger.dust)} u: after the contingency, going around the dunes is usually cheaper.`));
   if (s.ledger.sun > 0) insights.push(t(`La ruta al sol costó ${Math.round(s.ledger.sun)} u. de refrigeración: la baranda en sombra es más larga pero no calienta el traje.`,

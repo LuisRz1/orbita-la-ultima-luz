@@ -18,6 +18,9 @@ export const achievements = {
   'first-page': { title: t('Su letra', 'Her handwriting'), desc: t('Encuentra una página del diario de Aurora.', 'Find a page of the Aurora journal.') },
   'all-pages': { title: t('Diario completo', 'Full journal'), desc: t('Encuentra todas las páginas del diario de un destino.', 'Find every journal page at one destination.') },
   'seismic': { title: t('Sismo', 'Quake'), desc: t('Completa la red sísmica de la Luna.', 'Complete the seismic network on the Moon.') },
+  'luma-trail': { title: t('Buen olfato', 'Good nose'), desc: t('Pide a LUMA que rastree (F) y sigue su rastro.', 'Ask LUMA to track (F) and follow its trail.') },
+  'luma-fetch': { title: t('Donde no llegas', 'Where you cannot reach'), desc: t('LUMA sube a una repisa por un eco.', 'LUMA floats up to a ledge for an echo.') },
+  'luma-warmth': { title: t('Calor compartido', 'Shared warmth'), desc: t('El brillo de LUMA te ahorra frío en la sombra.', 'LUMA\'s glow spares you cold in the shadow.') },
   'complete': { title: t('Transmisión recibida', 'Transmission received'), desc: t('Completa una misión de superficie.', 'Complete a surface mission.') },
   'tight-reserve': { title: t('Al límite', 'On the edge'), desc: t('Completa la misión con 5 u. o menos sobre la reserva.', 'Complete the mission with 5 u or less above the reserve.') },
   'no-recall': { title: t('Enlace firme', 'Steady link'), desc: t('Completa la misión sin perder el enlace.', 'Complete the mission without losing the link.') },
@@ -37,6 +40,7 @@ export type GameEvent =
   | { kind: 'page'; found: number; total: number }
   | { kind: 'seismic'; planted: number; total: number }
   | { kind: 'sortie'; designs: SuitDesign[] }
+  | { kind: 'luma'; ability: 'trail' | 'fetch' | 'warmth' }
   | { kind: 'report'; report: Report; previous: ('complete' | 'recalled')[] };
 
 /** Achievements newly earned by an event, given the ones already held. */
@@ -52,6 +56,7 @@ export function unlocks(event: GameEvent, held: readonly string[]): AchievementI
     case 'beacon': add('beacons', event.lit >= event.total); break;
     case 'page': add('first-page', event.found >= 1); add('all-pages', event.found >= event.total); break;
     case 'seismic': add('seismic', event.planted >= event.total); break;
+    case 'luma': add(event.ability === 'trail' ? 'luma-trail' : event.ability === 'fetch' ? 'luma-fetch' : 'luma-warmth', true); break;
     case 'sortie': add('two-designs', new Set(event.designs.map(d => JSON.stringify(d))).size >= 2); break;
     case 'report': {
       const done = event.report.outcome === 'complete';

@@ -25,7 +25,9 @@ import { tuning } from './tuning.ts';
 import { buildInterior, type StationId } from './interior.ts';
 import { buildWorldView, palette } from './world-view.ts';
 import { biome, setBiome } from './style.ts';
-import { zoneDrain } from '../core/contract/level-v2.ts';
+import { zoneDrain, type Vec2 } from '../core/contract/level-v2.ts';
+import { cooldownLeft, createAbilities, glowRelief, hazardAhead, highEcho, sniffTarget, trail, type ScentKind } from '../core/luma-abilities.ts';
+import { createFx } from './fx.ts';
 
 export type Game = { dispose(): void };
 
@@ -70,6 +72,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const ground: Ground = { height: (x, z) => heightAt(hf, x, z), slope: (x, z) => slopeAt(hf, x, z), solids: level.props.map(p => p.solid) };
   const view = buildWorldView(level, hf, tiers[tier].scatter, tier === 'low' ? 3 : 4);
   const interior = buildInterior();
+  const fx = createFx(view.scene);
   let activeGround: Ground = ground;
   const camera = new PerspectiveCamera(62, 1, 0.1, 700);
   viewport.onResize((w, h) => { camera.aspect = w / h; camera.updateProjectionMatrix(); });
@@ -94,6 +97,12 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   /** Geophones carried this sortie (S1), and when the cosmetic quake happens once the network is complete. */
   let carrying = 0, quakeAt = Infinity, quakeUntil = 0;
   let stepDistance = 0, lastLine: unknown = null, pendingZoneLine: string | null = null;
+  /** LUMA's abilities this sortie (luma-abilities.ts): its run along a scent trail, a fetch and its alert posture. */
+  let abilities = createAbilities(level.id);
+  let lumaRun: { start: number; marks: Vec2[]; until: number } | null = null;
+  let fetching: { id: string; start: number; home: Vector3 } | null = null;
+  let alertUntil = 0, quakeWarned = false, warmth = 0;
+  const runSpeed = 11;
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
 
@@ -217,6 +226,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (assessSuit(design).problems.length) return;
     sortie = startSortie(design);
     crewStart = null; carrying = 0; quakeUntil = 0;
+    if (fetching) view.echoes.get(fetching.id)!.position.copy(fetching.home);
+    abilities = createAbilities(level.id); lumaRun = null; fetching = null; alertUntil = 0; quakeWarned = false; warmth = 0;
     quakeAt = level.seismic && level.seismic.sites.every(s => progress.geophones.includes(s.id)) ? 25 : Infinity;
     view.astronaut.setLoadout(design);
     sortie.session.collected = [...progress.echoes];
@@ -440,6 +451,57 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     publish(true);
   }
 
+  function gainEcho(id: string) {
+    view.echoes.get(id)!.visible = false;
+    audio.play('echo');
+    progress = { ...progress, echoes: [...progress.echoes, id] };
+    void save();
+    award({ kind: 'echo', found: progress.echoes.length, total: level.collectibles.length });
+    tell(say(`Eco de Aurora ${progress.echoes.length}/${level.collectibles.length}.`, `Aurora echo ${progress.echoes.length}/${level.collectibles.length}.`), 'system');
+  }
+
+  const scentNames: Record<ScentKind, Notice['text']> = {
+    echo: say('un eco de Aurora', 'an Aurora echo'), ruin: say('una entrada en ruinas', 'a ruined entrance'),
+    rock: say('una roca sin catalogar', 'an uncatalogued rock'), beacon: say('una baliza apagada', 'a dark beacon'),
+    goal: say('el siguiente objetivo', 'the next objective'),
+  };
+
+  /** F: LUMA fetches an echo on a ledge close by, or else runs out and leaves a glowing trail to what it smells. */
+  function callLuma() {
+    if (lumaGone()) {
+      audio.play('luma-absent');
+      tell(say('Pulsas F por costumbre. Nadie corre delante.', 'You press F out of habit. Nobody runs ahead.'), 'system');
+      return;
+    }
+    if (!lumaHere()) { audio.play('blocked'); tell(say('LUMA todavía no está contigo.', 'LUMA is not with you yet.'), 'system'); return; }
+    if (carried()) { tell(say('LUMA descansa en tus brazos. Ya no puede correr.', 'LUMA rests in your arms. It cannot run any more.')); return; }
+    if (lumaRun || fetching) return;
+    const high = abilities.fetchesLeft > 0 ? highEcho(level, sortie.session.collected, body.x, body.y, body.z, (x, z) => heightAt(hf, x, z)) : null;
+    if (high) {
+      abilities.fetchesLeft--; abilities.fetched++;
+      fetching = { id: high.id, start: time, home: view.echoes.get(high.id)!.position.clone() };
+      audio.play('luma-fetch');
+      tell(say('LUMA sube flotando hasta la repisa: donde no llega el traje, llega él. (Una vez por salida.)', 'LUMA floats up to the ledge: where the suit cannot reach, it can. (Once per sortie.)'));
+      publish(true);
+      return;
+    }
+    const wait = cooldownLeft(abilities, sortie.time);
+    if (wait > 0) { audio.play('blocked'); tell(say(`LUMA recupera el aliento: ${Math.ceil(wait)} s.`, `LUMA is catching its breath: ${Math.ceil(wait)} s.`), 'system'); return; }
+    const scent = sniffTarget(level, { echoes: progress.echoes, ruins: progress.ruins, atlas: progress.atlas, beacons: progress.beacons }, sortie.session, body.x, body.z);
+    if (!scent) { audio.play('luma'); tell(say('LUMA olfatea en círculo y vuelve a tu lado: aquí ya no queda nada que encontrar.', 'LUMA sniffs in a circle and comes back: nothing left to find here.')); return; }
+    const marks = trail({ x: body.x, z: body.z }, scent.position);
+    abilities.readyAt = sortie.time + abilities.stage.cooldown; abilities.sniffs++;
+    fx.trail(marks, (x, z) => heightAt(hf, x, z), time, runSpeed);
+    fx.pulse(body.x, groundAt(ground, body.x, body.z, body.y + 0.1), body.z, 6, biome.lumaCore);
+    lumaRun = { start: time, marks, until: time + (marks.length * 1.6) / runSpeed + 1.6 };
+    audio.play('luma-sniff');
+    const far = scent.distance > marks.length * 1.6 + 2;
+    tell({ es: `LUMA olfatea y sale corriendo: ${scentNames[scent.kind].es}, a ${Math.round(scent.distance)} m${far ? '. El rastro sigue más allá de lo que alcanza' : ''}.`,
+      en: `LUMA sniffs and dashes off: ${scentNames[scent.kind].en}, ${Math.round(scent.distance)} m away${far ? '. The scent goes on past where it can run' : ''}.` });
+    award({ kind: 'luma', ability: 'trail' });
+    publish(true);
+  }
+
   function updateEva(dt: number) {
     const params = suitMovement({ ...tuning, ...level.movement }, sortie.stats);
     const k = input.look.yaw, fx = -Math.sin(k), fz = -Math.cos(k), rx = Math.cos(k), rz = -Math.sin(k);
@@ -504,13 +566,33 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     }
 
     const picked = collect(level, sortie.session, body.x, body.y, body.z, (x, z) => heightAt(hf, x, z));
-    for (const id of picked) {
-      view.echoes.get(id)!.visible = false;
-      audio.play('echo');
-      progress = { ...progress, echoes: [...progress.echoes, id] };
-      void save();
-      award({ kind: 'echo', found: progress.echoes.length, total: level.collectibles.length });
-      tell(say(`Eco de Aurora ${progress.echoes.length}/${level.collectibles.length}.`, `Aurora echo ${progress.echoes.length}/${level.collectibles.length}.`), 'system');
+    for (const id of picked) gainEcho(id);
+
+    if (!frozen && input.wasPressed('luma')) callLuma();
+    if (fetching && time - fetching.start > 2.2) {
+      // LUMA is back with the echo.
+      const id = fetching.id;
+      view.echoes.get(id)!.position.copy(fetching.home);
+      fetching = null;
+      if (!sortie.session.collected.includes(id)) { sortie.session.collected.push(id); gainEcho(id); award({ kind: 'luma', ability: 'fetch' }); }
+    }
+    // LUMA senses what is ahead: a draining zone the player is walking into, or the network's quake coming.
+    if (lumaHere() && !carried()) {
+      const ahead = hazardAhead(level, sortie.session.completed, abilities.warned, body.x, body.z, body.vx, body.vz);
+      if (ahead) {
+        abilities.warned.push(ahead.id);
+        alertUntil = time + 3.2;
+        audio.play('luma-growl');
+        const kind = ahead.hazard ?? 'cold';
+        tell(kind === 'dust' ? say('LUMA se encoge y gruñe hacia las dunas: el viento allí gasta batería.', 'LUMA crouches and growls at the dunes: the wind there drains the battery.')
+          : kind === 'sun' ? say('LUMA entorna los ojos y se pega a tu sombra: delante el sol calienta el traje.', 'LUMA squints and keeps to your shadow: the sun ahead heats the suit.')
+          : say('LUMA eriza las orejas: delante hace mucho frío. Si se queda cerca, su brillo te calienta un poco.', 'LUMA flattens its ears: it is very cold ahead. If it stays close, its glow warms you a little.'));
+      }
+      if (!quakeWarned && quakeAt !== Infinity && sortie.time >= quakeAt - 2.5) {
+        quakeWarned = true; alertUntil = time + 3;
+        audio.play('luma-growl');
+        tell(say('LUMA se agazapa contra el suelo. Algo va a temblar.', 'LUMA presses itself to the ground. Something is about to shake.'));
+      }
     }
 
     const nowZone = zoneAt(level, body.x, body.z);
@@ -535,7 +617,13 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
     const moving = Math.hypot(body.vx, body.vz) > 0.5;
     if (!frozen) {
-      const atReserve = drain(sortie, level, dt, moving, zone);
+      // LUMA's glow spares part of the cold while it floats close by (not while it runs a trail or fetches).
+      const here = level.zones.find(q => q.id === zone);
+      const near = Math.hypot(lumaPos.x - body.x, lumaPos.z - body.z);
+      const relief = zoneDrain(here, sortie.session.completed) ? glowRelief(abilities.stage, here?.hazard, near, lumaHere() && !carried() && !lumaRun && !fetching) : 0;
+      warmth = relief;
+      if (relief && sortie.lumaWarmth >= 1) award({ kind: 'luma', ability: 'warmth' });
+      const atReserve = drain(sortie, level, dt, moving, zone, relief);
       if (sortie.time >= quakeAt) {
         quakeAt = Infinity; quakeUntil = time + 1;
         audio.play('land');
@@ -695,6 +783,13 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       attempts: progress.attempts, saveError,
       paused, dialogue: dialogue ? dialogue.lines[dialogue.index] : null, toast, achievements: progress.achievements,
       hasProgress: progress.attempts.length > 0,
+      luma: phase !== 'eva' ? null : lumaGone() ? { state: 'gone', wait: 0, cooldown: 0, fetches: 0, canFetch: false, warm: false, alert: false }
+        : !lumaHere() ? null : {
+          state: carried() ? 'carried' : lumaRun || fetching ? 'busy' : cooldownLeft(abilities, sortie.time) > 0 ? 'cooldown' : 'ready',
+          wait: cooldownLeft(abilities, sortie.time), cooldown: abilities.stage.cooldown, fetches: abilities.fetchesLeft,
+          canFetch: abilities.fetchesLeft > 0 && !carried() && !!highEcho(level, sortie.session.collected, body.x, body.y, body.z, (x, z) => heightAt(hf, x, z)),
+          warm: warmth > 0, alert: time < alertUntil,
+        },
       ship: phase === 'ship' ? { draft: ship.draft, done: [...ship.done], next: nextStation(), open: ship.open, near: ship.near, guided: ship.guided } : null,
     });
   }
@@ -727,7 +822,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const frameDt = Math.min(0.1, frameMs / 1000);
     view.astronaut.setBattery(sortie.energy / sortie.stats.capacity, phase === 'eva' && spendable(sortie) <= 0.5);
     view.astronaut.animate((phase === 'eva' && !paused && !dialogue) || phase === 'ship' ? frameDt : 0, Math.hypot(body.vx, body.vz), body.grounded, body.vy);
-    view.lumaModel.animate(time, idleFor > 2);
+    view.lumaModel.animate(time, idleFor > 2, Math.max(0, Math.min(1, (alertUntil - time) * 2)));
     view.luma.visible = lumaHere();
     view.dust.update(frameDt);
     view.ambience.update(frameDt, camera.position, time);
@@ -740,18 +835,36 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
     // LUMA floats behind the player's shoulder; after a while idle it drifts toward the next pending point.
     const pending = level.points.find(p => p.required && !sortie.session.completed.includes(p.id) && !missingFor(level, sortie.session, p).length);
-    const smooth = 1 - Math.exp(-frameMs / 1000 * 3.5);
-    if (carried()) {
+    const smooth = () => 1 - Math.exp(-frameMs / 1000 * lumaSpeed);
+    let lumaSpeed = 3.5;
+    if (lumaRun && time > lumaRun.until) lumaRun = null;
+    if (lumaRun && phase === 'eva') {
+      // Running ahead along its own trail, then waiting at the end before coming back.
+      const k = Math.min(lumaRun.marks.length - 1, Math.floor((time - lumaRun.start) * runSpeed / 1.6));
+      const m = lumaRun.marks[Math.max(0, k)];
+      target.set(m.x, heightAt(hf, m.x, m.z) + 0.55, m.z);
+      lumaSpeed = 9;
+    } else if (fetching && phase === 'eva') {
+      // Up to the ledge (1 s), a moment there, then back to the player with the echo.
+      const echo = view.echoes.get(fetching.id)!, age = time - fetching.start;
+      if (age < 1.2) { target.copy(echo.position); target.y += 0.3; lumaSpeed = 6; }
+      else {
+        target.set(px + 0.6, py + 1.3, pz + 0.6); lumaSpeed = 5;
+        echo.position.lerp(view.luma.position, Math.min(1, frameMs / 1000 * 8));
+      }
+    } else if (carried()) {
       // Carried in the arms, on the right side so the camera behind still sees it: no floating, no drifting.
       target.set(px + Math.cos(body.facing) * 0.55 - Math.sin(body.facing) * 0.2, py + 1.1, pz - Math.sin(body.facing) * 0.55 - Math.cos(body.facing) * 0.2);
     } else if (phase === 'eva' && idleFor > 5 && pending) {
       const dx = pending.position.x - px, dz = pending.position.z - pz, d = Math.hypot(dx, dz) || 1;
       target.set(px + dx / d * 2.4, py + 1.8, pz + dz / d * 2.4);
     } else target.set(px - Math.sin(body.facing) * 1.2 + Math.cos(body.facing) * 0.9, py + 1.7, pz - Math.cos(body.facing) * 1.2 - Math.sin(body.facing) * 0.9);
-    lumaPos.lerp(target, smooth);
+    lumaPos.lerp(target, smooth());
     view.luma.position.set(lumaPos.x, lumaPos.y + (prefs.getState().reduceMotion || carried() ? 0 : Math.sin(time * 2.2) * 0.12), lumaPos.z);
     view.luma.scale.setScalar(carried() ? 0.8 : 1);
-    view.luma.rotation.y = Math.atan2(px - lumaPos.x, pz - lumaPos.z) + Math.PI;
+    view.luma.rotation.y = lumaRun ? Math.atan2(lumaRun.marks.at(-1)!.x - lumaPos.x, lumaRun.marks.at(-1)!.z - lumaPos.z) + Math.PI : Math.atan2(px - lumaPos.x, pz - lumaPos.z) + Math.PI;
+    fx.warmth(lumaPos.x, heightAt(hf, lumaPos.x, lumaPos.z) + 0.3, lumaPos.z, phase === 'eva' && warmth > 0 ? 0.5 : 0);
+    fx.update(time, frameDt);
 
     if (phase === 'menu') {
       // Slow cinematic orbit over the whole crater, as on the title screen.
@@ -804,7 +917,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
       zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
       completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
-      signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length }),
+      signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length,
+      lumaAbilities: { readyIn: cooldownLeft(abilities, sortie.time), fetchesLeft: abilities.fetchesLeft, warned: [...abilities.warned], sniffs: abilities.sniffs,
+        running: !!lumaRun, fetching: fetching?.id ?? null, warmth: sortie.lumaWarmth, relief: warmth, trail: lumaRun?.marks.length ?? 0 } }),
     step: (count: number) => loop.step(count),
     pause: (value: boolean) => { loop.paused = value; },
     perf: () => ({ ...hud.getState(), ratio: viewport.ratio, width: viewport.width, height: viewport.height }),

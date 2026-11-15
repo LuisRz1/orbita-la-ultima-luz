@@ -5,7 +5,8 @@
 export type Mood = 'silent' | 'menu' | 'surface' | 'cold' | 'complete' | 'recalled';
 export type Sfx =
   | 'step' | 'jump' | 'thrust' | 'dash' | 'land' | 'scan' | 'objective' | 'blocked' | 'echo' | 'achievement'
-  | 'luma' | 'control' | 'click' | 'recall' | 'heartbeat'
+  | 'luma' | 'luma-sniff' | 'luma-growl' | 'luma-fetch' | 'luma-absent' | 'control' | 'click' | 'recall' | 'heartbeat'
+  | 'whoosh' | 'touchdown'
   | 'ui-hover' | 'ui-select' | 'ui-step' | 'ui-open' | 'ui-close' | 'ui-confirm' | 'ui-tic';
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
@@ -145,6 +146,45 @@ export function playSfx(ctx: BaseAudioContext, dry: AudioNode, wet: AudioNode, n
         o.connect(g).connect(dry); o.start(at); o.stop(at + 0.15); wob.start(at); wob.stop(at + 0.15);
       }
       tone(ctx, wet, t, 220, { a: 0.02, d: 0.5, peak: 0.02 }, 'sine', 330);
+      break;
+    case 'luma-sniff':
+      // Three quick snuffles through the translator band, then a bright rising chirp as it sets off.
+      for (let i = 0; i < 3; i++) hiss(ctx, dry, t + i * 0.13, { a: 0.012, d: 0.08, peak: 0.07 }, 'bandpass', 1800, 900, 2.5);
+      tone(ctx, dry, t + 0.42, 330, { a: 0.02, d: 0.22, peak: 0.06 }, 'triangle', 720);
+      tone(ctx, wet, t + 0.42, 660, { a: 0.02, d: 0.8, peak: 0.025 }, 'sine', 990);
+      break;
+    case 'luma-growl':
+      // A low creature rumble with a slow tremolo: a warning, not aggression.
+      {
+        const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), wob = ctx.createOscillator(), depth = ctx.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(92, t); o.frequency.linearRampToValueAtTime(78, t + 0.7);
+        f.type = 'lowpass'; f.frequency.value = 420;
+        wob.frequency.value = 17; depth.gain.value = 0.025;
+        envelope(g, t, { a: 0.08, d: 0.62, peak: 0.07 });
+        wob.connect(depth).connect(g.gain);
+        o.connect(f).connect(g).connect(dry);
+        o.start(t); o.stop(t + 0.75); wob.start(t); wob.stop(t + 0.75);
+      }
+      break;
+    case 'luma-fetch':
+      // Wing-less lift: a soft upward sweep and a pleased trill.
+      hiss(ctx, dry, t, { a: 0.1, d: 0.35, peak: 0.08 }, 'bandpass', 400, 2400, 1.6);
+      for (const [i, n] of [69, 74, 78].entries()) tone(ctx, wet, t + 0.3 + i * 0.07, midi(n), { a: 0.01, d: 0.5, peak: 0.04 }, 'triangle');
+      break;
+    case 'luma-absent':
+      // Pressing for LUMA after the farewell: one low bell, nothing answers.
+      tone(ctx, wet, t, midi(45), { a: 0.02, d: 3, peak: 0.05 }, 'sine');
+      break;
+    case 'whoosh':
+      // Camera sweep of the arrival shot: a long airy swell.
+      hiss(ctx, dry, t, { a: 0.9, d: 1.4, peak: 0.07 }, 'bandpass', 180, 900, 1.2);
+      hiss(ctx, wet, t + 0.2, { a: 1, d: 1.6, peak: 0.04 }, 'bandpass', 300, 1400, 1);
+      break;
+    case 'touchdown':
+      // The lander settling: deep thump, then a creak of the struts.
+      tone(ctx, dry, t, 48, { a: 0.006, d: 0.9, peak: 0.35 }, 'sine', 30);
+      hiss(ctx, dry, t, { a: 0.01, d: 0.8, peak: 0.16 }, 'lowpass', 260, 60);
+      tone(ctx, wet, t + 0.25, 140, { a: 0.05, d: 0.5, peak: 0.03 }, 'triangle', 120);
       break;
     case 'control':
       // Mission Control: a short bed of radio static and a Quindar tone (2525 Hz), the keying beep of Apollo-era

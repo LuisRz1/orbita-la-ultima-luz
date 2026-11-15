@@ -89,6 +89,32 @@ export function Telemetry() {
   </>;
 }
 
+/** LUMA's card: what it can do for you right now, and its absence once it is gone. */
+export function LumaCard() {
+  const { t } = useT();
+  const luma = useStore(hud, s => s.luma);
+  if (!luma) return null;
+  if (luma.state === 'gone') return <section className="panel luma-card gone" data-luma="gone" aria-label="LUMA">
+    <span className="panel-title">LUMA</span>
+    <p>{t({ es: 'En memoria. Nadie corre delante.', en: 'In memory. Nobody runs ahead.' })}</p>
+  </section>;
+  const pct = luma.cooldown ? (1 - luma.wait / luma.cooldown) * 100 : 100;
+  const status = luma.state === 'carried' ? t({ es: 'en tus brazos', en: 'in your arms' })
+    : luma.state === 'busy' ? t({ es: 'corriendo', en: 'running' })
+    : luma.alert ? t({ es: 'alerta', en: 'alert' })
+    : luma.state === 'cooldown' ? `${Math.ceil(luma.wait)} s` : t({ es: 'lista', en: 'ready' });
+  return <section className={'panel luma-card ' + luma.state + (luma.alert ? ' alert' : '')} data-luma={luma.state} aria-label="LUMA">
+    <span className="panel-title">LUMA · <em>{status}</em></span>
+    {luma.state !== 'carried' && <>
+      <div className="row"><span><kbd>F</kbd> {luma.canFetch ? t({ es: 'Alcanzar eco', en: 'Fetch echo' }) : t({ es: 'Rastrear', en: 'Track' })}</span>
+        <b>{luma.canFetch ? '↑' : luma.state === 'ready' ? '●' : '○'}</b></div>
+      <div className="bar luma-bar"><i style={{ width: pct + '%' }} /></div>
+      <div className="row"><span>{t({ es: 'Alcanzar (por salida)', en: 'Fetch (per sortie)' })}</span><b>{luma.fetches}</b></div>
+      <div className={'row warmth' + (luma.warm ? ' on' : '')}><span>{t({ es: 'Brillo en el frío', en: 'Glow in the cold' })}</span><b data-luma-warm={luma.warm ? 'on' : 'off'}>{luma.warm ? t({ es: 'te calienta', en: 'warming you' }) : '—'}</b></div>
+    </>}
+  </section>;
+}
+
 export function ZoneTitle() {
   const { t } = useT();
   const { zone, zoneAt, now } = useStore(hud);
