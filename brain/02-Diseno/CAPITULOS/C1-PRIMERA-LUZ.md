@@ -1,19 +1,23 @@
 ---
 id: capitulo-1
 type: capitulo
-status: propuesta-editorial-especificada
-updated: 2026-10-14
+status: recorrido-jugable-en-rama
+updated: 2026-11-14
 tags: [orbita, campana, capitulo-1]
 ---
 # Capítulo 1 — Primera luz
 
 **Destino:** Tierra y órbita. **Duración principal estimada:** 1,5–2 horas. **LUMA:** blanco cálido y dorado.
 
+La [rama de C1](https://github.com/LuisRz1/orbita-la-ultima-luz/tree/feat/world-orbit) tiene las seis misiones jugables en versión compacta; la duración anterior sigue como objetivo de campaña. Ver [guía de integración y pruebas](../../08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md). Se mantienen las tres regiones y los assets del kit.
+
 ## Objetivo y regiones
 
 Validar la cápsula de Aurora, conocer a LUMA y encontrar dónde recuperar los registros perdidos. La hermana del protagonista sigue desaparecida; la cápsula justifica reabrir la búsqueda, sin probar que siga viva. Ver [historia principal — spoilers](../HISTORIA-PRINCIPAL.md).
 
 C1-R01: complejo de preparación/lanzamiento. C1-R02: hábitat de estación. C1-R03: corredor orbital y exterior de estación. El interior de nave se reutiliza entre destinos.
+
+En esta implementación, el complejo se muestra con el mapa y el planificador; el hábitat y la EVA usan el movimiento isométrico del kit; el corredor usa pilotaje local. El interior de nave se representa durante el crucero como un panel de ruta y un mensaje escrito de LUMA, sin construir otro mapa.
 
 ## Misiones obligatorias
 

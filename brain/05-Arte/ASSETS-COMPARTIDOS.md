@@ -7,7 +7,7 @@ tags: [orbita, arte, kit, produccion]
 ---
 # Catálogo de assets compartidos
 
-Los 20 PNG originales están en `public/art` y sus metadatos en el [manifiesto](../../src/art-manifest.json). Se usan ya en el juego local. El generador editable [export_art.py](../../tools/export_art.py) produce los PNG de forma determinista; ejecuta `python tools/export_art.py` con Pillow si cambias el arte común. Los PNG están incluidos y no se necesita Python para jugar. Recursos originales bajo CC BY 4.0; ver [licencia](../../LICENSE-CONTENT.md).
+Los 20 PNG originales están en `public/art` y sus metadatos en el [manifiesto](../../src/legacy/art-manifest.json). Se usan ya en el juego local. El generador editable [export_art.py](../../tools/export_art.py) produce los PNG de forma determinista; ejecuta `python tools/export_art.py` con Pillow si cambias el arte común. Los PNG están incluidos y no se necesita Python para jugar. Recursos originales bajo CC BY 4.0; ver [licencia](../../LICENSE-CONTENT.md).
 
 | Asset | Medida y secuencia | Uso |
 | --- | --- | --- |

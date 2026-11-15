@@ -1,7 +1,7 @@
 ---
 id: aceptacion-pruebas
 type: calidad
-status: referencia-local-comprobada
+status: c1-y-referencia-comprobados
 updated: 2026-11-14
 tags: [orbita, pruebas]
 ---
@@ -61,4 +61,4 @@ Verificar cuatro paletas de LUMA con señales accesibles, traducción escrita si
 - Esperar en menús o explorar secundarias no mata a LUMA o a Aurora. Los riesgos ordinarios permiten recuperación y no sustituyen el desenlace.
 - Recargar en los límites de evacuación, despedida y recepción conserva el estado. El epílogo reconoce rescate y pérdida, y mantiene los pendientes mediante nuevas expediciones.
 
-**Resultado del kit local:** cuatro pruebas de reglas cubren las cargas, las salidas, los seis órdenes lunares, la reserva y la reanudación. Dos recorridos de Playwright en Chrome comprueban Luna y Marte, incluida la persistencia, la pausa, el idioma y la separación de partidas. El build de producción pasa. No se han ejecutado pruebas de campaña, crucero, vuelo, rendimiento sostenido o despliegue.
+**Resultado en la rama de C1:** siete pruebas de reglas y cuatro recorridos de Chrome. Se ejercitan dos diseños, ambos perfiles de EVA y de traslado, acoples, reserva, informe, evidencia, las seis permutaciones lunares y guardado. El recorrido orbital comprueba una incompatibilidad, el orden de LUMA, recarga de estación y crucero, cierre y entrega. Otro prueba el informe de fallo y su reintento. Los recorridos originales de Luna y Marte siguen aprobados; la entrega preserva una partida de Luna iniciada previamente. El build de producción y el arranque local pasan. No se probó la campaña completa, el rendimiento sostenido, mando o despliegue.

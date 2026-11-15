@@ -1,5 +1,11 @@
 # Registro de cambios
 
+## 2026-11-14 — Primera luz en revisión
+
+- Seis misiones de Tierra y órbita, de la configuración de nave al informe del nodo lunar.
+- Diseño de misión con recursos vinculados, pilotaje, EVA, informe de fallo y crucero que reanuda su progreso.
+- AUR-E01 y AUR-E02 autenticadas por separado; entrega a Luna sin migrar su partida ni cambiar los assets del kit.
+
 ## 2026-11-14 — Kit de mundos v1
 
 - Base local compartida, Luna jugable de referencia y mapas de ensayo en Órbita, Marte y Bennu.

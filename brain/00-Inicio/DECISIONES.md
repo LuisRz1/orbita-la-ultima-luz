@@ -10,7 +10,7 @@ tags: [orbita, producto]
 | Tema | Decisión |
 | --- | --- |
 | Formato | Juego directo en navegador. |
-| Estética | Pixel art 2.5D isométrico, cuerpo completo visible. |
+| Estética | 3D en tercera persona con cel-shading, contornos y luz horneada; interfaz densa de tipo terminal. Sustituye al pixel art 2.5D isométrico desde el 14 de noviembre ([ADR 006](../03-Arquitectura/ADR/ADR-006.md)). |
 | Ciencia | Futuro cercano plausible con Sistema Solar real. |
 | Duración | Objetivo de campaña completa de 12–20 horas. |
 | Fecha del evento | 14–15 de noviembre de 2026. |
@@ -21,7 +21,10 @@ tags: [orbita, producto]
 | Color | Paleta solar que evoluciona como una estrella similar al Sol según los capítulos. |
 | Arco emocional | Deterioro reconocido gradualmente y despedida íntima y definitiva; nota con spoilers. |
 | Después de la historia | Epílogo y mundo explorable con recuerdos y herramientas propias. |
-| Viaje espacial | Pilotaje directo 2.5D y trayectos largos acelerados. |
+| Viaje espacial | Pilotaje directo y trayectos largos acelerados; la vista pasa a 3D cuando el capítulo 1 se integre. |
+| Movimiento | A pie con doble salto y dash; su coste de energía depende del traje diseñado. |
+| Logros | Opcionales; nunca bloquean la historia. |
+| Commits | Los hace el propietario; los agentes no hacen commit, push ni despliegue. |
 | Coste de IA | Sin pagos por ahora; solo acceso gratuito disponible. |
 | Repositorio | Código y assets en el repositorio público [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz). La planificación original y los Issues se conservan en nasa-orbita. |
 | Demo | Pública y jugable sin registro. |

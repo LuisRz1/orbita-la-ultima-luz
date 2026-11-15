@@ -1,0 +1,61 @@
+.orb-chapter .orb-work{display:grid;gap:15px;min-width:0}
+.orb-chapter .orb-intro h2,.orb-chapter .orb-cruise h2{font-size:clamp(21px,3vw,32px);letter-spacing:-.035em;margin:6px 0 8px}
+.orb-chapter .orb-intro p,.orb-chapter .orb-cruise p{line-height:1.55;color:#bbcadd;font-size:13px}
+.orb-chapter .orb-intro .primary{margin-top:10px}
+.orb-chapter .orb-journal-details{padding-top:8px}
+.orb-chapter .orb-mission-list{padding:0;margin:0;list-style:none}
+.orb-chapter .orb-mission-list .objective{grid-template-columns:27px minmax(0,1fr)}
+.orb-chapter .orb-locked{opacity:.68}
+.orb-chapter .orb-plan,.orb-chapter .orb-board>.journal{padding:clamp(12px,2.2vw,22px)}
+.orb-chapter .orb-config,.orb-chapter .orb-instruments{border:0;padding:0;margin:16px 0;min-width:0}
+.orb-chapter legend{padding:0;margin:0 0 11px;font-size:14px;font-weight:700}
+.orb-chapter .orb-config-grid,.orb-chapter .orb-instruments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.orb-chapter .orb-choice{display:flex;flex-direction:column;gap:5px;min-width:0}
+.orb-chapter .orb-choice label{font-size:12px;color:#e8edf5}
+.orb-chapter .orb-choice select{font:inherit;font-size:13px;color:inherit;background:#182435;border:1px solid #455d75;border-radius:5px;padding:8px 7px;width:100%}
+.orb-chapter .orb-choice small,.orb-chapter .orb-check small{line-height:1.4;font-size:11px;color:#aebfd0}
+.orb-chapter .orb-instruments input{margin:0 7px 0 0;accent-color:#a4eadf;vertical-align:middle}
+.orb-chapter .orb-instruments .plan{min-height:72px}
+.orb-chapter .orb-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.orb-chapter .orb-check{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 6px;font-size:11px;
+  border:1px solid #34465a;border-radius:5px;padding:6px 7px;background:#172233}
+.orb-chapter .orb-check b{color:var(--teal);font-family:var(--mono);font-size:11px}
+.orb-chapter .orb-check-fail{border-color:#a86850}
+.orb-chapter .orb-check-fail b{color:var(--gold)}
+.orb-chapter .orb-check small{flex-basis:100%}
+.orb-chapter .orb-panel-actions{display:flex;align-items:center;gap:8px}
+.orb-chapter .orb-panel-actions .primary{margin:0;flex:1}
+.orb-chapter .orb-panel-actions .small-action{padding:8px;min-height:39px}
+.orb-chapter .orb-evidence{margin:7px 0 14px;padding-left:17px;line-height:1.6;color:#bbcadd;font-size:12px}
+.orb-chapter .orb-report h3{font-size:14px;margin:12px 0 1px}
+.orb-chapter .orb-telemetry{position:absolute;inset:auto 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  background:#0e1728e6;padding:8px 12px;border-top:1px solid var(--line);pointer-events:none}
+.orb-chapter .orb-telemetry span{font-size:10px;color:#bbcadd}
+.orb-chapter .orb-telemetry b{display:block;color:var(--gold);font:16px var(--mono)}
+.orb-chapter .orb-flight .view-overlay{bottom:45px}
+.orb-chapter .orb-flight-actions{padding:10px 12px;background:#121c2a;border-top:1px solid var(--line)}
+.orb-chapter .orb-flight-buttons,.orb-chapter .orb-flight-end{display:flex;gap:5px;flex-wrap:wrap}
+.orb-chapter .orb-flight-buttons button{min-height:27px;touch-action:none;user-select:none}
+.orb-chapter .orb-flight-buttons button:disabled{opacity:.55}
+.orb-chapter .orb-flight-actions .reserve{margin:8px 0}
+.orb-chapter .orb-flight-end .primary{flex:1;min-width:min(180px,100%);width:auto}
+.orb-chapter .orb-flight-start{display:grid;gap:7px}
+.orb-chapter .orb-follow-up{margin-top:6px}
+.orb-chapter .orb-source{font-size:11px;margin:11px 0 0}
+.orb-chapter a{color:var(--teal);text-underline-offset:2px}
+.orb-chapter .orb-transit-map{display:flex;align-items:center;gap:9px;min-height:95px;padding:13px 20px 3px;background:#121d31;border-radius:8px 8px 0 0}
+.orb-chapter .orb-transit-body{width:43px;height:43px;flex:none;border-radius:50%;background:radial-gradient(circle at 34% 28%,#92bed3,#30466e 65%,#15233d);
+  border:1px solid #7399b6;box-shadow:0 0 14px #426f8b99}
+.orb-chapter .orb-transit-moon{width:28px;height:28px;background:radial-gradient(circle at 34% 28%,#e2d8c0,#626679 74%,#2f374c);border-color:#97a2b3}
+.orb-chapter .orb-transit-track{height:3px;flex:1;background:#34455f}
+.orb-chapter .orb-transit-track i{display:block;height:100%;background:var(--gold)}
+.orb-chapter .orb-transit-labels{display:flex;justify-content:space-between;background:#121d31;padding:0 20px 12px;color:var(--muted);font:10px var(--mono)}
+.orb-chapter .orb-save-warning{font-size:13px;color:var(--gold)}
+@media(max-width:545px){
+  .orb-chapter .orb-config-grid,.orb-chapter .orb-checks{grid-template-columns:1fr}
+  .orb-chapter .orb-mission-list{grid-template-columns:1fr}
+  .orb-chapter .orb-panel-actions{align-items:stretch;flex-direction:column}
+  .orb-chapter .orb-telemetry{gap:4px;padding:5px 8px}
+  .orb-chapter .orb-telemetry span{font-size:9px}
+  .orb-chapter .orb-telemetry b{font-size:13px}
+}
