@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useStore } from 'zustand';
 import { achievementIds, achievements } from '../../core/achievements.ts';
+import { patchIds, patches } from '../../core/patches.ts';
 import { tierIds } from '../../engine/quality.ts';
 import { useT } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
@@ -125,6 +126,8 @@ function Achievements() {
 function Journal() {
   const { t } = useT();
   const { atlas, pages } = useStore(hud, s => s.collection);
+  const earned = useStore(hud, s => s.patches);
+  const chosen = useStore(prefs, s => s.patch);
   return <>
     <span className="panel-title">{t('atlas').toUpperCase()} · {atlas.filter(a => a.fact).length}/{atlas.length}</span>
     <ul className="achievement-list journal-list">
@@ -132,6 +135,15 @@ function Journal() {
         <span aria-hidden="true" className="atlas">{a.fact ? '▲' : '△'}</span>
         <div><b>{t(a.title)}</b>{a.fact && <small>{t(a.fact)} · <em>{t(a.basis === 'observation' ? 'observation' : 'simplification')}</em> · <a href={a.source!.url} target="_blank" rel="noreferrer">{a.source!.name} ↗</a></small>}</div>
       </li>)}
+    </ul>
+    <span className="panel-title">{t('patches').toUpperCase()} · {earned.length}/{patchIds.length}</span>
+    <ul className="achievement-list journal-list">
+      {patchIds.map(id => { const got = earned.includes(id), on = chosen === id;
+        return <li key={id} className={got ? 'got' : ''} data-patch={id}>
+          <span aria-hidden="true" style={{ color: got ? patches[id].color : undefined }}>{got ? '●' : '○'}</span>
+          <div><b>{t(patches[id].name)}</b><small>{t(patches[id].how)}</small></div>
+          {got && <button className={on ? 'on' : ''} aria-pressed={on} onClick={() => prefs.setState({ patch: on ? null : id })}>{t(on ? 'patchOff' : 'patchOn')}</button>}
+        </li>; })}
     </ul>
     {pages.length > 0 && <>
       <span className="panel-title">{t('pages').toUpperCase()} · {pages.filter(p => p.text).length}/{pages.length}</span>

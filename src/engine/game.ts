@@ -6,6 +6,7 @@ import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
 import { beaconCost, beaconInReach } from '../core/beacons.ts';
 import { ruinInReach } from '../core/ruins.ts';
 import { seismicAction, type SeismicAction } from '../core/seismic.ts';
+import { earnedPatches, patches, type PatchId } from '../core/patches.ts';
 import { gatherMemories } from '../levels/memories.ts';
 import type { Ruin, Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
@@ -79,6 +80,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     audio.volumes = { master: p.master, music: p.music, sfx: p.sfx };
     audio.applyVolumes();
     view?.setSky(p.paintedSky);
+    view?.astronaut.setPatch(p.patch && p.patch in patches ? patches[p.patch as PatchId].color : null);
   };
   // Browsers start audio only after a gesture: the first click or key press unlocks it.
   const unlockAudio = () => audio.unlock();
@@ -668,6 +670,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         pages: (level.ruins ?? []).map(r => ({ id: r.id, title: r.page.title, text: progress.ruins.includes(r.id) ? r.page.text : null })),
       },
       accessories: unlockedAccessories(ruinsEverywhere()),
+      patches: earnedPatches([...[...saves.values()].flatMap(p => p?.achievements ?? []), ...progress.achievements], ruinsEverywhere()),
       finale: level.farewell && completedHere() ? { memories: gatherMemories([...[...saves.values()].filter(p => p?.level !== level.id), progress]) } : null,
       pages: { found: progress.ruins.length, total: level.ruins?.length ?? 0 },
       beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },

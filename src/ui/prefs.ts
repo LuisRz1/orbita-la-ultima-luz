@@ -3,7 +3,7 @@ import { createStore } from 'zustand/vanilla';
 import type { Language } from '../core/contract/grid-v1.ts';
 import { tierIds, type Tier } from '../engine/quality.ts';
 
-export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean; quality: 'auto' | Tier; master: number; music: number; sfx: number; paintedSky: boolean };
+export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean; quality: 'auto' | Tier; master: number; music: number; sfx: number; paintedSky: boolean; patch: string | null };
 const key = 'orbita-3d-prefs';
 
 const volume = (v: unknown, fallback: number) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : fallback);
@@ -11,7 +11,7 @@ const volume = (v: unknown, fallback: number) => (typeof v === 'number' && v >= 
 function load(): Prefs {
   const base: Prefs = {
     lang: 'es', sensitivity: 1,
-    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: false,
+    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: false, patch: null,
   };
   try {
     const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as Partial<Prefs> | null;
@@ -23,6 +23,7 @@ function load(): Prefs {
       quality: saved.quality === 'auto' || tierIds.includes(saved.quality as Tier) ? saved.quality as Prefs['quality'] : 'auto',
       master: volume(saved.master, base.master), music: volume(saved.music, base.music), sfx: volume(saved.sfx, base.sfx),
       paintedSky: saved.paintedSky === true,
+      patch: typeof saved.patch === 'string' ? saved.patch : null,
     };
   } catch { return base; }
 }

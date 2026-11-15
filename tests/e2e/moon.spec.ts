@@ -226,5 +226,12 @@ test('the seismic network: pick up the geophones at the crate and plant all thre
   await call(page, 'setEnergy', 120);
   await act(-34, -7);
   await expect(page.getByText('Red sísmica completa')).toBeVisible();
+  // The network earns the «Sismo» patch, worn from the menu.
+  await call(page, 'pause', false);
+  await page.keyboard.press('Escape');
+  await page.locator('[data-pause="menu"]').click();
+  await page.locator('[data-menu="journal"]').click();
+  await page.locator('[data-patch="sismo"] button').click();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('orbita-3d-prefs')!).patch)).toBe('sismo');
   expect(errors).toEqual([]);
 });

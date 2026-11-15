@@ -34,6 +34,8 @@ export type Astronaut = {
   setLoadout(d: SuitDesign): void;
   /** Battery gauge on the backpack: fraction of capacity and whether only the reserve is left. */
   setBattery(fraction: number, reserveOnly: boolean): void;
+  /** Cosmetic patch on the right shoulder, or none. */
+  setPatch(color: string | null): void;
 };
 
 /** "Rounded explorer" suit: bubble helmet, broad shoulders and boots, coral commander stripes. Height ≈ 1.80 m. */
@@ -141,6 +143,11 @@ export function buildAstronaut(): Astronaut {
   const kit = new Group();
   kit.position.set(-0.14, -0.2, 0);
   legs[0].hip.add(kit);
+  // Cosmetic patch: a small round badge on the outside of the right shoulder.
+  const patch = new Mesh(new CylinderGeometry(0.07, 0.07, 0.02, 16), toon('#ffffff'));
+  patch.position.set(0.43, 1.36, 0); patch.rotation.z = Math.PI / 2; patch.visible = false;
+  patch.add(new Mesh(patch.geometry, outlineMaterial(0.01)));
+  rig.add(patch);
   rig.add(hips, torso, ...shoulders, chest, ...knobs, chestLight, backpack, frame, gaugeFrame, ...cells, neck, helmet, visor, antenna, nozzles, camera);
 
   const clear = (g: Group) => { for (const c of [...g.children]) g.remove(c); };
@@ -148,6 +155,7 @@ export function buildAstronaut(): Astronaut {
   const popping: Group[] = [];
   return {
     group,
+    setPatch(color) { patch.visible = !!color; if (color) patch.material = toon(color); },
     setLoadout(d) {
       clear(antenna); clear(nozzles); clear(camera); clear(drill); clear(kit);
       const len = { short: 0.25, medium: 0.45, long: 0.7 }[d.antenna];

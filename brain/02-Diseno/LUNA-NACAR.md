@@ -195,7 +195,7 @@ Las opciones nuevas van en una cuarta ranura, `accessories`, con un máximo de 1
   4. Basalto, en (50, −66).
   5. Escarcha, en (52, −14). Se basa en el hielo de agua en sombra permanente confirmado por LCROSS.
   6. Roca con microimpactos, en (−77, −2): al pie oeste de la cresta. Se movió de (−68, 2) porque allí solo se llegaba saltando.
-- **3 parches de misión.** Cosméticos para el traje.
+- **3 parches de misión.** Cosméticos para el traje (implementado el 15-nov: `src/core/patches.ts`, se eligen en «Atlas y diario»).
 
 **Misiones secundarias.** Empiezan solo al tocar su objeto disparador.
 
