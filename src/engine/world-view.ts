@@ -30,6 +30,8 @@ export type WorldView = {
   specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void;
   /** Side-mission beacons: a post with a lamp that lights up once repaired. */
   beacons: Map<string, Mesh>; setBeacon(id: string, lit: boolean): void; dust: Dust; footprints: Footprints; ambience: Ambience;
+  /** Switches between the plain sky band and the painted nebula (setting); `tick` drifts the nebula. */
+  setSky(painted: boolean): void; tickSky(time: number): void;
   /** Lamps that blink in sequence (ramp markers). */
   blinkers: Mesh[];
   sun: [number, number, number];
@@ -166,6 +168,48 @@ function footprintPool(): { mesh: InstancedMesh; footprints: Footprints } {
       },
     },
   };
+}
+
+/**
+ * Optional painted sky: a domain-warped nebula posterised into soft bands so it reads like the cel-shaded ground
+ * (fiction, an art choice). Drifts slowly; one dome, one draw call. Built only for biomes with a night sky.
+ */
+function paintedSky(colors: [string, string]) {
+  const mat = new ShaderMaterial({
+    side: BackSide, depthWrite: false, fog: false,
+    uniforms: {
+      uTime: { value: 0 }, uTop: { value: new Color(biome.skyTop) }, uHorizon: { value: new Color(biome.skyHorizon) },
+      uA: { value: new Color(colors[0]) }, uB: { value: new Color(colors[1]) },
+    },
+    vertexShader: 'varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `varying vec3 vDir;
+      uniform float uTime; uniform vec3 uTop; uniform vec3 uHorizon; uniform vec3 uA; uniform vec3 uB;
+      float h(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+      float n(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y),
+                   mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
+      float fbm(vec3 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.03 + 1.7; a *= 0.5; } return s; }
+      // Soft posterisation: flat bands with a narrow blend, like brush layers.
+      float bands(float v, float k) { float x = v * k; return (floor(x) + smoothstep(0.85, 1.0, fract(x))) / k; }
+      void main() {
+        vec3 d = vDir * 2.2 + vec3(uTime * 0.004, 0.0, uTime * 0.002);
+        vec3 w = vec3(fbm(d + 3.1), fbm(d + 7.4), fbm(d + 1.3));
+        float cloud = fbm(d + w * 1.6);
+        float rim = fbm(d * 2.5 + w * 2.0);
+        vec3 sky = mix(uHorizon, uTop, smoothstep(0.0, 0.3, vDir.y));
+        float body = bands(smoothstep(0.34, 0.72, cloud), 4.0);
+        float glow = bands(smoothstep(0.5, 0.85, rim * cloud * 1.7), 3.0);
+        float up = smoothstep(-0.02, 0.18, vDir.y);
+        vec3 col = mix(sky, uA * 0.85, body * 0.85 * up);
+        col = mix(col, uB, glow * 0.6 * up);
+        // A few bright knots where the clouds are densest: young stars lighting the gas.
+        col += uB * pow(max(0.0, cloud - 0.68), 2.0) * 6.0 * up;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  const dome = new Mesh(new SphereGeometry(455, 32, 16), mat);
+  dome.renderOrder = -1;
+  return dome;
 }
 
 /** Faint Milky Way band painted on a sky dome behind the stars. */
@@ -389,7 +433,10 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   const glow = new Sprite(new SpriteMaterial({ map: glowTexture(biome.sunGlow), blending: AdditiveBlending, depthWrite: false, fog: false }));
   glow.position.set(sun[0] * 400, sun[1] * 400, sun[2] * 400);
   glow.scale.setScalar(biome.sunScale);
-  scene.add(glow, skyBand());
+  const band = skyBand();
+  const painted = biome.nebula ? paintedSky(biome.nebula) : null;
+  if (painted) { painted.visible = false; scene.add(painted); }
+  scene.add(glow, band);
   if (biome.sky === 'earth') {
     const earth = new Mesh(new SphereGeometry(16, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
     earth.position.set(-140, 150, -330);
@@ -507,7 +554,10 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon, dust, footprints, ambience, blinkers, sun,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon,
+    setSky(on: boolean) { if (!painted) return; painted.visible = on; band.visible = !on; },
+    tickSky(t: number) { if (painted?.visible) (painted.material as ShaderMaterial).uniforms.uTime.value = t; },
+    dust, footprints, ambience, blinkers, sun,
     dispose() {
       const seen = new Set<unknown>();
       scene.traverse(o => {

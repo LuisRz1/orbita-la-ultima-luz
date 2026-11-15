@@ -21,6 +21,8 @@ const nacar = {
   air: 0, wind: 0,
   /** LUMA's fur and core for this chapter (its colour follows a Sun-like star through the story). */
   luma: '#ffb05c', lumaCore: '#fff2c4',
+  /** Painted-sky nebula colours (optional setting); null where the sky is daytime and no nebula would show. */
+  nebula: ['#7a4fb0', '#ff9ec7'] as [string, string] | null,
 };
 export type Biome = typeof nacar;
 
@@ -39,6 +41,7 @@ const terracota: Biome = {
   airDust: '#f3c9a6', puff: '#c98a66', hazardParticle: '#8a4a35', porthole: '#f2b98e',
   air: 1.4, wind: 1,
   luma: '#e8553f', lumaCore: '#ffd2b8',
+  nebula: null,
 };
 
 /**
@@ -56,6 +59,7 @@ const quirofano: Biome = {
   airDust: '#cfe0ff', puff: '#dfe8f5', hazardParticle: '#fff6d8', porthole: '#7fb0e8',
   air: 0, wind: 0,
   luma: '#ffe2a0', lumaCore: '#ffffff',
+  nebula: ['#2f5fa8', '#7fe3e0'],
 };
 
 export const biomes = { nacar, terracota, quirofano };

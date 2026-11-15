@@ -75,6 +75,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     input.sensitivity = 0.0025 * p.sensitivity;
     audio.volumes = { master: p.master, music: p.music, sfx: p.sfx };
     audio.applyVolumes();
+    view?.setSky(p.paintedSky);
   };
   // Browsers start audio only after a gesture: the first click or key press unlocks it.
   const unlockAudio = () => audio.unlock();
@@ -676,6 +677,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       camera.lookAt(px, py + (phase === 'eva' ? 1.4 : 1.1), pz);
     }
 
+    view.tickSky(prefs.getState().reduceMotion ? 0 : time);
     view.beacon.visible = Math.sin(time * 3) > -0.2;
     for (const lamp of view.blinkers) lamp.visible = Math.sin(time * 2.4 - lamp.position.x * 0.2) > -0.5;
     for (const [id, m] of view.echoes) if (m.visible) m.rotation.y = time * 1.5 + id.length;

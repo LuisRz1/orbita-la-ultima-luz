@@ -97,6 +97,9 @@ function Settings() {
     <div className="setting"><span>{t('reduceMotion')}</span>
       <div className="choice">{[true, false].map(v => <button key={String(v)} className={p.reduceMotion === v ? 'on' : ''} onClick={() => prefs.setState({ reduceMotion: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
     </div>
+    <div className="setting"><span>{t('paintedSky')}</span>
+      <div className="choice">{[true, false].map(v => <button key={String(v)} data-sky={String(v)} className={p.paintedSky === v ? 'on' : ''} onClick={() => prefs.setState({ paintedSky: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
+    </div>
     <div className="setting"><span>{t('quality')}</span>
       <div className="choice">{(['auto', ...tierIds] as const).map(q => <button key={q} className={p.quality === q ? 'on' : ''} onClick={() => prefs.setState({ quality: q })}>{q === 'auto' ? t('auto') : q}</button>)}</div>
     </div>
