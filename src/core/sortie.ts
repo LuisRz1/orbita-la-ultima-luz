@@ -158,7 +158,10 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
   if (s.ledger.sun >= 0.5) insights.push(t(`La ruta al sol costó ${Math.round(s.ledger.sun)} u. de refrigeración: la baranda en sombra es más larga pero no calienta el traje.`,
     `The sunlit route cost ${Math.round(s.ledger.sun)} u of cooling: the shaded handrail is longer but does not heat the suit.`));
   if (outcome === 'recalled') insights.push(s.emergency
-    ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
+    ? (!level.companionAfter || done.has(level.companionAfter)
+      ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
+      // Before LUMA joins (chapter 1), the safety tether does it, as the in-game warning says.
+      : t('La reserva se agotó antes de llegar al acople: el cable de seguridad tuvo que recogerte.', 'The reserve ran out before you reached the dock: the safety tether had to reel you in.'))
     : t('Volviste al módulo con la reserva de retorno: repliegue seguro.', 'You walked back to the lander on the return reserve: a safe recall.'));
   if (s.session.recalls > 0) insights.push(t(`${antennas[s.design.antenna].name.es} (${s.stats.commsRadius} m): perdiste el enlace ${s.session.recalls} vez/veces.`, `${antennas[s.design.antenna].name.en} (${s.stats.commsRadius} m): link lost ${s.session.recalls} time(s).`));
   if (s.session.falls > 0) insights.push(t(`El cable de seguridad te recogió ${s.session.falls} vez/veces al salir de la cubierta (no es culpa de la antena).`,

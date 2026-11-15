@@ -46,7 +46,7 @@ export function decisionLinks(r: Report): Link[] {
   });
   links.push({
     slot: 'antenna', choice: t(`${antennas[d.antenna].name.es} · ${antennas[d.antenna].radius} m`, `${antennas[d.antenna].name.en} · ${antennas[d.antenna].radius} m`),
-    effect: r.recalls ? t(`Enlace perdido ${r.recalls} vez/veces: LUMA te trajo de vuelta.`, `Link lost ${r.recalls} time(s): LUMA brought you back.`)
+    effect: r.recalls ? t(`Enlace perdido ${r.recalls} vez/veces: te guiaron de vuelta al punto de partida.`, `Link lost ${r.recalls} time(s): you were guided back to the start.`)
       : t('Enlace estable durante toda la salida.', 'Link held for the whole sortie.'),
     tone: r.recalls ? 'bad' : 'good',
   });

@@ -127,10 +127,11 @@ export function DialogueBox() {
 
 export function AchievementToast() {
   const { t } = useT();
-  const { toast, now } = useStore(hud);
+  const { toast, now, phase } = useStore(hud);
   if (!toast || now - toast.at > 4.5) return null;
   const a = achievements[toast.id as AchievementId];
-  return <div className="toast" key={toast.id + toast.at} role="status" data-toast={toast.id}>
+  // Outside the surface the top centre holds the report header or the suit bar: the toast moves to a corner.
+  return <div className={'toast' + (phase === 'eva' ? '' : ' corner')} key={toast.id + toast.at} role="status" data-toast={toast.id}>
     <span>{t('unlocked')}</span><b>{t(a.title)}</b><small>{t(a.desc)}</small>
   </div>;
 }
