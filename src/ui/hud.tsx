@@ -121,7 +121,7 @@ export function DialogueBox() {
   return <div className="dialogue" role="dialog" aria-label={line.speaker} data-dialogue>
     <span className={'speaker ' + line.speaker.toLowerCase()}>{line.speaker}</span>
     <p>{t(line.text)}</p>
-    <button onClick={() => commands.advance()} aria-label={t('advance')}>{t('advance')}</button>
+    <button onClick={() => commands.advance()} aria-label={t('advance')}>{t('advance')} <kbd>E</kbd></button>
   </div>;
 }
 

@@ -46,7 +46,7 @@ export const strings = {
   why_battery: s('Más batería = más tiempo fuera, pero pesa y te hace saltar menos.', 'More battery = more time outside, but it is heavy and you jump lower.'),
   why_thruster: s('El propulsor da el doble salto: atajos y ecos altos. Cada uso gasta batería.', 'The thruster gives a double jump: shortcuts and high echoes. Each use costs battery.'),
   why_antenna: s('La antena fija hasta dónde llega tu enlace. Fuera de él, LUMA te trae de vuelta.', 'The antenna sets how far your link reaches. Beyond it, LUMA brings you back.'),
-  why_instruments: s('Cada objetivo necesita su instrumento. No caben todos sin pasar de 28 kg.', 'Each objective needs its instrument. They do not all fit under 28 kg.'),
+  why_instruments: s('Cada objetivo necesita su instrumento. Todo suma masa: con la batería extendida los tres no caben en 28 kg.', 'Each objective needs its instrument. Everything adds mass: with the extended battery all three do not fit in 28 kg.'),
   why_locker: s('', ''), why_airlock: s('', ''),
   // menu, pause, settings
   subtitle: s('LA ÚLTIMA LUZ', 'THE LAST LIGHT'),

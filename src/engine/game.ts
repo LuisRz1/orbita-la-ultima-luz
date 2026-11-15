@@ -619,6 +619,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
   function update(dt: number) {
     time += dt;
+    // The mouse is captured only on the surface: in the lander the camera is fixed and the station panels need it.
+    input.allowLock = phase === 'eva';
+    if (phase === 'ship' && input.locked) document.exitPointerLock();
     audio.mood(currentMood());
     audio.tick(phase === 'eva' && !paused ? signalAt(level, body.x, body.z, sortie.stats.commsRadius) : 1,
       phase === 'eva' && !paused && spendable(sortie) < 15);
