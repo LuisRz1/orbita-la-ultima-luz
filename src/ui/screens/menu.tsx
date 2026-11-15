@@ -10,7 +10,7 @@ import { useT, type StringKey } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
-type Sub = 'settings' | 'achievements' | 'journal' | 'science' | 'credits' | null;
+type Sub = 'settings' | 'controls' | 'achievements' | 'journal' | 'science' | 'credits' | null;
 
 export function MainMenu() {
   const { t } = useT();
@@ -32,6 +32,7 @@ export function MainMenu() {
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
+        <button data-sfx="ui-open" data-menu="controls" onClick={() => setSub('controls')}>{t('controls')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
         {collection.atlas.length + collection.pages.length > 0 && <button data-sfx="ui-open" data-menu="journal" onClick={() => setSub('journal')}>{t('journal')}</button>}
         <button data-sfx="ui-open" data-menu="science" onClick={() => setSub('science')}>{t('science')}</button>
@@ -71,6 +72,7 @@ export function PauseMenu() {
       <nav className="menu-list">
         <button className="first" data-pause="resume" onClick={() => commands.resume()}>{t('resume')}</button>
         <button onClick={() => setSub('settings')}>{t('settings')}</button>
+        <button data-pause="controls" onClick={() => setSub('controls')}>{t('controls')}</button>
         <button data-pause="abandon" onClick={() => commands.abandon()}>{t('abandon')}</button>
         <button data-pause="menu" onClick={() => commands.toMenu()}>{t('mainMenu')}</button>
       </nav>
@@ -86,6 +88,7 @@ function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void })
       {sub === 'achievements' && <Achievements />}
       {sub === 'journal' && <Journal />}
       {sub === 'science' && <Science />}
+      {sub === 'controls' && <Controls />}
       {sub === 'credits' && <Credits />}
       <button className="back" data-sfx="ui-close" data-back onClick={onBack}>← {t('back')}</button>
     </section>
@@ -184,6 +187,24 @@ const sources = [
   { url: 'https://science.nasa.gov/resource/dust-devils-on-mars/', name: 'NASA · Dust devils on Mars', use: { es: 'Remolinos de polvo observados por los rovers; la tormenta que provoca el relé es ficción de juego.', en: 'Dust devils seen by the rovers; the storm set off by the relay is game fiction.' }, kind: 'fiction' as const },
   { url: 'https://science.nasa.gov/solar-system/planets/mars/what-does-a-sunrise-sunset-look-like-on-mars/', name: 'NASA · Sunrises and sunsets on Mars', use: { es: 'Cielo diurno anaranjado y halo azul junto al Sol por el polvo fino.', en: 'Orange daytime sky and a blue halo near the Sun from fine dust.' }, kind: 'observed' as const },
 ];
+
+const keys: [string, StringKey][] = [
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'],
+  ['🖱', 'keyLook'], ['Esc', 'keyPause'],
+];
+
+/** Keys and what the HUD shows, for anyone who missed the hint line. */
+function Controls() {
+  const { t } = useT();
+  return <>
+    <span className="panel-title">{t('controls').toUpperCase()}</span>
+    <dl className="controls-list">{keys.map(([k, what]) => <div key={what}><dt><kbd>{k}</kbd></dt><dd>{t(what)}</dd></div>)}</dl>
+    <span className="slot-label">{t('hudHelp')}</span>
+    <ul className="insights">
+      {(['hudCompass', 'hudBattery', 'hudReserve', 'hudSignal', 'hudDialogue'] as const).map(k => <li key={k}>{t(k)}</li>)}
+    </ul>
+  </>;
+}
 
 /** Model and reality: each mechanic next to the NASA data it stands on, with its label and source. */
 function Science() {

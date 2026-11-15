@@ -17,7 +17,7 @@
 | NASA data, model separated from fiction | Menu → **Science: model and reality**: every mechanic next to the NASA figure it stands on, labelled *observation*, *simplification* or *fiction*, with its source. Rock atlas cards and title cards also cite NASA pages. |
 | English and Spanish | The whole interface and LUMA's recorded voice, switchable in Settings. |
 
-**Three-minute tour.** Open the game with `?demo` (opens every destination without touching saves) or `?level=moon` for the most complete chapter. Then:
+**Three-minute tour.** The game starts in your browser language (force it with `?lang=en` or `?lang=es`). Open it with `?demo` (opens every destination without touching saves) or `?level=moon` for the most complete chapter. Controls and HUD help are in the menu (**Controls and help**). Then:
 
 1. **New expedition** → walk to the lit stations (WASD, **E** to use). Try a light suit **without the sample drill**; the top bar marks the cache objective in red.
 2. Locker → airlock → explore. Follow the compass ◆; **E** at each lit objective. Watch the battery panel.
@@ -46,7 +46,7 @@
 | Datos NASA, modelo separado de la ficción | Menú → **Ciencia: modelo y realidad**: cada mecánica junto al dato de la NASA en que se apoya, con la etiqueta *observación*, *simplificación* o *ficción* y su fuente. Las fichas del atlas de rocas y del menú también citan páginas de la NASA. |
 | Inglés y español | Toda la interfaz y la voz grabada de LUMA, desde Ajustes. |
 
-**Recorrido de tres minutos.** Abre el juego con `?demo` (abre todos los destinos sin tocar los guardados) o `?level=moon` para el capítulo más completo. Después:
+**Recorrido de tres minutos.** El juego arranca en el idioma del navegador (fuérzalo con `?lang=es` o `?lang=en`). Ábrelo con `?demo` (abre todos los destinos sin tocar los guardados) o `?level=moon` para el capítulo más completo. La ayuda de controles y de la pantalla está en el menú (**Controles y ayuda**). Después:
 
 1. **Nueva expedición** → camina a los puestos iluminados (WASD, **E** para usar). Prueba un traje ligero **sin taladro**: la barra superior marca en rojo el objetivo de la caché.
 2. Taquilla → esclusa → explora. Sigue el ◆ de la brújula; **E** en cada objetivo iluminado. Vigila el panel de batería.

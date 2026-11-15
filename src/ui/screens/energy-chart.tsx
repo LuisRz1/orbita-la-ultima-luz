@@ -1,7 +1,9 @@
 // Battery over mission time for the sortie report: the line, the return reserve, numbered objectives, hazard
 // zones entered, link losses and the moment the reserve was reached. Plain SVG, no canvas or library.
 import type { TraceMark, TraceSample } from '../../core/sortie.ts';
+import { useStore } from 'zustand';
 import { useT } from '../i18n.ts';
+import { prefs } from '../prefs.ts';
 
 const W = 640, H = 176, L = 34, R = 12, T = 24, B = 22;
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -16,6 +18,7 @@ export function energyAt(trace: TraceSample[], t: number) {
 
 export function EnergyChart({ trace, marks, capacity, reserve }: { trace: TraceSample[]; marks: TraceMark[]; capacity: number; reserve: number }) {
   const { t } = useT();
+  const still = useStore(prefs, p => p.reduceMotion);
   const end = Math.max(1, trace[trace.length - 1]?.t ?? 1);
   const x = (s: number) => L + (s / end) * (W - L - R);
   const y = (e: number) => T + (1 - Math.max(0, e) / capacity) * (H - T - B);
@@ -24,7 +27,7 @@ export function EnergyChart({ trace, marks, capacity, reserve }: { trace: TraceS
   const points = marks.filter(m => m.kind === 'point');
   const last = trace[trace.length - 1];
   const summary = `${t('energyTrace')}: ${Math.round(trace[0]?.e ?? 0)} → ${Math.round(last?.e ?? 0)} u, ${clock(end)}`;
-  return <figure className="energy-chart" data-energy-chart>
+  return <figure className={'energy-chart' + (still ? '' : ' draw')} data-energy-chart>
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={summary} preserveAspectRatio="xMidYMid meet">
       {[0, 0.5, 1].map(f => <g key={f} className="grid">
         <line x1={L} x2={W - R} y1={y(capacity * f)} y2={y(capacity * f)} />
@@ -35,7 +38,7 @@ export function EnergyChart({ trace, marks, capacity, reserve }: { trace: TraceS
       <line className="reserve-line" x1={L} x2={W - R} y1={y(reserve)} y2={y(reserve)} />
       <text className="reserve-label" x={W - R - 4} y={y(reserve) - 4} textAnchor="end">{t('reserve')} · {reserve} u.</text>
       <path className="area" d={area} />
-      <path className="line" d={line} />
+      <path className="line" d={line} pathLength={1} />
       {marks.filter(m => m.kind === 'hazard' || m.kind === 'recall').map((m, i) => <g key={m.kind + i} className={'event ' + m.kind} data-chart-mark={m.kind}>
         <line x1={x(m.t)} x2={x(m.t)} y1={T - 8} y2={y(0)} />
         <text x={x(m.t)} y={T - 10} textAnchor="middle">{m.kind === 'recall' ? '⟲' : glyph[m.hazard ?? 'cold']}<title>{t(m.label)} · {clock(m.t)}</title></text>

@@ -458,3 +458,14 @@
 .orbita .mission-brief .total { padding-top: 3px; border-top: 1px solid var(--line); color: var(--text); }
 .orbita .mission-brief dd.total.warn { color: var(--warn); }
 @media (max-width: 760px) { .orbita .mission-brief { display: none; } }
+
+.orbita .controls-list { display: grid; gap: 6px; margin: 0 0 8px; }
+.orbita .controls-list div { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: baseline; }
+.orbita .controls-list dd { margin: 0; }
+
+/* The battery line draws itself once, then the marks appear; skipped with reduced motion. */
+.orbita .energy-chart.draw .line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: chart-draw 1.3s ease-out 0.15s forwards; }
+.orbita .energy-chart.draw .point, .orbita .energy-chart.draw .event, .orbita .energy-chart.draw .area { opacity: 0; animation: chart-fade 0.4s ease-out 1.2s forwards; }
+@keyframes chart-draw { to { stroke-dashoffset: 0; } }
+@keyframes chart-fade { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .orbita .energy-chart.draw .line, .orbita .energy-chart.draw .point, .orbita .energy-chart.draw .event, .orbita .energy-chart.draw .area { animation: none; opacity: 1; stroke-dashoffset: 0; } }
