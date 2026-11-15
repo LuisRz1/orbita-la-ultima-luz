@@ -422,3 +422,22 @@
 .orbita .route-strip li.open button:hover, .orbita .route-strip li.open button:focus-visible { border-color: var(--accent); outline: none; }
 .orbita .route-strip li.locked span { padding: 3px 8px; border: 2px dashed rgb(125 138 151 / 45%); color: var(--dim); }
 @media (max-width: 640px) { .orbita .loop-strip { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- science: model and reality ---------- */
+.orbita .sub.wide { width: min(900px, 94vw); }
+.orbita .science-intro { margin: 0 0 10px; color: var(--text); }
+.orbita .science-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 10px; }
+.orbita .science-legend .basis small { margin-left: 8px; color: var(--dim); letter-spacing: 0; text-transform: none; }
+.orbita .basis { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.orbita .basis.observed { color: #9dffc8; }
+.orbita .basis.simplified { color: var(--accent); }
+.orbita .basis.fiction { color: #f2a7c3; }
+.orbita .science-list { margin: 0; padding: 0; list-style: none; }
+.orbita .science-list li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.orbita .science-head { display: flex; justify-content: space-between; gap: 12px; }
+.orbita .science-head b { font-weight: 700; }
+.orbita .science-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.orbita .science-cols p { margin: 4px 0 0; line-height: 1.5; }
+.orbita .science-cols small { display: block; color: var(--dim); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
+.orbita .science-cols a { color: var(--accent); font-size: 11px; }
+@media (max-width: 700px) { .orbita .science-cols { grid-template-columns: 1fr; } }

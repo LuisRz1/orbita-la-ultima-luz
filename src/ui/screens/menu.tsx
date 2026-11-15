@@ -5,11 +5,12 @@ import { useStore } from 'zustand';
 import { achievementIds, achievements } from '../../core/achievements.ts';
 import { patchIds, patches } from '../../core/patches.ts';
 import { tierIds } from '../../engine/quality.ts';
+import { scienceRows } from '../../levels/science.ts';
 import { useT, type StringKey } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
-type Sub = 'settings' | 'achievements' | 'journal' | 'credits' | null;
+type Sub = 'settings' | 'achievements' | 'journal' | 'science' | 'credits' | null;
 
 export function MainMenu() {
   const { t } = useT();
@@ -33,6 +34,7 @@ export function MainMenu() {
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
         {collection.atlas.length + collection.pages.length > 0 && <button data-sfx="ui-open" data-menu="journal" onClick={() => setSub('journal')}>{t('journal')}</button>}
+        <button data-sfx="ui-open" data-menu="science" onClick={() => setSub('science')}>{t('science')}</button>
         <button data-sfx="ui-open" data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
       </nav>
       {destinations.length > 1 && <nav className="route-strip" aria-label={t('route')}>
@@ -79,10 +81,11 @@ export function PauseMenu() {
 function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void }) {
   const { t } = useT();
   return <div className="screen sub-screen">
-    <section className="panel sub" role="dialog" aria-label={t(sub === 'settings' ? 'settings' : sub === 'achievements' ? 'achievements' : sub === 'journal' ? 'journal' : 'credits')}>
+    <section className={'panel sub' + (sub === 'science' ? ' wide' : '')} role="dialog" aria-label={t(sub)}>
       {sub === 'settings' && <Settings />}
       {sub === 'achievements' && <Achievements />}
       {sub === 'journal' && <Journal />}
+      {sub === 'science' && <Science />}
       {sub === 'credits' && <Credits />}
       <button className="back" data-sfx="ui-close" data-back onClick={onBack}>← {t('back')}</button>
     </section>
@@ -181,6 +184,25 @@ const sources = [
   { url: 'https://science.nasa.gov/resource/dust-devils-on-mars/', name: 'NASA · Dust devils on Mars', use: { es: 'Remolinos de polvo observados por los rovers; la tormenta que provoca el relé es ficción de juego.', en: 'Dust devils seen by the rovers; the storm set off by the relay is game fiction.' }, kind: 'fiction' as const },
   { url: 'https://science.nasa.gov/solar-system/planets/mars/what-does-a-sunrise-sunset-look-like-on-mars/', name: 'NASA · Sunrises and sunsets on Mars', use: { es: 'Cielo diurno anaranjado y halo azul junto al Sol por el polvo fino.', en: 'Orange daytime sky and a blue halo near the Sun from fine dust.' }, kind: 'observed' as const },
 ];
+
+/** Model and reality: each mechanic next to the NASA data it stands on, with its label and source. */
+function Science() {
+  const { t } = useT();
+  return <>
+    <span className="panel-title">{t('science').toUpperCase()}</span>
+    <p className="science-intro">{t('scienceIntro')}</p>
+    <div className="science-legend">{(['observed', 'simplified', 'fiction'] as const).map(b => <span key={b} className={'basis ' + b}>{t(b)}<small>{t((b + 'Means') as StringKey)}</small></span>)}</div>
+    <ul className="science-list">
+      {scienceRows.map(r => <li key={r.id} data-science={r.id} data-basis={r.basis}>
+        <div className="science-head"><b>{t(r.topic)}</b><span className={'basis ' + r.basis}>{t(r.basis)}</span></div>
+        <div className="science-cols">
+          <p><small>{t('realData')}</small>{t(r.real)}{r.source && <> <a href={r.source.url} target="_blank" rel="noreferrer">{r.source.name} ↗</a></>}</p>
+          <p><small>{t('inGame')}</small>{t(r.game)}</p>
+        </div>
+      </li>)}
+    </ul>
+  </>;
+}
 
 function Credits() {
   const { t, lang } = useT();

@@ -56,6 +56,12 @@ test('the title shows the design loop and the route; ?demo opens every destinati
   await page.goto('/?quality=low');
   await expect(page.locator('[data-loop] li')).toHaveCount(4, { timeout: 30_000 });
   await expect(page.locator('[data-travel-locked="bennu"]')).toBeVisible();
+  // Science: every mechanic with its label; every non-fiction row links a NASA page.
+  await page.locator('[data-menu="science"]').click();
+  await expect(page.locator('[data-science]')).toHaveCount(11);
+  for (const row of await page.locator('[data-science]:not([data-basis="fiction"])').all()) await expect(row.locator('a[href*="nasa.gov"]')).toHaveCount(1);
+  await expect(page.locator('[data-science="moon-gravity"]')).toContainText('1,62 m/s²');
+  await page.locator('[data-back]').click();
   await page.goto('/?demo&quality=low');
   await expect(page.locator('[data-travel="bennu"]')).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('[data-travel="extraction"]')).toBeVisible();
