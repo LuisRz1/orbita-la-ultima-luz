@@ -81,6 +81,16 @@ export const moonLevel: LevelV2 = {
     { id: 'archive', title: t('Archivo norte', 'North archive'), center: landmarks.archive, radius: 15 },
   ],
   specimens: moonSpecimens,
+  // S2 (LUNA-NACAR.md): the posts run from the lander towards the buried shelter R1 in the west bowl.
+  beacons: {
+    title: t('Baliza de Aurora', 'Aurora beacon'),
+    posts: [
+      { id: 'beacon-1', position: { x: -12, z: 60 } }, { id: 'beacon-2', position: { x: -24, z: 40 } },
+      { id: 'beacon-3', position: { x: -34, z: 18 } }, { id: 'beacon-4', position: { x: -40, z: -8 } },
+    ],
+    reward: t('Las cuatro balizas encendidas. Siguen la ruta que Aurora marcó hacia el cuenco del oeste: allí hay una cúpula medio enterrada.',
+      'All four beacons lit. They follow the route Aurora marked towards the west bowl: a half-buried dome lies there.'),
+  },
   collectibles: [
     { ...above(0), id: 'echo-lander' },
     { ...above(5), id: 'echo-pillar-north' },

@@ -27,7 +27,9 @@ export type WorldView = {
   scene: Scene; player: Group; astronaut: Astronaut; luma: Group; lumaModel: Luma; shadow: Mesh; beacon: Mesh;
   points: Map<string, PointView>; echoes: Map<string, Mesh>;
   /** Atlas rocks (mint). `setScanned` dims one once it is in the atlas. */
-  specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void; dust: Dust; footprints: Footprints; ambience: Ambience;
+  specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void;
+  /** Side-mission beacons: a post with a lamp that lights up once repaired. */
+  beacons: Map<string, Mesh>; setBeacon(id: string, lit: boolean): void; dust: Dust; footprints: Footprints; ambience: Ambience;
   /** Lamps that blink in sequence (ramp markers). */
   blinkers: Mesh[];
   sun: [number, number, number];
@@ -469,6 +471,30 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   }
   const setScanned = (id: string, scanned: boolean) => { const m = specimens.get(id); if (m) m.material = scanned ? rockDone : rockFresh; };
 
+  const beacons = new Map<string, Mesh>();
+  const postGeo = new CylinderGeometry(0.09, 0.12, 2.2, 8), lampGeo = new SphereGeometry(0.22, 12, 8);
+  const lampOff = new MeshBasicMaterial({ color: '#3a3542' }), lampOn = new MeshBasicMaterial({ color: palette.warn, fog: false });
+  const haloMat = new SpriteMaterial({ map: glowTexture('#ffd59a'), transparent: true, opacity: 0.8, depthWrite: false, blending: AdditiveBlending });
+  for (const b of level.beacons?.posts ?? []) {
+    const y = heightAt(hf, b.position.x, b.position.z);
+    const post = new Mesh(postGeo, toon('#cfc8d6'));
+    post.add(new Mesh(postGeo, outlineMaterial(0.03)));
+    post.position.set(b.position.x, y + 1.1, b.position.z);
+    const lamp = new Mesh(lampGeo, lampOff);
+    lamp.position.y = 1.2;
+    const halo = new Sprite(haloMat);
+    halo.scale.setScalar(2.2); halo.visible = false; halo.name = 'halo';
+    lamp.add(halo);
+    post.add(lamp);
+    scene.add(post);
+    beacons.set(b.id, lamp);
+  }
+  const setBeacon = (id: string, lit: boolean) => {
+    const lamp = beacons.get(id); if (!lamp) return;
+    lamp.material = lit ? lampOn : lampOff;
+    lamp.getObjectByName('halo')!.visible = lit;
+  };
+
   const astronaut = buildAstronaut();
   const player = astronaut.group;
   const lumaModel = buildLuma();
@@ -481,7 +507,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, dust, footprints, ambience, blinkers, sun,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon, dust, footprints, ambience, blinkers, sun,
     dispose() {
       const seen = new Set<unknown>();
       scene.traverse(o => {

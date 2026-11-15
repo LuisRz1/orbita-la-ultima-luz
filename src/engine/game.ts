@@ -3,6 +3,7 @@ import { buildHeightfield, heightAt, slopeAt } from '../core/heightfield.ts';
 import { createBody, groundAt, stepBody, type Body, type Ground } from '../core/movement.ts';
 import { emptyProgress, readProgress, writeProgress, type Progress } from '../core/save/progress3d.ts';
 import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
+import { beaconCost, beaconInReach } from '../core/beacons.ts';
 import type { Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
 import { buildReport, dashCost, drain, sortieInteract, spend, spendable, startSortie, type Sortie } from '../core/sortie.ts';
@@ -189,6 +190,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     }
     for (const [id, m] of view.echoes) m.visible = !progress.echoes.includes(id);
     for (const id of view.specimens.keys()) view.setScanned(id, progress.atlas.includes(id));
+    for (const id of view.beacons.keys()) view.setBeacon(id, progress.beacons.includes(id));
   }
 
   function start(design: SuitDesign) {
@@ -337,6 +339,25 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     publish(true);
   }
 
+  /** Side mission S2: repairing a post is saved at once and never touches the return reserve. */
+  function repairBeacon(id: string) {
+    const cost = beaconCost(sortie.design);
+    if (spendable(sortie) < cost) {
+      audio.play('blocked');
+      tell(say(`Reparar la baliza cuesta ${cost} u. y no puedes tocar la reserva de retorno.`, `Repairing the beacon costs ${cost} u and the return reserve is off limits.`), 'warn');
+      return;
+    }
+    spend(sortie, 'actions', cost);
+    audio.play('objective');
+    progress = { ...progress, beacons: [...progress.beacons, id] };
+    void save();
+    view.setBeacon(id, true);
+    const total = level.beacons!.posts.length, lit = progress.beacons.length;
+    award({ kind: 'beacon', lit, total });
+    tell(lit >= total ? level.beacons!.reward : say(`Baliza ${lit}/${total} encendida.`, `Beacon ${lit}/${total} lit.`), 'system');
+    publish(true);
+  }
+
   function updateEva(dt: number) {
     const params = suitMovement(tuning, sortie.stats);
     const k = input.look.yaw, fx = -Math.sin(k), fz = -Math.cos(k), rx = Math.cos(k), rz = -Math.sin(k);
@@ -379,6 +400,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         // No mission point in reach: maybe an atlas rock. Nothing at all needs no feedback.
         const rock = specimenInReach(level, progress.atlas, body.x, body.z);
         if (rock) scanSpecimen(rock);
+        else { const post = beaconInReach(level, progress.beacons, body.x, body.z); if (post) repairBeacon(post.id); }
       } else if (result.error === 'requirements') {
         audio.play('blocked');
         tell(say('Todavía no. Faltan pasos antes de esto: revisa la lista de objetivos.', 'Not yet. Other steps come first: check the objective list.'), 'warn');
@@ -522,6 +544,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const reach = phase === 'eva' ? pointInReach(level, sortie.session, body.x, body.z) : null;
     const needs = reach ? instrumentFor[reach.action] : undefined;
     const rock = phase === 'eva' && !reach ? specimenInReach(level, progress.atlas, body.x, body.z) : null;
+    const post = phase === 'eva' && !reach && !rock ? beaconInReach(level, progress.beacons, body.x, body.z) : null;
     const info = viewport.renderer.info.render;
     const here = level.zones.find(q => q.id === zone);
     const cold = zoneDrain(here, sortie.session.completed) > 0;
@@ -541,7 +564,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         blocked: missingFor(level, sortie.session, reach).map(id => level.points.find(p => p.id === id)!.title),
         missing: needs && !sortie.design.instruments.includes(needs) ? instruments[needs].name : null }
         : rock ? { verb: say('Catalogar', 'Catalogue'), title: rock.title, cost: scanCost, blocked: [],
-          missing: sortie.design.instruments.includes('camera') ? null : instruments.camera.name } : null,
+          missing: sortie.design.instruments.includes('camera') ? null : instruments.camera.name }
+        : post ? { verb: say('Reparar', 'Repair'), title: level.beacons!.title, cost: beaconCost(sortie.design), blocked: [], missing: null } : null,
+      beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },
       atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },
       notice, signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), fade, locked: input.locked,
       player: { x: body.x, y: body.y, z: body.z, speed: Math.hypot(body.vx, body.vz), grounded: body.grounded },

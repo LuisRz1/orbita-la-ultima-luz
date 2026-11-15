@@ -24,6 +24,8 @@ export type Specimen = {
   id: string; position: Vec2; title: Localized; fact: Localized;
   basis: 'observation' | 'simplification'; source: { name: string; url: string };
 };
+/** Side mission: unlit posts that the player can repair; the last one gives a hint (`reward`). Never blocks the mission. */
+export type BeaconLine = { title: Localized; posts: { id: string; position: Vec2 }[]; reward: Localized };
 export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover'
   | 'capsule' | 'module' | 'panel';
 export type Prop = { kind: PropKind; solid: Solid };
@@ -45,6 +47,7 @@ export type LevelV2 = {
   fallLimit?: number;
   /** Optional rock atlas: scanning each one costs energy and never blocks the mission. */
   specimens?: Specimen[];
+  beacons?: BeaconLine;
 };
 
 /**
@@ -71,6 +74,11 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
     ids.add(sp.id);
     if (slopeAt(hf, sp.position.x, sp.position.z) > maxSlope) problems.push('specimen on a steep slope: ' + sp.id);
     if (!/^https:\/\//.test(sp.source.url)) problems.push('specimen without an https source: ' + sp.id);
+  }
+  for (const b of level.beacons?.posts ?? []) {
+    if (ids.has(b.id)) problems.push('duplicate id ' + b.id);
+    ids.add(b.id);
+    if (slopeAt(hf, b.position.x, b.position.z) > maxSlope) problems.push('beacon on a steep slope: ' + b.id);
   }
   const exit = level.points.find(p => p.id === level.exit);
   if (!exit || exit.action !== 'upload' || !exit.required) problems.push('exit must be a required upload point');

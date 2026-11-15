@@ -203,7 +203,7 @@ Las opciones nuevas van en una cuarta ranura, `accessories`, con un máximo de 1
   - Se recogen 3 geófonos de la caja de carga en (4, 80) y se plantan en (−24, 46), (40, 10) y (−34, −8), a 3 u. cada uno.
   - Recompensa: el parche «Sismo» y una tarjeta sobre los sismos superficiales registrados por los sismómetros del Apollo.
   - En partidas siguientes hay un sismo cosmético de 1 s: la cámara tiembla y cae polvo de las columnas.
-- **S2. Balizas de Aurora**
+- **S2. Balizas de Aurora** (implementado el 15-nov; parche «Faro» pendiente, por ahora es el logro «Faro»)
   - 4 postes apagados entre el módulo y R1: (−12, 60), (−24, 40), (−34, 18) y (−40, −8). Repararlos cuesta 2 u. (1 u. con kit).
   - Recompensa: el camino queda iluminado para siempre (solo visual), el parche «Faro» y una pista hacia R1.
 - **S3. Atlas completo** (6/6)

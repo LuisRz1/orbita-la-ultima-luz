@@ -178,3 +178,18 @@ test('an atlas rock is catalogued with the camera for one unit and stays dim onc
   await expect(page.locator('[data-prompt]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('the Aurora beacons light one by one and the last gives the hint towards the west bowl', async ({ page }) => {
+  const errors = await open(page);
+  for (const [x, z] of [[-12, 60], [-24, 40], [-34, 18], [-40, -8]]) {
+    await call(page, 'teleport', x + 1.2, z);
+    await call(page, 'step', 2);
+    await settle(page);
+    await expect(page.locator('[data-prompt]')).toContainText('Baliza');
+    await call(page, 'press', 'interact');
+    await call(page, 'step', 2);
+  }
+  await expect(page.locator('[data-beacons]')).toContainText('4/4');
+  await expect(page.getByText('cuenco del oeste')).toBeVisible();
+  expect(errors).toEqual([]);
+});

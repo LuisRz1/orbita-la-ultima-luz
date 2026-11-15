@@ -8,7 +8,7 @@ const s = (es: string, en: string): Localized => ({ es, en });
 export const strings = {
   loading: s('CARGANDO SUPERFICIE…', 'LOADING SURFACE…'),
   eva: s('EVA · SUPERFICIE', 'EVA · SURFACE'),
-  objectives: s('objetivos', 'objectives'), nextGoal: s('siguiente', 'next'), allDone: s('vuelve al módulo', 'head back to the lander'), echoes: s('ecos', 'echoes'), atlas: s('atlas', 'atlas'), optional: s('opc', 'opt'),
+  objectives: s('objetivos', 'objectives'), nextGoal: s('siguiente', 'next'), allDone: s('vuelve al módulo', 'head back to the lander'), echoes: s('ecos', 'echoes'), atlas: s('atlas', 'atlas'), beacons: s('balizas', 'beacons'), optional: s('opc', 'opt'),
   link: s('ENLACE', 'LINK'), signal: s('Señal', 'Signal'), systems: s('SISTEMAS', 'SYSTEMS'), battery: s('batería', 'battery'),
   reserve: s('reserva de retorno', 'return reserve'), energy: s('Energía', 'Energy'),
   gravityNote: s('movimiento estilizado', 'stylised movement'),
