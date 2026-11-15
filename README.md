@@ -51,7 +51,7 @@ La ambientación será un futuro cercano hipotético. Los datos científicos ten
 
 ## Tecnología acordada
 
-Phaser 4.2.1, TypeScript, Vite, React, Zustand, Zod e IndexedDB con Dexie. Tiled para mapas y LibreSprite para sprites. Vercel para la publicación y un servicio opcional de conversación online. El juego completo deberá poder jugarse sin pagar IA.
+three.js 0.187 (WebGL, sin motor de física: controlador propio sobre mapas de alturas), React 19 para la interfaz, Zustand, Zod, IndexedDB con Dexie, TypeScript y Vite. Audio procedural con Web Audio y voces de LUMA pregrabadas. Phaser solo para la versión 2D de `/?legacy`. Decisión en [ADR-006](brain/03-Arquitectura/ADR/ADR-006.md). Vercel para la publicación. El juego completo se juega sin pagar IA.
 
 Las versiones del kit están fijadas en el lockfile. [Entorno](brain/06-Produccion/ENTORNO.md) distingue las herramientas usadas de las previstas.
 
