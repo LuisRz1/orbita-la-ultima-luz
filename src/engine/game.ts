@@ -1086,7 +1086,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         running: !!lumaRun, fetching: fetching?.id ?? null, warmth: sortie.lumaWarmth, relief: warmth, trail: lumaRun?.marks.length ?? 0 } }),
     step: (count: number) => loop.step(count),
     pause: (value: boolean) => { loop.paused = value; },
-    perf: () => ({ ...hud.getState(), ratio: viewport.ratio, width: viewport.width, height: viewport.height }),
+    // Publishes first so the numbers belong to the last rendered frame, not to the state built before the first one.
+    perf: () => { publish(true); return { ...hud.getState(), ratio: viewport.ratio, width: viewport.width, height: viewport.height }; },
     teleport: (x: number, z: number) => teleport(x, z),
     press: (action: Actions) => input.press(action),
     hold: (action: Actions, down: boolean) => input.hold(action, down),
