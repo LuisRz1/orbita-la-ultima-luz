@@ -5,6 +5,7 @@
 // Bennu is real; the human visit, the refuge and the service module are hypothetical.
 import type { Localized } from '../../core/contract/grid-v1.ts';
 import type { LevelPoint, LevelV2, Prop } from '../../core/contract/level-v2.ts';
+import { bennuSpecimens } from './atlas.ts';
 import { bennuHeight, boulders, landmarks } from './terrain.ts';
 
 const t = (es: string, en: string): Localized => ({ es, en });
@@ -90,6 +91,7 @@ export const bennuLevel: LevelV2 = {
   // Microgravity, stylised: long slow hops and a gentle run, so the anchor line and speed control matter.
   movement: { gravityUp: 1.6, gravityDown: 2.2, cutGravity: 4, jumpSpeed: 3.8, airJumpSpeed: 3, runSpeed: 4.2, groundAccel: 12, airAccel: 3, dashSpeed: 9, dashKeep: 5 },
   tether: 6,
+  specimens: bennuSpecimens,
   zones: [
     { id: 'contact', title: t('Punto de contacto', 'Contact site'), center: { x: 0, z: 64 }, radius: 20 },
     { id: 'monolith', title: t('El gran bloque', 'The great block'), center: landmarks.monolith, radius: 18 },

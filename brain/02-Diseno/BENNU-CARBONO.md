@@ -39,5 +39,5 @@ Bioma `carbono`: suelo carbón con luces arena, sombras azul profundo, cielo neg
 ## Pendiente
 
 - M01, M04, M05 y M06 como secuencias.
-- Contenido secundario: 8 encargos y hallazgos del capítulo.
+- Contenido secundario: 8 encargos y hallazgos del capítulo. Hecho: atlas de 5 rocas con la ficha NASA (`src/levels/bennu/atlas.ts`).
 - Voces de LUMA para Bennu.

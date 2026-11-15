@@ -43,3 +43,14 @@ test('LUMA and Control never spoil the incident; the sister speaks only after AU
     if (line.speaker === 'AURORA') assert.equal(key, 'complete');
   }
 });
+
+test('the Bennu atlas has five sourced rocks, each reachable on foot', () => {
+  const rocks = bennuLevel.specimens!;
+  assert.equal(rocks.length, 5);
+  const reach = walkable(hf, bennuLevel.spawn, defaultParams.maxSlope);
+  const step = hf.size / (hf.res - 1);
+  for (const r of rocks) {
+    assert.match(r.source.url, /^https:\/\/science\.nasa\.gov\//);
+    assert.equal(reach[Math.round((r.position.z + hf.size / 2) / step) * hf.res + Math.round((r.position.x + hf.size / 2) / step)], 1, r.id);
+  }
+});
