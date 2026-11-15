@@ -39,6 +39,7 @@ export function SortieReport({ report, onRedesign, onRetry, onEpilogue }: { repo
         <button className={done && !next && !finale ? 'primary' : ''} data-retry onClick={onRetry}>{t('retry')}</button>
         {done && finale && <button className="primary" data-sfx="ui-confirm" data-epilogue-open onClick={onEpilogue}>{t('epilogue')} ↗</button>}
         {done && next && <button className="primary" data-sfx="ui-confirm" data-next={next.id} onClick={() => commands.travel(next.id)}>{t('continueTo')} {t(next.name)} ↗</button>}
+        <button data-report-menu onClick={() => commands.toMenu()}>{t('mainMenu')}</button>
       </div>
       <p className="model-note">{t('modelNote')}</p>
     </section>

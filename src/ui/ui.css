@@ -208,6 +208,25 @@
 }
 .orbita .menu-list button:hover, .orbita .menu-list button:focus-visible { border-color: var(--accent); background: rgb(127 227 224 / 10%); padding-left: 24px; outline: none; }
 .orbita .menu-list button.first { border-color: var(--accent); }
+/* Route: the other destinations as compact chips, so the list fits a 720 px screen even with the campaign open. */
+.orbita .route { display: grid; gap: 6px; padding: 8px 0 4px; }
+.orbita .route-label { color: var(--dim); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; }
+.orbita .route-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.orbita .menu-list .route-list button { padding: 7px 10px; font-size: 12px; letter-spacing: 0.12em; }
+.orbita .menu-list .route-list button:hover:not(:disabled) { padding-left: 14px; }
+.orbita .menu-list .route-list button:disabled { color: var(--dim); border-style: dashed; cursor: not-allowed; }
+.orbita .menu-list .route-list button:disabled:hover { border-color: var(--frame); background: rgb(11 15 20 / 55%); padding-left: 10px; }
+.orbita .route-note { color: var(--dim); font-size: 11px; }
+/* Short screens (1280×720 and laptops with browser chrome): tighter title and list; scroll as a last resort. */
+.orbita .menu-main { max-height: calc(100% - 12vh - 16px); overflow-y: auto; scrollbar-width: thin; }
+@media (max-height: 820px) {
+  .orbita .menu-main { top: 6vh; max-height: calc(100% - 6vh - 12px); }
+  .orbita .game-title { font-size: clamp(40px, 6vw, 72px); }
+  .orbita .game-subtitle { margin: 10px 0 16px; }
+  .orbita .premise { margin-bottom: 18px; font-size: 13px; line-height: 1.6; }
+  .orbita .menu-list { gap: 6px; }
+  .orbita .menu-list button { padding: 9px 16px; }
+}
 .orbita .data-card { right: 6vw; top: 30vh; width: min(360px, 40vw); padding: 18px 20px; }
 .orbita .data-card dl { display: grid; grid-template-columns: auto 1fr; gap: 12px 20px; margin: 0; }
 .orbita .data-card dt { color: var(--dim); letter-spacing: 0.2em; text-transform: uppercase; font-size: 11px; }

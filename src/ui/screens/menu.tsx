@@ -16,6 +16,7 @@ export function MainMenu() {
   const { hasProgress, facts, destinations, collection } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
+  const others = destinations.filter(d => !d.current);
   return <div className="screen menu-screen">
     <section className="menu-main">
       <h1 className="game-title">ÓRBITA</h1>
@@ -24,9 +25,15 @@ export function MainMenu() {
       <nav className="menu-list" aria-label="menu">
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
-        {destinations.filter(d => !d.current).map(d => d.unlocked
-          ? <button key={d.id} data-sfx="ui-confirm" data-travel={d.id} onClick={() => commands.travel(d.id)}>{t('travelTo')} {t(d.name)} ↗</button>
-          : <button key={d.id} disabled data-travel-locked={d.id}>{t(d.name)} · {t('routeLocked')}</button>)}
+        {others.length > 0 && <div className="route" aria-label={t('route')}>
+          <span className="route-label">{t('route')}</span>
+          <div className="route-list">
+            {others.map(d => d.unlocked
+              ? <button key={d.id} data-sfx="ui-confirm" data-travel={d.id} onClick={() => commands.travel(d.id)}>{t(d.name)} ↗</button>
+              : <button key={d.id} disabled data-travel-locked={d.id} title={t('routeLocked')}>{t(d.name)}</button>)}
+          </div>
+          {others.some(d => !d.unlocked) && <small className="route-note">{t('routeLockedNote')}</small>}
+        </div>}
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
         {collection.atlas.length + collection.pages.length > 0 && <button data-sfx="ui-open" data-menu="journal" onClick={() => setSub('journal')}>{t('journal')}</button>}

@@ -53,6 +53,7 @@ export const strings = {
   premise: s('La expedición Aurora desapareció y la búsqueda se suspendió. Tu hermana iba a bordo. Con LUMA, una criatura que nadie terminó de entender, sigues su rastro hasta un cráter de la Luna. Diseña cada salida, gestiona la batería y trae de vuelta lo que ella dejó.',
     'The Aurora expedition vanished and the search was called off. Your sister was on board. With LUMA, a creature no one quite understood, you follow the trail to a crater on the Moon. Design each sortie, manage the battery and bring back what she left behind.'),
   travelTo: s('Viajar a', 'Travel to'), routeLocked: s('completa el destino anterior', 'complete the previous destination'),
+  route: s('Ruta · viajar a', 'Route · travel to'), routeLockedNote: s('Los destinos en gris se abren al completar el anterior.', 'Grey destinations open once you complete the one before.'),
   continueTo: s('Continuar a', 'Continue to'), outcomeTitle: s('lo que ahora sabemos', 'what we know now'),
   continue: s('Continuar', 'Continue'),newExpedition: s('Nueva expedición', 'New expedition'), settings: s('Ajustes', 'Settings'),
   achievements: s('Logros', 'Achievements'), credits: s('Créditos y fuentes', 'Credits and sources'), back: s('Volver', 'Back'),
