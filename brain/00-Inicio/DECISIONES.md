@@ -44,3 +44,7 @@ Seis misiones por capítulo, Bennu y los objetivos concretos son la propuesta ed
 La [historia principal](../02-Diseno/HISTORIA-PRINCIPAL.md) documenta la propuesta de Aurora que el propietario pidió subir: cápsula con LUMA, registros lunares, investigación en Marte, reencuentro, evacuación, sacrificio y regreso. Los detalles del contenedor, manifiesto y fallo técnico son desarrollo editorial del plan; no requisitos oficiales de NASA ni citas del propietario. La escala terrestre intermedia de la revisión 1.1 queda sustituida por reabastecimiento en Marte.
 
 Cambiar una decisión de producto requiere registrarlo aquí y actualizar el plan, alcance y tareas afectados. No volver a solicitar confirmación para la publicación pública que ya está autorizada.
+
+## 15 de noviembre: aspecto por encima del coste de GPU
+
+El propietario indicó en la sesión del 15-nov-2026 («olvida mi gráfica, no te limites») que el aspecto visual tiene prioridad sobre el presupuesto de Iris Xe. Se permite posproceso y efectos de mayor coste en calidad media y alta; la calidad baja debe seguir siendo usable en equipos débiles. Ver [ADR-006](../03-Arquitectura/ADR/ADR-006.md).
