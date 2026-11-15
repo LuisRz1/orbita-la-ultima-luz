@@ -3,7 +3,14 @@ import { createStore } from 'zustand/vanilla';
 import type { Language } from '../core/contract/grid-v1.ts';
 import { tierIds, type Tier } from '../engine/quality.ts';
 
-export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean; quality: 'auto' | Tier; master: number; music: number; sfx: number; paintedSky: boolean; patch: string | null };
+export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean; quality: 'auto' | Tier; master: number; music: number; sfx: number; paintedSky: boolean; patch: string | null;
+  /** Post-processing (bloom, shafts, depth of field) on medium and high quality. */
+  effects: boolean;
+  /** Arrival shot when a sortie begins. */
+  cinematics: boolean;
+  /** Sortie camera: behind the shoulder or from inside the helmet. */
+  view: 'third' | 'first';
+};
 const key = 'orbita-3d-prefs';
 
 const volume = (v: unknown, fallback: number) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : fallback);
@@ -18,7 +25,7 @@ function firstLanguage(): Language {
 function load(): Prefs {
   const base: Prefs = {
     lang: firstLanguage(), sensitivity: 1,
-    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: false, patch: null,
+    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: false, patch: null, effects: true, cinematics: true, view: 'third',
   };
   try {
     const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as Partial<Prefs> | null;
@@ -32,6 +39,7 @@ function load(): Prefs {
       master: volume(saved.master, base.master), music: volume(saved.music, base.music), sfx: volume(saved.sfx, base.sfx),
       paintedSky: saved.paintedSky === true,
       patch: typeof saved.patch === 'string' ? saved.patch : null,
+      effects: saved.effects !== false, cinematics: saved.cinematics !== false, view: saved.view === 'first' ? 'first' : 'third',
     };
   } catch { return base; }
 }

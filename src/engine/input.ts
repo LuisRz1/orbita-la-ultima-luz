@@ -15,6 +15,10 @@ export class Input {
   lastLook = -Infinity;
   /** Camera distance in metres, changed with the mouse wheel. */
   zoom = 6.4;
+  /** Lowest pitch the mouse may reach; the helmet view and the photo mode let the player look up further. */
+  pitchMin = -0.15;
+  /** Farthest wheel zoom (the photo mode pulls back further). */
+  zoomMax = 11;
   private held = new Set<Actions>();
   private pressed = new Set<Actions>();
   private readonly target: HTMLElement;
@@ -35,13 +39,13 @@ export class Input {
     target.addEventListener('click', () => { if (document.pointerLockElement !== target) target.requestPointerLock?.(); }, { signal });
     target.addEventListener('wheel', e => {
       e.preventDefault();
-      this.zoom = Math.min(11, Math.max(3.2, this.zoom + Math.sign(e.deltaY) * 0.6));
+      this.zoom = Math.min(this.zoomMax, Math.max(3.2, this.zoom + Math.sign(e.deltaY) * 0.6));
     }, { signal, passive: false });
     window.addEventListener('mousemove', e => {
       if (document.pointerLockElement !== target) return;
       this.lastLook = performance.now();
       this.look.yaw -= e.movementX * this.sensitivity;
-      this.look.pitch = Math.min(1.2, Math.max(-0.15, this.look.pitch + e.movementY * this.sensitivity));
+      this.look.pitch = Math.min(1.2, Math.max(this.pitchMin, this.look.pitch + e.movementY * this.sensitivity));
     }, { signal });
   }
 

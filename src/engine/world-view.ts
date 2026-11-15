@@ -147,7 +147,7 @@ function scatterRocks(level: LevelV2, hf: Heightfield, density: number) {
 
 /** Ring buffer of boot prints pressed into the regolith; one instanced draw call. */
 function footprintPool(): { mesh: InstancedMesh; footprints: Footprints } {
-  const max = 220;
+  const max = 480;
   const geo = new PlaneGeometry(0.28, 0.42);
   geo.rotateX(-Math.PI / 2);
   const mat = new MeshBasicMaterial({ map: footprintTexture(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, toneMapped: false });
@@ -379,7 +379,7 @@ function mergeStatic(root: Group, keep: Mesh[]) {
 
 /** Pooled dust puffs for landings and dashes. */
 function dustPool(gravity: number, air: number): { points: Points; dust: Dust } {
-  const max = 96;
+  const max = 192;
   const pos = new Float32Array(max * 3), vel = new Float32Array(max * 3), life = new Float32Array(max);
   const geometry = new BufferGeometry();
   const attr = new BufferAttribute(pos, 3);

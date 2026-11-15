@@ -242,9 +242,26 @@ export function playSfx(ctx: BaseAudioContext, dry: AudioNode, wet: AudioNode, n
   }
 }
 
+/**
+ * Each destination colours the same score: a key (semitones from D), how often the bells ring and their timbre.
+ * LUMA's motif (three rising notes) is woven into the bells only while it is alive and with the player.
+ */
+export type ScorePalette = { transpose: number; bellGap: number; bellWave: OscillatorType; padLength: number };
+export const scorePalettes: Record<string, ScorePalette> = {
+  orbit: { transpose: 5, bellGap: 1, bellWave: 'triangle', padLength: 16 },
+  moon: { transpose: 0, bellGap: 1, bellWave: 'triangle', padLength: 16 },
+  mars: { transpose: -3, bellGap: 1.3, bellWave: 'sine', padLength: 18 },
+  bennu: { transpose: -5, bellGap: 1.6, bellWave: 'sine', padLength: 20 },
+  extraction: { transpose: -5, bellGap: 1.9, bellWave: 'sine', padLength: 22 },
+};
+
 /** Generative score. `schedule` is called ahead of time and places notes in [from, to). */
 export class Score {
   mood: Mood = 'silent';
+  palette: ScorePalette = scorePalettes.moon;
+  motif = false;
+  private bellCount = 0;
+  private readonly droneOscs: OscillatorNode[] = [];
   private chord = 0;
   private nextChord = 0;
   private nextBell = 0;
@@ -267,11 +284,18 @@ export class Score {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.type = type; o.frequency.value = f; g.gain.value = level;
       o.connect(g).connect(this.drone); o.start();
+      this.droneOscs.push(o);
     }
     // Slow filter breathing (about 14 s per cycle).
     const lfo = ctx.createOscillator(), depth = ctx.createGain();
     lfo.frequency.value = 0.07; depth.gain.value = 180;
     lfo.connect(depth).connect(this.filter.frequency); lfo.start();
+  }
+
+  setPalette(p: ScorePalette, t = this.ctx.currentTime) {
+    this.palette = p;
+    const k = Math.pow(2, p.transpose / 12);
+    [36.71, 73.42, 73.9].forEach((f, i) => this.droneOscs[i]?.frequency.setTargetAtTime(f * k, t, 1.5));
   }
 
   setMood(mood: Mood, t = this.ctx.currentTime) {
@@ -300,7 +324,7 @@ export class Score {
       g.connect(this.filter);
       for (const cents of [-7, 6]) {
         const o = this.ctx.createOscillator();
-        o.type = 'sawtooth'; o.frequency.value = midi(n); o.detune.value = cents;
+        o.type = 'sawtooth'; o.frequency.value = midi(n + this.palette.transpose); o.detune.value = cents;
         o.connect(g); o.start(t); o.stop(end + 0.1);
       }
     });
@@ -308,7 +332,7 @@ export class Score {
 
   schedule(from: number, to: number) {
     if (this.mood === 'silent') return;
-    const length = this.mood === 'menu' ? 18 : 16;
+    const length = this.mood === 'menu' ? 18 : this.palette.padLength;
     if (this.nextChord < to) {
       const at = Math.max(from, this.nextChord);
       this.pad(at, chords[this.chord % chords.length], length);
@@ -320,9 +344,18 @@ export class Score {
       // Sparse bells: one every 3–9 s, from the chord's colour, low octave; fewer in the cold.
       const pool = this.mood === 'cold' ? bells.slice(0, 3) : bells;
       const n = pool[(Math.floor(at * 7.3) % pool.length + pool.length) % pool.length] - (this.mood === 'cold' ? 12 : 0);
-      tone(this.ctx, this.wet, at, midi(n), { a: 0.01, d: 3.5, peak: this.mood === 'menu' ? 0.05 : 0.035 }, 'triangle');
-      tone(this.ctx, this.out, at, midi(n), { a: 0.005, d: 1.8, peak: 0.02 }, 'sine');
-      this.nextBell = at + 3 + ((Math.sin(at * 12.9898) * 43758.5453) % 1 + 1) % 1 * 6;
+      const key = this.palette.transpose;
+      if (this.motif && this.mood !== 'cold' && ++this.bellCount % 5 === 0) {
+        // LUMA's motif: a small rising call, answered by its echo an octave down.
+        [0, 3, 7].forEach((step, i) => {
+          tone(this.ctx, this.wet, at + i * 0.32, midi(62 + step + key), { a: 0.01, d: 2.6, peak: 0.032 }, 'triangle');
+          tone(this.ctx, this.wet, at + 1.4 + i * 0.32, midi(50 + step + key), { a: 0.01, d: 2.6, peak: 0.018 }, 'sine');
+        });
+      } else {
+        tone(this.ctx, this.wet, at, midi(n + key), { a: 0.01, d: 3.5, peak: this.mood === 'menu' ? 0.05 : 0.035 }, this.palette.bellWave);
+        tone(this.ctx, this.out, at, midi(n + key), { a: 0.005, d: 1.8, peak: 0.02 }, 'sine');
+      }
+      this.nextBell = at + (3 + ((Math.sin(at * 12.9898) * 43758.5453) % 1 + 1) % 1 * 6) * this.palette.bellGap;
     }
   }
 }
@@ -388,6 +421,8 @@ export class GameAudio {
     this.buildWind(ctx);
     this.applyWind();
     this.applyVolumes();
+    this.score.setPalette(this.pendingPalette);
+    this.score.motif = this.pendingMotif;
     this.score.setMood(this.pendingMood);
     this.timer = window.setInterval(() => { const t = ctx.currentTime; this.score.schedule(t, t + 0.6); }, 250);
   }
@@ -432,6 +467,13 @@ export class GameAudio {
   }
 
   mood(m: Mood) { this.pendingMood = m; if (this.ctx) this.score.setMood(m); }
+
+  private pendingPalette: ScorePalette = scorePalettes.moon;
+  private pendingMotif = false;
+  /** Destination colour of the score (key, bells). */
+  palette(id: string) { this.pendingPalette = scorePalettes[id] ?? scorePalettes.moon; if (this.ctx) this.score.setPalette(this.pendingPalette); }
+  /** LUMA's motif in the bells: on while it is with the player, gone for good after the farewell. */
+  lumaMotif(on: boolean) { this.pendingMotif = on; if (this.ctx) this.score.motif = on; }
 
   play(name: Sfx) { if (this.ctx && this.ctx.state === 'running') playSfx(this.ctx, this.sfx, this.wet, name); }
 

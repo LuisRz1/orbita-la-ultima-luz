@@ -28,6 +28,9 @@ import { biome, setBiome } from './style.ts';
 import { zoneDrain, type Vec2 } from '../core/contract/level-v2.ts';
 import { cooldownLeft, createAbilities, glowRelief, hazardAhead, highEcho, sniffTarget, trail, type ScentKind } from '../core/luma-abilities.ts';
 import { createFx } from './fx.ts';
+import { createPost, type Post } from './post.ts';
+import { arrivalShot, type Shot, type ShotFrame } from './cinematic.ts';
+import { debugEnabled } from './debug.ts';
 
 export type Game = { dispose(): void };
 
@@ -65,6 +68,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   // The palette must be chosen before any material, texture or model is built.
   setBiome(biomeId);
   audio.setWind(biome.wind);
+  audio.palette(level.id);
   audio.setStorm(0);
   const tier = startingTier();
   const viewport = createViewport(host, tier);
@@ -72,10 +76,27 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const ground: Ground = { height: (x, z) => heightAt(hf, x, z), slope: (x, z) => slopeAt(hf, x, z), solids: level.props.map(p => p.solid) };
   const view = buildWorldView(level, hf, tiers[tier].scatter, tier === 'low' ? 3 : 4);
   const interior = buildInterior();
-  const fx = createFx(view.scene);
+  const vfx = createFx(view.scene);
+  // Post-processing follows the quality tier and the «effects» setting; switching the setting rebuilds it.
+  let post: Post | null = null, postFor: string | null = null;
+  const frameStats = () => post?.stats ?? { calls: 0, triangles: 0 };
+  const ensurePost = () => {
+    const wanted = prefs.getState().effects ? tier : 'low';
+    if (wanted === postFor && post) return post;
+    post?.dispose();
+    post = createPost(viewport.renderer, view.scene, camera, wanted, {
+      bloom: tier === 'high' ? 0.62 : 0.5,
+      // Shafts read as light through dust; on airless worlds only a faint streak remains (art choice).
+      shafts: biome.air > 0 ? 0.55 : 0.16, tint: biome.sunColor,
+    });
+    post.sun(view.sun);
+    post.setSize(viewport.width, viewport.height, viewport.ratio);
+    postFor = wanted;
+    return post;
+  };
   let activeGround: Ground = ground;
   const camera = new PerspectiveCamera(62, 1, 0.1, 700);
-  viewport.onResize((w, h) => { camera.aspect = w / h; camera.updateProjectionMatrix(); });
+  viewport.onResize((w, h) => { camera.aspect = w / h; camera.updateProjectionMatrix(); post?.setSize(w, h, viewport.ratio); });
   const input = new Input(viewport.renderer.domElement);
   const applyPrefs = () => {
     const p = prefs.getState();
@@ -103,6 +124,17 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   let fetching: { id: string; start: number; home: Vector3 } | null = null;
   let alertUntil = 0, quakeWarned = false, warmth = 0;
   const runSpeed = 11;
+  /** Arrival shot (cinematic.ts): plays on the first sortie of a visit; the sortie begins when it ends or is skipped. */
+  let cine: { shot: Shot; start: number; touched: boolean } | null = null, arrived = false;
+  const shotFrame: ShotFrame = { position: new Vector3(), look: new Vector3(), focus: 8 };
+  const cinematicsOn = () => prefs.getState().cinematics && !prefs.getState().reduceMotion
+    && (!debugEnabled() || new URLSearchParams(window.location.search).has('cinematic'));
+  /** Camera feel: field-of-view kick after a dash and a short shake after a hard landing. */
+  let fovKick = 0, shake = 0, fallSpeed = 0;
+  const baseFov = 62;
+  /** Helmet view (V or the setting) and photo mode (P): camera-only, the simulation and collisions are unchanged. */
+  const firstPerson = () => prefs.getState().view === 'first' && phase === 'eva' && !cine;
+  let photo = false, bob = 0;
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
 
@@ -135,7 +167,14 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   if (new URLSearchParams(window.location.search).has('demo')) for (const r of route) unlocked.add(r.id);
   const routeIndex = route.findIndex(r => r.id === levelId);
   const nextStop = routeIndex >= 0 && routeIndex < route.length - 1 ? route[routeIndex + 1] : null;
-  const travel = (id: string) => { if (unlocked.has(id)) window.location.assign(levelUrl(id, window.location.search)); };
+  // Travelling fades to black first, then loads the destination.
+  let leavingTo: string | null = null;
+  const travel = (id: string) => {
+    if (!unlocked.has(id)) return;
+    // A paused loop (deterministic tests) or reduced motion goes at once.
+    if (loop.paused || prefs.getState().reduceMotion) window.location.assign(levelUrl(id, window.location.search));
+    else leavingTo = id;
+  };
   let storm = false;
   function setStorm(on: boolean) {
     storm = on;
@@ -240,9 +279,44 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     setStorm(false);
     resetPointsView();
     phase = 'eva'; paused = false;
-    tell(level.arrival);
     award({ kind: 'sortie', designs: [...progress.attempts.map(a => a.design), design] });
+    if (!arrived && cinematicsOn()) {
+      const lander = level.props.find(p => p.kind === 'lander' || p.kind === 'module')?.solid ?? { x: level.spawn.x, z: level.spawn.z - 6 };
+      const end = new Vector3(body.x + Math.sin(input.look.yaw) * Math.cos(input.look.pitch) * input.zoom, body.y + 1.5 + Math.sin(input.look.pitch) * input.zoom,
+        body.z + Math.cos(input.look.yaw) * Math.cos(input.look.pitch) * input.zoom);
+      cine = { shot: arrivalShot(new Vector3(body.x, body.y, body.z), input.look.yaw, end, new Vector3(lander.x, heightAt(hf, lander.x, lander.z), lander.z), (x, z) => heightAt(hf, x, z)), start: time, touched: false };
+      audio.play('whoosh');
+      fade = 1;
+    } else beginSortie();
+    arrived = true;
+    publish(true);
+  }
+
+  /** The sortie proper: arrival line and the intro dialogue, after the arrival shot if there is one. */
+  function beginSortie() {
+    cine = null;
+    tell(level.arrival);
     play('intro');
+  }
+
+  function updateCinematic(dt: number) {
+    if (!cine) return;
+    const t = time - cine.start;
+    fade = Math.max(0, fade - dt * 1.4);
+    // Touchdown: the lander's last settle kicks up a ring of dust.
+    if (!cine.touched && t > 0.5) {
+      cine.touched = true;
+      const lander = level.props.find(p => p.kind === 'lander' || p.kind === 'module')?.solid;
+      if (lander) {
+        const y = heightAt(hf, lander.x, lander.z);
+        for (let a = 0; a < 6; a++) view.dust.burst(lander.x + Math.cos(a) * 3.5, y, lander.z + Math.sin(a) * 3.5, 8, 2.6);
+        vfx.pulse(lander.x, y, lander.z, 14, biome.puff);
+      }
+      audio.play('touchdown');
+    }
+    const skip = (['interact', 'jump', 'pause', 'dash', 'luma'] as const).some(a => input.wasPressed(a))
+      || (['up', 'down', 'left', 'right'] as const).some(a => input.isHeld(a));
+    if (skip || t >= cine.shot.duration) beginSortie();
   }
 
   function finish() {
@@ -350,7 +424,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     publish(true);
   };
   commands.closeStation = () => { input.endStep(); ship.open = null; audio.play('ui-close'); publish(true); };
-  commands.toMenu = () => { phase = 'menu'; paused = false; dialogue = null; hud.setState({ report: null }); if (document.pointerLockElement) document.exitPointerLock(); publish(true); };
+  commands.toMenu = () => { cine = null; phase = 'menu'; paused = false; dialogue = null; hud.setState({ report: null }); if (document.pointerLockElement) document.exitPointerLock(); publish(true); };
   commands.resume = () => { paused = false; publish(true); };
   commands.abandon = toDesign;
   commands.advance = advance;
@@ -491,8 +565,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (!scent) { audio.play('luma'); tell(say('LUMA olfatea en círculo y vuelve a tu lado: aquí ya no queda nada que encontrar.', 'LUMA sniffs in a circle and comes back: nothing left to find here.')); return; }
     const marks = trail({ x: body.x, z: body.z }, scent.position);
     abilities.readyAt = sortie.time + abilities.stage.cooldown; abilities.sniffs++;
-    fx.trail(marks, (x, z) => heightAt(hf, x, z), time, runSpeed);
-    fx.pulse(body.x, groundAt(ground, body.x, body.z, body.y + 0.1), body.z, 6, biome.lumaCore);
+    vfx.trail(marks, (x, z) => heightAt(hf, x, z), time, runSpeed);
+    vfx.pulse(body.x, groundAt(ground, body.x, body.z, body.y + 0.1), body.z, 6, biome.lumaCore);
     lumaRun = { start: time, marks, until: time + (marks.length * 1.6) / runSpeed + 1.6 };
     audio.play('luma-sniff');
     const far = scent.distance > marks.length * 1.6 + 2;
@@ -516,14 +590,23 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       x: fx * ay + rx * ax, z: fz * ay + rz * ax,
       jump: input.wasPressed('jump'), jumpHeld: input.isHeld('jump'), dash,
     }, ground, params, dt);
-    if (events.dashed) { spend(sortie, 'dash', dashCost); award({ kind: 'dash' }); view.dust.burst(body.x, body.y, body.z, 10, 1.2); audio.play('dash'); }
-    if (events.landed) { view.dust.burst(body.x, body.y, body.z, 14, 1.8); audio.play('land'); }
+    if (events.dashed) { spend(sortie, 'dash', dashCost); award({ kind: 'dash' }); view.dust.burst(body.x, body.y, body.z, 16, 1.6); audio.play('dash'); fovKick = 1; post?.kick(0.5); }
+    if (events.landed) {
+      // Harder landings throw more dust and shake the camera a little.
+      const hard = Math.min(1, Math.max(0, (fallSpeed - 3) / 6));
+      view.dust.burst(body.x, body.y, body.z, 14 + Math.round(hard * 18), 1.8 + hard * 1.4);
+      vfx.pulse(body.x, body.y, body.z, 1.5 + hard * 2.5, biome.puff);
+      shake = Math.max(shake, hard * 0.6);
+      audio.play('land');
+    }
+    fallSpeed = body.grounded ? 0 : Math.max(fallSpeed, -body.vy);
     if (events.airJumped) { spend(sortie, 'thruster', sortie.stats.airJumpCost); award({ kind: 'air-jump' }); audio.play('thrust'); }
     if (events.jumped) audio.play('jump');
     if (body.grounded) {
       stepDistance += Math.hypot(body.vx, body.vz) * dt;
       if (stepDistance > 1.15) {
         stepDistance = 0; audio.play('step');
+        if (tier !== 'low' && biome.footprints) view.dust.burst(body.x, body.y, body.z, 2, 0.35);
         if (biome.footprints) view.footprints.place(body.x, groundAt(ground, body.x, body.z, body.y + 0.1), body.z, body.facing);
       }
     }
@@ -532,6 +615,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       const result = sortieInteract(level, sortie, body.x, body.z);
       if (result.ok) {
         audio.play(result.point.action === 'scan' ? 'scan' : 'objective');
+        vfx.pulse(body.x, body.y, body.z, result.point.action === 'scan' ? 16 : 7, result.point.action === 'scan' ? biome.cyan : biome.amber);
         resetPointsView();
         tell(result.point.result);
         if (sortie.outcome === 'complete') ending = 1.2;
@@ -569,6 +653,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     for (const id of picked) gainEcho(id);
 
     if (!frozen && input.wasPressed('luma')) callLuma();
+    // R: free scanner sweep over the ground. Purely a look around: it shows nothing the map does not.
+    if (!frozen && input.wasPressed('scan')) { vfx.pulse(body.x, body.y, body.z, 18, biome.cyan); audio.play('scan'); }
     if (fetching && time - fetching.start > 2.2) {
       // LUMA is back with the echo.
       const id = fetching.id;
@@ -680,7 +766,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (ending > 0) { ending -= dt; if (ending <= 0) { finish(); return; } }
 
     idleFor = moving ? 0 : idleFor + dt;
-    if (moving && performance.now() - input.lastLook > 1800) input.look.yaw = angleLerp(input.look.yaw, Math.atan2(-body.dirX, -body.dirZ), dt * 0.9);
+    if (moving && !firstPerson() && performance.now() - input.lastLook > 1800) input.look.yaw = angleLerp(input.look.yaw, Math.atan2(-body.dirX, -body.dirZ), dt * 0.9);
     if (events.landed || events.dashed || events.airJumped) publish(true);
   }
 
@@ -701,7 +787,14 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
   function update(dt: number) {
     time += dt;
+    if (leavingTo) {
+      fade = Math.min(1, fade + dt * 2.4);
+      publish(true);
+      if (fade >= 1) { const id = leavingTo; leavingTo = null; window.location.assign(levelUrl(id, window.location.search)); }
+      return;
+    }
     audio.mood(currentMood());
+    audio.lumaMotif(phase === 'eva' && lumaHere() && !carried());
     audio.tick(phase === 'eva' && !paused ? signalAt(level, body.x, body.z, sortie.stats.commsRadius) : 1,
       phase === 'eva' && !paused && spendable(sortie) < 15);
     const line = dialogue ? dialogue.lines[dialogue.index] : null;
@@ -716,11 +809,27 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     // Losing pointer lock in the middle of a sortie (Esc, alt-tab) pauses it.
     const locked = input.locked;
     const lostLock = wasLocked && !locked;
-    if (lostLock && phase === 'eva' && !dialogue) { paused = true; publish(true); }
+    if (lostLock && phase === 'eva' && !dialogue && !photo) { paused = true; publish(true); }
     wasLocked = locked;
     if (dialogue && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
-    else if (phase === 'eva' && input.wasPressed('pause') && !lostLock) { paused = !paused; publish(true); }
-    if (phase === 'eva' && !paused && !dialogue) updateEva(dt);
+    else if (phase === 'eva' && input.wasPressed('pause') && !lostLock && !photo) { paused = !paused; publish(true); }
+    if (phase === 'eva' && !cine && !dialogue && !paused && input.wasPressed('view')) {
+      prefs.setState({ view: prefs.getState().view === 'first' ? 'third' : 'first' });
+      audio.play('ui-tic');
+    }
+    if (phase === 'eva' && !cine && !dialogue && (input.wasPressed('photo') || (photo && input.wasPressed('pause')))) {
+      photo = !photo;
+      input.zoomMax = photo ? 30 : 11; input.zoom = Math.min(input.zoom, input.zoomMax);
+      audio.play(photo ? 'ui-open' : 'ui-close');
+      input.endStep();
+      publish(true);
+      return;
+    }
+    input.pitchMin = photo ? -0.6 : firstPerson() ? -0.75 : -0.15;
+    if (!photo && !firstPerson() && input.look.pitch < -0.15) input.look.pitch = -0.15;
+    if (photo && phase === 'eva') { Object.assign(prev, { x: body.x, y: body.y, z: body.z }); input.endStep(); return; }
+    if (cine && phase === 'eva') { Object.assign(prev, { x: body.x, y: body.y, z: body.z }); updateCinematic(dt); }
+    else if (phase === 'eva' && !paused && !dialogue) updateEva(dt);
     else if (phase === 'ship' && !dialogue) updateShip(dt);
     else {
       Object.assign(prev, { x: body.x, y: body.y, z: body.z });
@@ -750,7 +859,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     hud.setState({
       compass: { heading: input.look.yaw + Math.PI, marks },
       ready: true, phase, tier, frameMs: viewport.governor.average, renderScale: viewport.governor.scale,
-      drawCalls: info.calls, triangles: info.triangles,
+      drawCalls: frameStats().calls || info.calls, triangles: frameStats().triangles || info.triangles,
       levelTitle: level.title, briefing: level.briefing,
       objectives: level.points.map(p => ({ id: p.id, title: p.title, required: p.required, done: sortie.session.completed.includes(p.id), action: p.action, power: p.power })),
       echoes: { found: progress.echoes.length, total: level.collectibles.length },
@@ -783,6 +892,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       attempts: progress.attempts, saveError,
       paused, dialogue: dialogue ? dialogue.lines[dialogue.index] : null, toast, achievements: progress.achievements,
       hasProgress: progress.attempts.length > 0,
+      view: firstPerson() ? 'first' : 'third', photo: photo && phase === 'eva',
+      cinematic: cine && phase === 'eva' ? { title: level.title, subtitle: level.subtitle, progress: Math.min(1, (time - cine.start) / cine.shot.duration) } : null,
       luma: phase !== 'eva' ? null : lumaGone() ? { state: 'gone', wait: 0, cooldown: 0, fetches: 0, canFetch: false, warm: false, alert: false }
         : !lumaHere() ? null : {
           state: carried() ? 'carried' : lumaRun || fetching ? 'busy' : cooldownLeft(abilities, sortie.time) > 0 ? 'cooldown' : 'ready',
@@ -824,6 +935,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     view.astronaut.animate((phase === 'eva' && !paused && !dialogue) || phase === 'ship' ? frameDt : 0, Math.hypot(body.vx, body.vz), body.grounded, body.vy);
     view.lumaModel.animate(time, idleFor > 2, Math.max(0, Math.min(1, (alertUntil - time) * 2)));
     view.luma.visible = lumaHere();
+    view.player.visible = !(firstPerson() && !photo);
+    view.shadow.visible = view.player.visible;
     view.dust.update(frameDt);
     view.ambience.update(frameDt, camera.position, time);
 
@@ -858,15 +971,36 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     } else if (phase === 'eva' && idleFor > 5 && pending) {
       const dx = pending.position.x - px, dz = pending.position.z - pz, d = Math.hypot(dx, dz) || 1;
       target.set(px + dx / d * 2.4, py + 1.8, pz + dz / d * 2.4);
+    } else if (firstPerson()) {
+      // In the helmet view LUMA floats ahead and to the right, inside the visor's field of view.
+      const k = input.look.yaw;
+      target.set(px - Math.sin(k) * 2.9 + Math.cos(k) * 1.5, py + 1.25, pz - Math.cos(k) * 2.9 - Math.sin(k) * 1.5);
     } else target.set(px - Math.sin(body.facing) * 1.2 + Math.cos(body.facing) * 0.9, py + 1.7, pz - Math.cos(body.facing) * 1.2 - Math.sin(body.facing) * 0.9);
     lumaPos.lerp(target, smooth());
     view.luma.position.set(lumaPos.x, lumaPos.y + (prefs.getState().reduceMotion || carried() ? 0 : Math.sin(time * 2.2) * 0.12), lumaPos.z);
     view.luma.scale.setScalar(carried() ? 0.8 : 1);
     view.luma.rotation.y = lumaRun ? Math.atan2(lumaRun.marks.at(-1)!.x - lumaPos.x, lumaRun.marks.at(-1)!.z - lumaPos.z) + Math.PI : Math.atan2(px - lumaPos.x, pz - lumaPos.z) + Math.PI;
-    fx.warmth(lumaPos.x, heightAt(hf, lumaPos.x, lumaPos.z) + 0.3, lumaPos.z, phase === 'eva' && warmth > 0 ? 0.5 : 0);
-    fx.update(time, frameDt);
+    vfx.warmth(lumaPos.x, heightAt(hf, lumaPos.x, lumaPos.z) + 0.3, lumaPos.z, phase === 'eva' && warmth > 0 ? 0.5 : 0);
+    vfx.update(time, frameDt);
 
-    if (phase === 'menu') {
+    const calm = prefs.getState().reduceMotion;
+    if (cine && phase === 'eva') {
+      cine.shot.at(time - cine.start, shotFrame);
+      camera.position.copy(shotFrame.position);
+      camera.lookAt(shotFrame.look);
+      camPos.copy(camera.position);
+    } else if (firstPerson() && !photo) {
+      // Inside the helmet: eye height, a gentle bob while walking, pitch mapped from the same mouse look.
+      const speed = Math.hypot(body.vx, body.vz);
+      bob += body.grounded ? frameDt * speed * 1.9 : 0;
+      const sway = calm ? 0 : Math.sin(bob) * 0.035 * Math.min(1, speed / 4);
+      const eye = py + 1.62 + sway;
+      camera.position.set(px, Math.max(eye, heightAt(hf, px, pz) + 0.4), pz);
+      const yaw = input.look.yaw, pitch = Math.max(-1.1, Math.min(1.25, (input.look.pitch - 0.32) * 1.3));
+      target.set(px - Math.sin(yaw) * Math.cos(pitch), camera.position.y - Math.sin(pitch), pz - Math.cos(yaw) * Math.cos(pitch));
+      camera.lookAt(target);
+      camPos.copy(camera.position);
+    } else if (phase === 'menu') {
       // Slow cinematic orbit over the whole crater, as on the title screen.
       const a = prefs.getState().reduceMotion ? 0.6 : time * 0.035;
       camera.position.set(Math.sin(a) * 120, 46, Math.cos(a) * 120);
@@ -897,9 +1031,16 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       camPos.y = Math.max(camPos.y, heightAt(hf, camPos.x, camPos.z) + 0.6);
       camera.position.copy(camPos);
       // Cosmetic quake (S1 complete): one second of small shake, skipped with reduced motion.
-      if (time < quakeUntil && !prefs.getState().reduceMotion) camera.position.add(target.set(Math.sin(time * 61) * 0.06, Math.sin(time * 47) * 0.05, Math.cos(time * 53) * 0.06));
+      if (time < quakeUntil && !calm) camera.position.add(target.set(Math.sin(time * 61) * 0.06, Math.sin(time * 47) * 0.05, Math.cos(time * 53) * 0.06));
+      // Hard landing: a short decaying shake.
+      if (shake > 0.01 && !calm) camera.position.add(target.set(Math.sin(time * 73) * shake * 0.12, Math.sin(time * 59) * shake * 0.1, Math.cos(time * 67) * shake * 0.12));
       camera.lookAt(px, py + (phase === 'eva' ? 1.4 : 1.1), pz);
     }
+    shake = Math.max(0, shake - frameDt * 2.5);
+    // Dash: the field of view opens for a moment and settles back.
+    fovKick = Math.max(0, fovKick - frameDt * 2.2);
+    const fov = baseFov + (calm ? 0 : 9 * fovKick * fovKick);
+    if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
 
     view.tickSky(prefs.getState().reduceMotion ? 0 : time);
     updateCrew();
@@ -907,7 +1048,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     for (const lamp of view.blinkers) lamp.visible = Math.sin(time * 2.4 - lamp.position.x * 0.2) > -0.5;
     for (const [id, m] of view.echoes) if (m.visible) m.rotation.y = time * 1.5 + id.length;
 
-    viewport.renderer.render(phase === 'ship' ? interior.scene : view.scene, camera);
+    const p = ensurePost();
+    p.focus(cine && phase === 'eva' ? shotFrame.focus : null);
+    p.render(phase === 'ship' ? interior.scene : view.scene, camera, frameDt);
     sincePublish += frameMs;
     publish();
   }
@@ -918,6 +1061,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
       completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
       signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length,
+      cinematic: !!cine, fov: camera.fov, view: firstPerson() ? 'first' : 'third', photo, camera: camera.position.toArray(),
       lumaAbilities: { readyIn: cooldownLeft(abilities, sortie.time), fetchesLeft: abilities.fetchesLeft, warned: [...abilities.warned], sniffs: abilities.sniffs,
         running: !!lumaRun, fetching: fetching?.id ?? null, warmth: sortie.lumaWarmth, relief: warmth, trail: lumaRun?.marks.length ?? 0 } }),
     step: (count: number) => loop.step(count),

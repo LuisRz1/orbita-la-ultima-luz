@@ -53,6 +53,12 @@ Marte sí transmite sonido por su atmósfera tenue: los micrófonos de Persevera
 - **En la Luna:** está a cero.
 - **Para revisarlo:** `renderWav({ wind: 1 }, s)` lo exporta. Todavía no se ha pasado por earshot.
 
+## Color por destino y motivo de LUMA
+
+La misma partitura cambia de tonalidad y de campanas en cada destino (`scorePalettes` en [audio.ts](../../src/engine/audio.ts)): Órbita sube a sol, la Luna conserva re, Marte baja a si con campanas senoidales más espaciadas y Bennu y la extracción bajan a la con acordes más largos. Mientras LUMA acompaña al jugador en superficie, una de cada cinco campanas es su motivo: tres notas que suben y su eco una octava abajo. Tras la despedida el motivo no vuelve a sonar.
+
+Efectos nuevos, todos por código: olfateo y salida de LUMA, gruñido de aviso, subida para alcanzar un eco, nota grave cuando ya no está, barrido de la toma de llegada y asentamiento del módulo. Sin pasar todavía por earshot.
+
 ## Cómo se verificó
 
 No se puede escuchar desde el agente. Por eso cada sonido se renderiza sin conexión (`renderWav` con `OfflineAudioContext`) y se analiza con [earshot](https://github.com/Leonxlnx/earshot) (MIT, modelos CLAP y AST en CPU, ejecutado con `uvx` sin instalarlo de forma global):

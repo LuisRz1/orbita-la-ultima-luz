@@ -5,7 +5,7 @@ import { sound, type Sfx } from '../engine/audio.ts';
 import { debugEnabled } from '../engine/debug.ts';
 import { webglAvailable } from '../engine/renderer.ts';
 import { resetTuning, setTuning, tuning } from '../engine/tuning.ts';
-import { AchievementToast, Compass, DialogueBox, Fade, LumaCard, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
+import { AchievementToast, CinematicCard, Compass, DialogueBox, Fade, LumaCard, PhotoHint, Visor, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
 import { useT } from './i18n.ts';
 import { MainMenu, PauseMenu } from './screens/menu.tsx';
 import { SortieReport } from './screens/sortie-report.tsx';
@@ -67,18 +67,23 @@ function TuningPanel() {
 function Screens() {
   const { t } = useT();
   const { phase, report, saveError, paused } = useStore(hud);
+  const cinematic = useStore(hud, s => !!s.cinematic);
+  const photo = useStore(hud, s => s.photo);
   const [epilogue, setEpilogue] = useState(false);
   let body = null;
   if (phase === 'menu') body = <MainMenu />;
   else if (phase === 'ship') body = <ShipScreen />;
   else if (phase === 'report' && report) body = epilogue ? <Epilogue onClose={() => setEpilogue(false)} />
     : <SortieReport report={report} onRedesign={() => commands.redesign()} onRetry={() => commands.retry()} onEpilogue={() => setEpilogue(true)} />;
+  else if (phase === 'eva' && cinematic) body = <CinematicCard />;
+  else if (phase === 'eva' && photo) body = <PhotoHint />;
   else if (phase === 'eva') body = <>
-    <MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt /><Fade />
+    <Visor /><MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt />
     {paused && <PauseMenu />}
   </>;
   return <>
     {body}
+    <Fade />
     <DialogueBox />
     <AchievementToast />
     {saveError && <p className="save-error">{t('saveError')}</p>}

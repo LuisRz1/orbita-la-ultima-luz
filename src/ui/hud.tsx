@@ -89,6 +89,47 @@ export function Telemetry() {
   </>;
 }
 
+/** Helmet view: the visor's rim, a faint reflection and a readout projected on the glass (battery and link). */
+export function Visor() {
+  const { t } = useT();
+  const { view, energy, capacity, signal, draining } = useStore(hud);
+  if (view !== 'first') return null;
+  const pct = capacity ? energy / capacity : 0;
+  const low = energy - reserve < 15;
+  return <div className="visor" data-visor aria-hidden="true">
+    <i className="visor-glass" /><i className="visor-glint" />
+    <div className={'visor-readout' + (low ? ' low' : '')}>
+      <span>{t({ es: 'batería', en: 'battery' })} <b>{Math.round(energy)}</b> u.{draining ? ' · ' + t(draining) : ''}</span>
+      <svg viewBox="0 0 120 12"><rect x="0" y="3" width="120" height="6" className="track" /><rect x="0" y="3" width={120 * pct} height="6" className="fill" /><rect x={120 * reserve / Math.max(1, capacity)} y="0" width="1.5" height="12" className="mark" /></svg>
+      <span>{t({ es: 'enlace', en: 'link' })} <b>{Math.round(signal * 100)}%</b></span>
+    </div>
+  </div>;
+}
+
+/** Photo mode: everything hidden but a one-line reminder of the controls. */
+export function PhotoHint() {
+  const { t } = useT();
+  return <p className="photo-hint" data-photo>{t({ es: 'MODO FOTO · ratón: orbitar · rueda: distancia · P o Esc: salir', en: 'PHOTO MODE · mouse: orbit · wheel: distance · P or Esc: leave' })}</p>;
+}
+
+/** Arrival shot: letterbox bars, the destination's title and a skip hint. */
+export function CinematicCard() {
+  const { t } = useT();
+  const cinematic = useStore(hud, s => s.cinematic);
+  if (!cinematic) return null;
+  // The title follows the shot's own clock, so it stays in step with the camera even when frames are slow.
+  const k = cinematic.progress, show = Math.min(1, Math.max(0, (k - 0.12) / 0.16), Math.max(0, (1 - k) / 0.14));
+  return <div className="cinematic" data-cinematic aria-live="polite">
+    <i className="bar-top" /><i className="bar-bottom" />
+    <div className="cinematic-title" style={{ opacity: show, transform: `translateY(${(1 - show) * 12}px)` }}>
+      <span>{t({ es: 'Llegada', en: 'Arrival' })}</span>
+      <h1>{t(cinematic.title)}</h1>
+      <p>{t(cinematic.subtitle)}</p>
+    </div>
+    <p className="cinematic-skip"><kbd>E</kbd> / <kbd>Espacio</kbd> {t({ es: 'saltar', en: 'skip' })}</p>
+  </div>;
+}
+
 /** LUMA's card: what it can do for you right now, and its absence once it is gone. */
 export function LumaCard() {
   const { t } = useT();

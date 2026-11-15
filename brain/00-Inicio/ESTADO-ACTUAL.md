@@ -9,6 +9,8 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
+**Vibras nocturnas del 15 (rama del agente VIBRAS, sin fusionar en `main`):** LUMA gana cuatro habilidades deterministas (rastrear con F, brillo en el frío, presentir peligros, alcanzar un eco una vez por salida) que desaparecen tras la despedida; toma de llegada saltable, posproceso en calidad media/alta, vista de casco (V), modo foto (P), sensación de dash y aterrizaje, música por destino con motivo de LUMA. Evidencia y pendientes en la [bitácora](../08-Bitacora/2026-11-15.md#vibras-nocturnas). **Siguiente paso:** que el propietario confirme la prioridad visual sobre Iris Xe en DECISIONES, pruebe a mano la lista de la bitácora y revise la rama antes de fusionarla.
+
 **Mejoras nocturnas del 15 (rama del agente MEJORAS, sin fusionar en `main`):** el informe de salida pasa a ser la pieza central del reto, con gráfico de batería en el tiempo, tabla decisión → resultado, comparación con el intento anterior y propuestas que se cargan con un clic; panel de requisitos de la misión en el módulo; pantalla «Ciencia: modelo y realidad» con 11 filas y fuentes NASA leídas; menú con el bucle de diseño y la ruta compacta; `?demo`, `?lang` e idioma inicial del navegador; «Controles y ayuda»; README de entrega EN/ES y [guion de demo](../06-Produccion/GUION-DEMO.md). Evidencia y pendientes en la [bitácora](../08-Bitacora/2026-11-15.md#mejoras-nocturnas). **Siguiente paso:** revisar y fusionar la rama en `main`, ensayar el guion y grabar la demo.
 
 **15 de noviembre: el juego 3D va del nivel 1 al 4** (Órbita → Luna → Marte → Bennu), todo en `main`. Detalle y evidencia en la [bitácora del 15](../08-Bitacora/2026-11-15.md); para retomar, el [handoff del 15](../08-Bitacora/HANDOFF-2026-11-15.md).

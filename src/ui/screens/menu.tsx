@@ -118,6 +118,12 @@ function Settings() {
     <div className="setting"><span>{t('paintedSky')}</span>
       <div className="choice">{[true, false].map(v => <button key={String(v)} data-sky={String(v)} className={p.paintedSky === v ? 'on' : ''} onClick={() => prefs.setState({ paintedSky: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
     </div>
+    {([['effects', 'effects'], ['cinematics', 'cinematics']] as const).map(([k, label]) => <div className="setting" key={k}><span>{t(label)}</span>
+      <div className="choice">{[true, false].map(v => <button key={String(v)} data-pref={k + '-' + String(v)} className={p[k] === v ? 'on' : ''} onClick={() => prefs.setState({ [k]: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
+    </div>)}
+    <div className="setting"><span>{t('viewMode')}</span>
+      <div className="choice">{(['third', 'first'] as const).map(v => <button key={v} data-view={v} className={p.view === v ? 'on' : ''} onClick={() => prefs.setState({ view: v })}>{t(v === 'third' ? 'viewThird' : 'viewFirst')}</button>)}</div>
+    </div>
     <div className="setting"><span>{t('quality')}</span>
       <div className="choice">{(['auto', ...tierIds] as const).map(q => <button key={q} className={p.quality === q ? 'on' : ''} onClick={() => prefs.setState({ quality: q })}>{q === 'auto' ? t('auto') : q}</button>)}</div>
     </div>
@@ -189,7 +195,7 @@ const sources = [
 ];
 
 const keys: [string, StringKey][] = [
-  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'],
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'], ['V', 'keyView'], ['P', 'keyPhoto'],
   ['🖱', 'keyLook'], ['Esc', 'keyPause'],
 ];
 
