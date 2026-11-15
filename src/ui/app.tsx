@@ -79,7 +79,7 @@ function Screens() {
   </>;
   return <>
     {body}
-    <DialogueBox />
+    {!(phase === 'eva' && paused) && <DialogueBox />}
     <AchievementToast />
     {saveError && <p className="save-error">{t('saveError')}</p>}
   </>;

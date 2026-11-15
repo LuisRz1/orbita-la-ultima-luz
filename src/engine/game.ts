@@ -533,7 +533,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (pendingZoneLine) {
       const z = level.zones.find(q => q.id === pendingZoneLine)!;
       if (zone !== z.id) pendingZoneLine = null;
-      else if (Math.hypot(body.x - z.center.x, body.z - z.center.z) < z.radius * 0.45) { play('zone:' + z.id); pendingZoneLine = null; }
+      // Only on the ground: a line that opens mid-jump or mid-fall would freeze the player in the air.
+      else if (body.grounded && Math.hypot(body.x - z.center.x, body.z - z.center.z) < z.radius * 0.45) { play('zone:' + z.id); pendingZoneLine = null; }
     }
 
     const moving = Math.hypot(body.vx, body.vz) > 0.5;
@@ -646,9 +647,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     // Losing pointer lock in the middle of a sortie (Esc, alt-tab) pauses it.
     const locked = input.locked;
     const lostLock = wasLocked && !locked;
-    if (lostLock && phase === 'eva' && !dialogue) { paused = true; publish(true); }
+    // Esc releases the mouse first: it pauses even with a story line open (the line waits under the pause menu).
+    if (lostLock && phase === 'eva') { paused = true; publish(true); }
     wasLocked = locked;
-    if (dialogue && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
+    if (dialogue && !paused && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
     else if (phase === 'eva' && input.wasPressed('pause') && !lostLock) { paused = !paused; publish(true); }
     if (phase === 'eva' && !paused && !dialogue) updateEva(dt);
     else if (phase === 'ship' && !dialogue) updateShip(dt);

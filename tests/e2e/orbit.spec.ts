@@ -86,7 +86,11 @@ test('stepping off a station deck: the safety tether reels the player back to th
   await call(page, 'hold', 'right', true);
   await call(page, 'step', 60);
   await call(page, 'hold', 'right', false);
-  // The sunlit truss line may open while in the air; the fall resumes after it.
+  // Zone lines wait for the ground: none opens while the player is falling.
+  await call(page, 'step', 30);
+  const falling = await call(page, 'state') as State & { grounded: boolean; dialogue: boolean };
+  expect(falling.grounded).toBe(false);
+  expect(falling.dialogue).toBe(false);
   for (let i = 0; i < 4; i++) { await settle(page); await call(page, 'step', 120); }
   state = await call(page, 'state') as State & { falls: number; y: number };
   expect(state.falls).toBe(2);
