@@ -27,6 +27,12 @@ export const moonDialogue: Record<string, Line[]> = {
   'zone:archive': [
     l('LUMA', 'Ese contenedor lleva su sello. Lo cerró con cuidado, como quien piensa volver.', 'That container carries her seal. She closed it carefully, like someone who meant to come back.'),
   ],
+  // Chapter 2 shows, in safe conditions, that LUMA can cross narrow spaces with its own protection and work simple
+  // mechanisms (ARCO-LUMA-SPOILERS.md). The extraction on Bennu relies on the player having seen it here.
+  'point:archive': [
+    l('LUMA', 'El bloque se quedó encajado al fondo. Espera: yo quepo por el hueco.', 'The block got stuck at the back. Wait: I fit through the gap.'),
+    l('LUMA', '…Mi luz me protege del frío de ahí dentro. Ya solté la traba. Tira ahora.', '…My light keeps the cold in there off me. I released the catch. Pull now.'),
+  ],
   recalled: [
     l('LUMA', 'Volvemos. No es perder: ahora sabemos cuánto cuesta el camino.', 'We head back. It is not losing: now we know what the path costs.'),
     l('LUMA', '…Y yo necesitaba descansar un poco. No se lo digas a Control.', '…And I needed a little rest. Do not tell Control.'),
