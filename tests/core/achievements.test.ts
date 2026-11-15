@@ -5,6 +5,8 @@ import { buildReport, sortieInteract, spend, startSortie } from '../../src/core/
 import { proposals, reserve } from '../../src/core/suit.ts';
 import { moonLevel } from '../../src/levels/moon/level.ts';
 import { moonDialogue } from '../../src/levels/moon/dialogue.ts';
+import { marsDialogue } from '../../src/levels/mars/dialogue.ts';
+import { marsLevel } from '../../src/levels/mars/level.ts';
 
 const completed = () => {
   const s = startSortie(proposals[1].design);
@@ -44,4 +46,20 @@ test('lunar dialogue is bilingual and never names later destinations', () => {
     assert.ok(line.text.es && line.text.en);
     assert.doesNotMatch(line.text.es + line.text.en, /Marte|Mars|Bennu|AUR-E0[3-7]/);
   }
+});
+
+test('Martian dialogue is bilingual and only the authenticated close names Bennu or the survivors', () => {
+  for (const [key, lines] of Object.entries(marsDialogue)) for (const line of lines) {
+    assert.ok(line.text.es && line.text.en, key);
+    if (key !== 'complete') assert.doesNotMatch(line.text.es + line.text.en, /Bennu|supervivientes|survivors|AUR-E0[6-7]/, key);
+  }
+  assert.match(marsDialogue.complete.map(l => l.text.es).join(' '), /Bennu/);
+  // Point results report only what was recovered; the destination appears only in the authenticated outcome.
+  for (const p of marsLevel.points) assert.doesNotMatch(p.result.es + p.result.en + p.hint.es + p.hint.en, /Bennu/, p.id);
+  assert.match(marsLevel.outcome.es, /Bennu/);
+});
+
+test('the dust achievement unlocks on entering a dust zone', () => {
+  assert.deepEqual(unlocks({ kind: 'zone', cold: false, dust: true }, []), ['dust']);
+  assert.deepEqual(unlocks({ kind: 'zone', cold: false, dust: true }, ['dust']), []);
 });

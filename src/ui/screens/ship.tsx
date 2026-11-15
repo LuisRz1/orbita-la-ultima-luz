@@ -93,11 +93,17 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
 
 export function ShipScreen() {
   const { t } = useT();
-  const { ship, objectives, notice, now } = useStore(hud);
+  const { ship, objectives, notice, now, attempts } = useStore(hud);
   if (!ship) return null;
   const showNotice = notice && now - notice.at < 7;
   return <div className="screen ship-screen">
     <TopBar draft={ship.draft} done={ship.done} objectives={objectives} />
+    {attempts.length > 0 && !ship.open && <section className="panel history" aria-label={t('attempts')}>
+      <span className="panel-title">{t('attempts').toUpperCase()} · {attempts.length}</span>
+      <ol>{attempts.slice(-5).reverse().map((a, i) => <li key={attempts.length - i} className={a.outcome}>
+        {t(a.outcome === 'complete' ? 'complete' : 'recalled')} · {a.completed.length} · {Math.round(a.used)} u.
+      </li>)}</ol>
+    </section>}
     {ship.open && ship.open !== 'locker' && ship.open !== 'airlock' && <StationPanel id={ship.open} draft={ship.draft} objectives={objectives} />}
     {!ship.open && <div className="center-bottom">
       {showNotice && <p className={'notice ' + notice.tone} key={notice.at}><span>{t('noticeSystem')}</span>{t(notice.text)}</p>}

@@ -1,5 +1,15 @@
 # Registro de cambios
 
+## 2026-11-14 — Nivel 3D de Marte y ramas unidas
+
+- `main` une `feat/3d` (motor 3D, Luna Nácar, interior de nave, audio) y Primera luz (`feat/world-orbit`).
+- Marte «Terracota»: valle de Aurora con hábitat, bitácora, afloramiento, equipo de campo, relé, mirador y terminal (C3-M03–M05 y autenticación de AUR-E04/E05). Se abre con `?level=mars` y se desbloquea al completar la Luna.
+- Contingencia de energía: reparar el relé desata una tormenta de polvo sobre las dunas. Rodear por los vados balizados es más barato.
+- Bioma por nivel (paleta, cielo con Fobos y Deimos, niebla, polvo con aire, viento audible, LUMA roja); la Luna conserva Nácar.
+- Menú y créditos por destino, botón «Continuar a Marte», logro «Entre remolinos» e historial de intentos en la nave.
+- Corregido: las partículas ambientales y el polvo de pasos y dash no se movían (el atributo copiaba el array).
+- Corregidas dos pruebas e2e que seguían esperando la consola de diseño sustituida por la nave.
+
 ## 2026-11-14 — Primera luz en revisión
 
 - Seis misiones de Tierra y órbita, de la configuración de nave al informe del nodo lunar.

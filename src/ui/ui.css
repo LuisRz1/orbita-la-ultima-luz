@@ -177,6 +177,7 @@
 .orbita .causes li { margin: 3px 0; color: var(--warn); }
 .orbita .causes b { color: var(--text); font-weight: 400; }
 .orbita .insights li { margin: 3px 0; }
+.orbita .outcome { margin: 0; padding: 8px 10px; border-left: 2px solid var(--accent); color: var(--text); line-height: 1.45; }
 .orbita .ledger-row { display: grid; grid-template-columns: 190px 1fr 60px; gap: 8px; align-items: center; padding: 2px 0; }
 .orbita .ledger-row span { color: var(--dim); }
 .orbita .ledger-row i { height: 6px; background: var(--accent); }
@@ -322,6 +323,10 @@
 .orbita .ship-bar span b.on, .orbita .ship-bar .goals b.ok { background: var(--accent); border-color: var(--accent); }
 .orbita .ship-bar .goals b.bad { background: #ff7a6b; border-color: #ff7a6b; }
 .orbita .ship-bar .mass.over, .orbita .ship-bar .warnv { color: var(--warn); }
+.orbita .ship-screen .history { position: absolute; top: 64px; right: 16px; margin: 0; min-width: 190px; }
+.orbita .ship-screen .history ol { margin: 4px 0 0; padding-left: 18px; }
+.orbita .ship-screen .history li.complete { color: var(--accent); }
+.orbita .ship-screen .history li.recalled { color: var(--warn); }
 .orbita .station { left: 50%; bottom: 22px; transform: translateX(-50%); width: min(560px, 94vw); border-color: var(--frame-active); }
 .orbita .station-why { margin: 0 0 10px; color: var(--text); }
 .orbita .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

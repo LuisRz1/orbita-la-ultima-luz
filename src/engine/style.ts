@@ -5,15 +5,54 @@ import {
 } from 'three';
 
 /** Biome palette for the Moon («Nácar»): lavender and pearl under an indigo sky, violet shadows instead of grey. */
-export const biome = {
+const nacar = {
   lit: '#ddd4ea', mid: '#a99cc8', shadow: '#4b3f7c', deep: '#2a2350', ink: '#1b1530',
   skyTop: '#0d0a22', skyHorizon: '#2b2459', fog: '#2b2459', stars: '#f3ecff', milkyWay: '#6b5aa8',
   rockLit: '#c7bcdc', rockDark: '#7f71a6', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
   cyan: '#7fe3e0', amber: '#ffaf68',
+  /** Sky objects, light and air. */
+  sky: 'earth' as 'earth' | 'mars-moons', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
+  hemiSky: '#9fb0cc', hemiGround: '#2a2a33', fogNear: 60, fogFar: 230, starCount: 1800,
+  airDust: '#f6e9ff', puff: '#d8d2c4', hazardParticle: '#bfe9ff', porthole: '#cbbfe6',
+  /** Drag on dust puffs: 0 in vacuum, so they fly in clean arcs. */
+  air: 0, wind: 0,
+  /** LUMA's fur and core for this chapter (its colour follows a Sun-like star through the story). */
+  luma: '#ffb05c', lumaCore: '#fff2c4',
 };
-export const ink = biome.ink;
+export type Biome = typeof nacar;
+
+/**
+ * Mars («Terracota y menta»): peach ground, plum shadows, a butterscotch sky with the blue halo the real Martian
+ * sky shows around the Sun, two small moons and a thin, dusty atmosphere that carries sound and drags dust.
+ */
+const terracota: Biome = {
+  lit: '#f0a77a', mid: '#c46b4e', shadow: '#6b3b4f', deep: '#4a2638', ink: '#2a141c',
+  skyTop: '#a8694d', skyHorizon: '#e9b98c', fog: '#d9a07a', stars: '#fff1e0', milkyWay: '#000000',
+  rockLit: '#d98f68', rockDark: '#8f4f45', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
+  cyan: '#7fe3e0', amber: '#ffaf68',
+  sky: 'mars-moons', sunGlow: '#8fb7e6', sunScale: 80, sunColor: '#ffe6cc',
+  hemiSky: '#e9b98c', hemiGround: '#5a2e2a', fogNear: 45, fogFar: 200, starCount: 0,
+  airDust: '#f3c9a6', puff: '#c98a66', hazardParticle: '#8a4a35', porthole: '#f2b98e',
+  air: 1.4, wind: 1,
+  luma: '#e8553f', lumaCore: '#ffd2b8',
+};
+
+export const biomes = { nacar, terracota };
+export type BiomeId = keyof typeof biomes;
+
+/** Active biome. Mutated in place by setBiome so every importer sees the level's palette. */
+export const biome: Biome = { ...nacar };
+export let ink = biome.ink;
 /** Colour toon shadows lean toward; one value per biome. */
 const shadeTint = new Color(biome.shadow);
+
+/** Selects the palette before a level's scene is built. The Moon keeps the original Nácar values. */
+export function setBiome(id: BiomeId) {
+  Object.assign(biome, biomes[id]);
+  ink = biome.ink;
+  shadeTint.set(biome.shadow);
+  for (const m of outlineCache.values()) m.color.set(ink);
+}
 
 let gradient: DataTexture | null = null;
 /** Three hard bands (shadow, mid, lit): the painted-light look of the reference. */
@@ -96,6 +135,18 @@ export function earthTexture() {
     g.fillStyle = 'rgba(255,255,255,0.75)';
     for (let i = 0; i < 40; i++) { g.beginPath(); g.ellipse(r() * s, r() * s, 10 + r() * 40, 2 + r() * 5, r() * 0.4, 0, Math.PI * 2); g.fill(); }
     g.fillStyle = '#f2f4f6'; g.fillRect(0, 0, s, 10); g.fillRect(0, s - 12, s, 12);
+  }, false);
+}
+
+/** Phobos and Deimos: small, dark, cratered potatoes. */
+export function marsMoonTexture(seed: number) {
+  return canvas(64, (g, s) => {
+    const r = rng(seed);
+    g.fillStyle = '#6e5a50'; g.fillRect(0, 0, s, s);
+    for (let i = 0; i < 18; i++) {
+      g.fillStyle = r() > 0.5 ? 'rgba(40,28,24,0.45)' : 'rgba(150,126,110,0.35)';
+      g.beginPath(); g.arc(r() * s, r() * s, 2 + r() * 7, 0, Math.PI * 2); g.fill();
+    }
   }, false);
 }
 

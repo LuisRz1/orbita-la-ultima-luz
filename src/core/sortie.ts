@@ -1,6 +1,6 @@
 // One EVA sortie with a given suit: energy ledger, gated interactions and the report that links outcome to design.
 import type { Localized } from './contract/grid-v1.ts';
-import type { LevelPoint, LevelV2 } from './contract/level-v2.ts';
+import { zoneDrain, type LevelPoint, type LevelV2 } from './contract/level-v2.ts';
 import { createSession, missingFor, pointInReach, type Session } from './session.ts';
 import {
   actionCost, antennas, assessSuit, batteries, dashCost, instrumentFor, instruments, lifeDrain, moveDrain, reserve, thrusters,
@@ -9,7 +9,7 @@ import {
 
 const t = (es: string, en: string): Localized => ({ es, en });
 
-export type LedgerKey = 'life' | 'move' | 'dash' | 'thruster' | 'actions' | 'cold';
+export type LedgerKey = 'life' | 'move' | 'dash' | 'thruster' | 'actions' | 'cold' | 'dust';
 export type Outcome = 'complete' | 'recalled';
 export type Sortie = {
   design: SuitDesign; stats: SuitStats; energy: number; ledger: Record<LedgerKey, number>;
@@ -21,11 +21,12 @@ export type Sortie = {
 export const ledgerLabels: Record<LedgerKey, Localized> = {
   life: t('Soporte vital', 'Life support'), move: t('Desplazamiento', 'Walking'), dash: t('Dash', 'Dash'),
   thruster: t('Propulsor', 'Thruster'), actions: t('Instrumentos y reparaciones', 'Instruments and repairs'), cold: t('Frío en sombra', 'Cold in shadow'),
+  dust: t('Polvo y viento', 'Dust and wind'),
 };
 
 export function startSortie(design: SuitDesign): Sortie {
   const stats = assessSuit(design);
-  return { design, stats, energy: stats.capacity, ledger: { life: 0, move: 0, dash: 0, thruster: 0, actions: 0, cold: 0 },
+  return { design, stats, energy: stats.capacity, ledger: { life: 0, move: 0, dash: 0, thruster: 0, actions: 0, cold: 0, dust: 0 },
     session: createSession(), time: 0, outcome: null, blocked: [], emergency: false };
 }
 
@@ -42,8 +43,9 @@ export function drain(s: Sortie, level: LevelV2, dt: number, moving: boolean, zo
   s.time += dt;
   spend(s, 'life', lifeDrain * dt);
   if (moving) spend(s, 'move', moveDrain * dt);
-  const cold = level.zones.find(z => z.id === zone)?.drain ?? 0;
-  if (cold) spend(s, 'cold', cold * dt);
+  const here = level.zones.find(z => z.id === zone);
+  const extra = zoneDrain(here, s.session.completed);
+  if (extra) spend(s, here?.hazard === 'dust' ? 'dust' : 'cold', extra * dt);
   return s.energy <= reserve;
 }
 
@@ -103,6 +105,8 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
   ];
   if (s.ledger.thruster > 0) insights.push(t(`${thrusters[s.design.thruster].name.es}: ${Math.round(s.ledger.thruster)} u. en saltos en el aire.`, `${thrusters[s.design.thruster].name.en}: ${Math.round(s.ledger.thruster)} u on air jumps.`));
   if (s.ledger.cold > 0) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
+  if (s.ledger.dust > 0) insights.push(t(`Cruzar el polvo costó ${Math.round(s.ledger.dust)} u.: tras la contingencia, rodear las dunas suele salir más barato.`,
+    `Crossing the dust cost ${Math.round(s.ledger.dust)} u: after the contingency, going around the dunes is usually cheaper.`));
   if (outcome === 'recalled') insights.push(s.emergency
     ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
     : t('Volviste al módulo con la reserva de retorno: repliegue seguro.', 'You walked back to the lander on the return reserve: a safe recall.'));

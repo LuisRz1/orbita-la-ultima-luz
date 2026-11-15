@@ -7,10 +7,16 @@ import type { Solid } from '../movement.ts';
 export type Vec2 = { x: number; z: number };
 
 export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: number; zone: string };
-/** `drain`: extra energy per second while inside (cold, dust). */
-export type Zone = { id: string; title: Localized; center: Vec2; radius: number; drain?: number };
+/**
+ * `drain`: extra energy per second while inside. `hazard` says what causes it (cold by default).
+ * `surge`: a contingency. Once the point `after` is completed the zone drains `drain` instead (for example a dust
+ * storm that a relay repair sets off), so the planned way home may no longer be the cheapest one.
+ */
+export type Hazard = 'cold' | 'dust';
+export type Surge = { after: string; drain: number; warning: Localized };
+export type Zone = { id: string; title: Localized; center: Vec2; radius: number; drain?: number; hazard?: Hazard; surge?: Surge };
 export type Collectible = { id: string; position: Vec2; y?: number };
-export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step';
+export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover';
 export type Prop = { kind: PropKind; solid: Solid };
 
 export type LevelV2 = {
@@ -43,6 +49,7 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
       problems.push('point outside the radio link: ' + p.id);
     for (const pre of p.prerequisites) if (!level.points.some(q => q.id === pre)) problems.push('unknown prerequisite ' + pre);
   }
+  for (const z of level.zones) if (z.surge && !level.points.some(p => p.id === z.surge!.after)) problems.push('surge after unknown point in ' + z.id);
   const exit = level.points.find(p => p.id === level.exit);
   if (!exit || exit.action !== 'upload' || !exit.required) problems.push('exit must be a required upload point');
 
@@ -76,4 +83,11 @@ export function walkable(hf: Heightfield, from: Vec2, maxSlope: number) {
   return seen;
 }
 
-export const pointHeight = (hf: Heightfield, v: Vec2) => heightAt(hf, v.x, v.z);
+/** Energy per second a zone drains right now: its surge value once the triggering point is done. */
+export function zoneDrain(zone: Zone | undefined, completed: readonly string[]) {
+  if (!zone) return 0;
+  if (zone.surge && completed.includes(zone.surge.after)) return zone.surge.drain;
+  return zone.drain ?? 0;
+}
+
+export const pointHeight =(hf: Heightfield, v: Vec2) => heightAt(hf, v.x, v.z);

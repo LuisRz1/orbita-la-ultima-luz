@@ -44,6 +44,15 @@ En la Luna no hay aire. Lo que se oye es lo que llega a través del traje: sonid
 | Control habla | Estática corta y tono Quindar de 2525 Hz (el pitido de las comunicaciones del Apolo) | Lo lee como campanita; decisión de estilo |
 | Señal débil | Estática continua proporcional a la pérdida de enlace | — |
 
+## Viento de Marte
+
+Marte sí transmite sonido por su atmósfera tenue: los micrófonos de Perseverance grabaron viento y remolinos de polvo ([NASA, Sounds from Beyond](https://www.nasa.gov/sounds-from-beyond/)). Por eso solo Marte tiene una capa de viento:
+
+- **Qué es:** ruido filtrado por un paso bajo de unos 380 Hz, con dos osciladores lentos que mueven el corte y el nivel como ráfagas (`windBed` en [audio.ts](../../src/engine/audio.ts)).
+- **Durante la tormenta:** sube de 0,05 a 0,14 de ganancia.
+- **En la Luna:** está a cero.
+- **Para revisarlo:** `renderWav({ wind: 1 }, s)` lo exporta. Todavía no se ha pasado por earshot.
+
 ## Cómo se verificó
 
 No se puede escuchar desde el agente. Por eso cada sonido se renderiza sin conexión (`renderWav` con `OfflineAudioContext`) y se analiza con [earshot](https://github.com/Leonxlnx/earshot) (MIT, modelos CLAP y AST en CPU, ejecutado con `uvx` sin instalarlo de forma global):

@@ -64,7 +64,8 @@ Regla de capas: `core` no importa three ni React; `engine` no importa React; `ui
 4. `dialogue.ts`: líneas ES/EN que no revelen destinos ni pruebas posteriores ([historia](../02-Diseno/HISTORIA-PRINCIPAL.md)).
 5. Regístralo en `src/levels/registry.ts` y ábrelo con `/?level=mars`.
 6. Añade una prueba como `tests/core/level.test.ts`: `checkLevel` debe devolver `[]` (todo lo obligatorio alcanzable a pie, dentro del enlace).
-7. Paleta del bioma: define sus tokens como `biome` en `style.ts` (la Luna es «Nácar»; Marte «Terracota y menta» y Bennu «Carbón y oro rosa» están propuestos en [Luna Nácar](../02-Diseno/LUNA-NACAR.md)). Por ahora el bioma es global: hacerlo por nivel es una tarea abierta.
+7. Paleta del bioma: añade un objeto a `biomes` en `style.ts` (colores, cielo, niebla, aire, viento y color de LUMA del capítulo) y nómbralo en la entrada del registro (`biome: '...'`). El motor llama a `setBiome` antes de construir la escena. Existen `nacar` (Luna) y `terracota` (Marte, ver [Marte «Terracota»](../02-Diseno/MARTE-TERRACOTA.md)); Bennu «Carbón y oro rosa» está propuesto en [Luna Nácar](../02-Diseno/LUNA-NACAR.md).
+8. Datos del menú: añade su ficha en `src/levels/facts.ts` y su lugar en `route` (registry.ts) para que se desbloquee tras el destino anterior.
 
 ## 4. Trabajar con agentes
 

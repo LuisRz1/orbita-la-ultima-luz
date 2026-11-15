@@ -10,8 +10,9 @@ export const achievements = {
   'first-thrust': { title: t('Dos veces arriba', 'Twice up'), desc: t('Haz un doble salto con el propulsor.', 'Double jump with the thruster.') },
   'cold': { title: t('Donde no llega el sol', 'Where the sun never reaches'), desc: t('Entra en el cráter en sombra.', 'Enter the shadowed crater.') },
   'first-echo': { title: t('Primer eco', 'First echo'), desc: t('Encuentra un eco de Aurora.', 'Find an echo of Aurora.') },
-  'all-echoes': { title: t('Todas sus huellas', 'Every trace'), desc: t('Encuentra los ocho ecos de la Luna.', 'Find all eight echoes on the Moon.') },
-  'complete': { title: t('Transmisión recibida', 'Transmission received'), desc: t('Completa la misión lunar.', 'Complete the lunar mission.') },
+  'dust': { title: t('Entre remolinos', 'Among dust devils'), desc: t('Cruza las dunas de Marte.', 'Cross the Martian dunes.') },
+  'all-echoes': { title: t('Todas sus huellas', 'Every trace'), desc: t('Encuentra todos los ecos de un destino.', 'Find every echo at one destination.') },
+  'complete': { title: t('Transmisión recibida', 'Transmission received'), desc: t('Completa una misión de superficie.', 'Complete a surface mission.') },
   'tight-reserve': { title: t('Al límite', 'On the edge'), desc: t('Completa la misión con 5 u. o menos sobre la reserva.', 'Complete the mission with 5 u or less above the reserve.') },
   'no-recall': { title: t('Enlace firme', 'Steady link'), desc: t('Completa la misión sin perder el enlace.', 'Complete the mission without losing the link.') },
   'learn': { title: t('Aprender del repliegue', 'Learning from a recall'), desc: t('Completa la misión después de un repliegue.', 'Complete the mission after a recall.') },
@@ -23,7 +24,7 @@ export const achievementIds = Object.keys(achievements) as AchievementId[];
 
 export type GameEvent =
   | { kind: 'dash' } | { kind: 'air-jump' }
-  | { kind: 'zone'; cold: boolean }
+  | { kind: 'zone'; cold: boolean; dust?: boolean }
   | { kind: 'echo'; found: number; total: number }
   | { kind: 'sortie'; designs: SuitDesign[] }
   | { kind: 'report'; report: Report; previous: ('complete' | 'recalled')[] };
@@ -35,7 +36,7 @@ export function unlocks(event: GameEvent, held: readonly string[]): AchievementI
   switch (event.kind) {
     case 'dash': add('first-dash', true); break;
     case 'air-jump': add('first-thrust', true); break;
-    case 'zone': add('cold', event.cold); break;
+    case 'zone': add('cold', event.cold); add('dust', !!event.dust); break;
     case 'echo': add('first-echo', event.found >= 1); add('all-echoes', event.found >= event.total); break;
     case 'sortie': add('two-designs', new Set(event.designs.map(d => JSON.stringify(d))).size >= 2); break;
     case 'report': {

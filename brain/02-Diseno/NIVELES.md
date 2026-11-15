@@ -64,6 +64,21 @@ Ocho ecos: techo del módulo, dos columnas, dos rocas grandes, cima del pico, cr
 
 Los textos y reglas de los seis objetivos vienen del mundo lunar v1 ([moon.ts](../../src/core/worlds/moon.ts)): la versión 2D y la 3D describen la misma misión.
 
+## Ficha: Marte
+
+Valle de Aurora, capítulo 3: hábitat, valle, relé y contingencia de polvo. Coordenadas, misión, paleta y fuentes en [Marte «Terracota»](MARTE-TERRACOTA.md).
+
+| Zona | Posición | Objetivo | Cómo se llega |
+| --- | --- | --- | --- |
+| Campamento de Aurora | sur (−8, 62) | Hábitat, bitácora y terminal (salida) | Inicio |
+| Cauce seco | z ≈ 22 | — | 7 m de hondo: salto y dash por el centro, o vados balizados en x ≈ ±60 |
+| Campo de dunas | (−4, −16) | — | A pie; gasta batería y mucho más tras reparar el relé |
+| Meseta estratificada | (52, −8) | Afloramiento al pie; mirador (opcional) arriba | Rampa suroeste o doble salto |
+| Colina del relé | (−52, −34) | Relé del valle | A pie |
+| Cabecera del valle | (6, −80) | Equipo de campo | A pie |
+
+Una zona puede tener `hazard` (`cold` o `dust`) y `surge` (contingencia: gasto mayor desde que se completa un punto). `checkLevel` comprueba que el punto de la contingencia exista.
+
 ## Pendiente
 
 - Energía, traje y consola de diseño (tanda 2): hoy los objetivos solo exigen sus requisitos.

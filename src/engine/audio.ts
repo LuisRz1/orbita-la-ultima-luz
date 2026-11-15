@@ -302,7 +302,28 @@ export class GameAudio {
   private voiceGain!: GainNode;
   private voices = new Map<string, Promise<AudioBuffer | null>>();
   private speaking: AudioBufferSourceNode | null = null;
+  private windGain: GainNode | null = null;
+  /**
+   * Wind bed. 0 on the Moon (no air carries sound); on Mars the thin atmosphere does carry a low, breathy wind, as
+   * the microphones on NASA's Perseverance rover recorded. `storm` raises it during the dust contingency.
+   */
+  private windLevel = 0;
+  private storm = 0;
   volumes = { master: 0.8, music: 0.7, sfx: 0.9 };
+
+  setWind(level: number) { this.windLevel = level; this.applyWind(); }
+  setStorm(level: number) { this.storm = level; this.applyWind(); }
+  private applyWind() {
+    if (!this.ctx || !this.windGain) return;
+    this.windGain.gain.setTargetAtTime(this.windLevel * (0.05 + this.storm * 0.09), this.ctx.currentTime, 1.2);
+  }
+
+  /** Built once, silent until setWind. */
+  private buildWind(ctx: AudioContext) {
+    this.windGain = ctx.createGain(); this.windGain.gain.value = 0;
+    windBed(ctx, this.windGain);
+    this.windGain.connect(this.sfx);
+  }
 
   /** Browsers only allow audio after a user gesture; call this from one. */
   unlock() {
@@ -324,6 +345,8 @@ export class GameAudio {
     this.staticGain = ctx.createGain(); this.staticGain.gain.value = 0;
     s.connect(band).connect(this.staticGain).connect(this.sfx); s.start();
     this.score = new Score(ctx, this.music, this.wet);
+    this.buildWind(ctx);
+    this.applyWind();
     this.applyVolumes();
     this.score.setMood(this.pendingMood);
     this.timer = window.setInterval(() => { const t = ctx.currentTime; this.score.schedule(t, t + 0.6); }, 250);
@@ -385,11 +408,27 @@ export class GameAudio {
   dispose() { clearInterval(this.timer); void this.ctx?.close(); this.ctx = null; }
 }
 
+/** Martian wind: low-passed noise whose cutoff and level breathe slowly, like gusts, into `out`. */
+export function windBed(ctx: BaseAudioContext, out: AudioNode) {
+  const src = ctx.createBufferSource(), low = ctx.createBiquadFilter(), gust = ctx.createGain();
+  src.buffer = noise(ctx); src.loop = true;
+  low.type = 'lowpass'; low.frequency.value = 380; low.Q.value = 0.7;
+  gust.gain.value = 0.7;
+  const lfo = ctx.createOscillator(), lfoDepth = ctx.createGain();
+  lfo.frequency.value = 0.11; lfoDepth.gain.value = 220;
+  lfo.connect(lfoDepth).connect(low.frequency);
+  const lfo2 = ctx.createOscillator(), lfo2Depth = ctx.createGain();
+  lfo2.frequency.value = 0.07; lfo2Depth.gain.value = 0.3;
+  lfo2.connect(lfo2Depth).connect(gust.gain);
+  src.connect(low).connect(gust).connect(out);
+  src.start(); lfo.start(); lfo2.start();
+}
+
 /** Shared instance: the engine drives music and game sounds, the interface plays its own clicks through it. */
 export const sound = new GameAudio();
 
 /** Renders a sound or a stretch of score offline and returns 16-bit PCM WAV bytes (used for review tooling). */
-export async function renderWav(what: { sfx?: Sfx; mood?: Mood }, seconds: number, sampleRate = 44100) {
+export async function renderWav(what: { sfx?: Sfx; mood?: Mood; wind?: number }, seconds: number, sampleRate = 44100) {
   const ctx = new OfflineAudioContext(2, Math.ceil(seconds * sampleRate), sampleRate);
   const out = ctx.createGain(), wet = ctx.createGain();
   const reverb = makeReverb(ctx);
@@ -397,6 +436,7 @@ export async function renderWav(what: { sfx?: Sfx; mood?: Mood }, seconds: numbe
   out.connect(ctx.destination); wet.connect(reverb).connect(ctx.destination);
   if (what.sfx) playSfx(ctx, out, wet, what.sfx, 0.05);
   if (what.mood) { const score = new Score(ctx, out, wet); score.setMood(what.mood, 0); score.schedule(0, seconds); }
+  if (what.wind) { const g = ctx.createGain(); g.gain.value = 0.05 + what.wind * 0.09; windBed(ctx, g); g.connect(out); }
   const buf = await ctx.startRendering();
   const frames = buf.length, bytes = new DataView(new ArrayBuffer(44 + frames * 4));
   const w = (o: number, s: string) => { for (let i = 0; i < s.length; i++) bytes.setUint8(o + i, s.charCodeAt(i)); };

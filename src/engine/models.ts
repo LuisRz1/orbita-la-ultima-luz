@@ -7,7 +7,7 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Prop } from '../core/contract/level-v2.ts';
 import type { SuitDesign } from '../core/suit.ts';
-import { foilTexture, glyphTexture, hullTexture, outlineMaterial, stripeTexture, toon, toonMapped, visorTexture } from './style.ts';
+import { biome, foilTexture, glyphTexture, hullTexture, outlineMaterial, stripeTexture, toon, toonMapped, visorTexture } from './style.ts';
 
 /** Suit colour blocking for the Nácar biome. */
 export const suitColors = {
@@ -219,7 +219,9 @@ export type Luma = { group: Group; animate(t: number, still: boolean): void };
 /** LUMA: compact, cubic alien creature with a warm core and a translator band. */
 export function buildLuma(): Luma {
   const group = new Group();
-  const fur = toon(colors.luma, '#4a2208');
+  // Fur and core follow the chapter's stage of LUMA's colour (amber on the Moon, red on Mars).
+  const lumaCore = biome.lumaCore;
+  const fur = toon(biome.luma, '#4a2208');
   const body = part(new RoundedBoxGeometry(0.36, 0.34, 0.36, 3, 0.07), fur, 0.025);
   const glyphs = glyphTexture();
   glyphs.repeat.set(2, 1);
@@ -228,7 +230,7 @@ export function buildLuma(): Luma {
   const eyes = [-0.075, 0.075].map(x => { const e = new Mesh(new BoxGeometry(0.05, 0.09, 0.02), toon('#1b1530')); e.position.set(x, 0.045, -0.182); return e; });
   const shine = [-0.075, 0.075].map(x => { const e = new Mesh(new BoxGeometry(0.016, 0.022, 0.01), new MeshBasicMaterial({ color: '#ffffff' })); e.position.set(x - 0.01, 0.065, -0.19); return e; });
   const cheeks = [-0.13, 0.13].map(x => { const c = new Mesh(new CircleGeometry(0.025, 10), new MeshBasicMaterial({ color: '#ff8a5c', transparent: true, opacity: 0.7 })); c.position.set(x, -0.005, -0.182); c.rotation.y = Math.PI; return c; });
-  const core = new Mesh(new OctahedronGeometry(0.05), toon(colors.lumaCore, colors.lumaCore));
+  const core = new Mesh(new OctahedronGeometry(0.05), toon(lumaCore, lumaCore));
   core.position.set(0, -0.08, -0.2);
   const ears = [-1, 1].map(side => {
     const e = part(new RoundedBoxGeometry(0.06, 0.156, 0.06, 2, 0.02), fur, 0.018); e.position.set(side * 0.13, 0.23, 0); e.rotation.z = -side * 0.35;
@@ -236,7 +238,7 @@ export function buildLuma(): Luma {
     return e;
   });
   const motes = new Group();
-  for (let i = 0; i < 4; i++) { const m = new Mesh(new OctahedronGeometry(0.018), new MeshBasicMaterial({ color: colors.lumaCore })); motes.add(m); }
+  for (let i = 0; i < 4; i++) { const m = new Mesh(new OctahedronGeometry(0.018), new MeshBasicMaterial({ color: lumaCore })); motes.add(m); }
   group.add(body, band, core, motes, ...eyes, ...shine, ...cheeks, ...ears);
   return {
     group,
@@ -263,7 +265,7 @@ export function buildProp(prop: Prop, base: number): Group {
   const g = new Group();
   g.position.set(solid.x, base, solid.z);
   const h = solid.top - base;
-  const hull = toon(colors.hull), dark = toon(colors.dark), rock = toon(colors.rock), rockDark = toon(colors.rockDark);
+  const hull = toon(colors.hull), dark = toon(colors.dark), rock = toon(biome.rockLit), rockDark = toon(biome.rockDark);
   const add = (m: Mesh, x: number, y: number, z: number) => { m.position.set(x, y, z); g.add(m); return m; };
 
   if (kind === 'lander' && solid.kind === 'box') {
@@ -313,6 +315,32 @@ export function buildProp(prop: Prop, base: number): Group {
     add(part(new CylinderGeometry(solid.r, solid.r * 1.3, h, 8), dark, 0.015), 0, h / 2, 0);
     const lamp = add(new Mesh(new SphereGeometry(0.12, 10, 8), new MeshBasicMaterial({ color: '#ffe3a3' })), 0, h + 0.08, 0);
     lamp.userData.blink = true;
+  } else if (kind === 'habitat' && solid.kind === 'box') {
+    // Aurora's Martian habitat: two half-buried pressurised cylinders joined by a node, a dusty solar wing and a
+    // lit hatch on the west side (where the log is read).
+    const shell = toonMapped(hullTexture('AURORA-HAB'));
+    for (const dz of [-solid.hz * 0.5, solid.hz * 0.5]) {
+      const can = add(part(new CylinderGeometry(h * 0.55, h * 0.55, solid.hx * 1.8, 14), shell), 0, h * 0.42, dz);
+      can.rotation.z = Math.PI / 2;
+    }
+    add(part(new SphereGeometry(h * 0.62, 14, 10), hull), solid.hx * 0.9, h * 0.42, 0);
+    add(part(new BoxGeometry(0.08, 1.3, 0.9), dark, 0.015), -solid.hx * 0.92, 0.8, 0);
+    const hatch = add(new Mesh(new SphereGeometry(0.1, 10, 8), new MeshBasicMaterial({ color: '#ffe3a3' })), -solid.hx * 0.95, 1.6, 0);
+    hatch.userData.blink = true;
+    const wing = add(part(new BoxGeometry(3.6, 0.06, 1.6), toon('#2b3a5c'), 0.015), 0, h + 0.5, 0);
+    wing.rotation.x = 0.35;
+    add(part(new CylinderGeometry(0.06, 0.06, 1, 6), dark, 0.01), 0, h, 0);
+    // Dust banked against the walls.
+    for (const sx of [-1, 1]) { const drift = add(part(new SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), rock, 0.02), sx * solid.hx * 0.6, 0, solid.hz * 0.9); drift.scale.set(1.6, 0.45, 0.8); }
+  } else if (kind === 'rover' && solid.kind === 'box') {
+    // Aurora's pressurised rover, parked and dusty. Its flat roof is a perch for an echo.
+    add(part(new RoundedBoxGeometry(solid.hx * 2, h * 0.55, solid.hz * 2, 2, 0.12), toonMapped(hullTexture('ROVER-A'))), 0, h * 0.62, 0);
+    add(part(new RoundedBoxGeometry(solid.hx * 1.6, h * 0.25, solid.hz * 1.2, 2, 0.08), hull), 0, h * 0.95, -solid.hz * 0.2);
+    add(new Mesh(new BoxGeometry(solid.hx * 1.4, 0.3, 0.05), toon(colors.screen, '#2a8f8c')), 0, h * 0.95, -solid.hz * 0.82);
+    for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [1, 0], [-1, 0]]) {
+      const wheel = add(part(new CylinderGeometry(0.42, 0.42, 0.3, 12), dark, 0.02), sx * (solid.hx + 0.05), 0.42, sz * solid.hz * 0.7);
+      wheel.rotation.z = Math.PI / 2;
+    }
   } else if (kind === 'step' && solid.kind === 'box') {
     // A rock slab column from the rift floor; its flat top is the step.
     const slab = add(part(new BoxGeometry(solid.hx * 2, h, solid.hz * 2), rock, 0.04), 0, h / 2, 0);

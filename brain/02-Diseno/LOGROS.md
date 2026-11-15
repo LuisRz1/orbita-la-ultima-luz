@@ -1,22 +1,23 @@
 ---
 id: logros-3d
 type: diseno
-status: implementado-luna
+status: implementado-luna-marte
 updated: 2026-11-14
 tags: [orbita, diseno, logros, 3d]
 ---
 # Logros
 
-Logros opcionales de la Luna. Premian explorar, moverse bien y aprender del bucle de diseño. Ninguno bloquea la historia ni cambia recursos ni recompensas. Fuente: [achievements.ts](../../src/core/achievements.ts).
+Logros opcionales de la Luna y Marte. Premian explorar, moverse bien y aprender del bucle de diseño. Ninguno bloquea la historia ni cambia recursos ni recompensas. Fuente: [achievements.ts](../../src/core/achievements.ts). Cada destino los guarda en su propia partida.
 
 | Id | Nombre | Condición |
 | --- | --- | --- |
 | first-dash | Impulso | Usar el dash. |
 | first-thrust | Dos veces arriba | Doble salto con propulsor. |
-| cold | Donde no llega el sol | Entrar en el cráter en sombra. |
+| cold | Donde no llega el sol | Entrar en el cráter en sombra (Luna). |
+| dust | Entre remolinos | Cruzar las dunas de Marte. |
 | first-echo | Primer eco | Encontrar un eco de Aurora. |
-| all-echoes | Todas sus huellas | Encontrar los ocho ecos. |
-| complete | Transmisión recibida | Completar la misión lunar. |
+| all-echoes | Todas sus huellas | Encontrar todos los ecos de un destino. |
+| complete | Transmisión recibida | Completar una misión de superficie. |
 | tight-reserve | Al límite | Completar con 5 u. o menos sobre la reserva. |
 | no-recall | Enlace firme | Completar sin perder el enlace. |
 | learn | Aprender del repliegue | Completar después de un repliegue. |

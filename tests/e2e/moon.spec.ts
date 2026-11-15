@@ -96,9 +96,21 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('/?debug&quality=low');
   await page.locator('[data-menu="new"]').click({ timeout: 30_000 });
-  await expect(page.getByRole('dialog', { name: 'Diseño de traje' })).toBeVisible();
-  await call(page, 'pause', true);
+  await expect(page.getByRole('status', { name: 'Estado del traje' })).toBeVisible();
   const level = await call(page, 'level') as { points: { id: string; x: number; z: number }[] };
+  /** Opens a station in the lander, applies the clicks and confirms it. */
+  const station = async (id: string, ...clicks: string[]) => {
+    await call(page, 'station', id);
+    for (const c of clicks) await page.locator(`[data-station="${id}"] ${c}`).click();
+    await page.locator(`[data-station="${id}"] [data-confirm]`).click();
+  };
+  /** Helmet from the locker, then out through the airlock; the sortie starts once the exit fade ends. */
+  const leave = async () => {
+    await call(page, 'station', 'locker');
+    await call(page, 'station', 'airlock');
+    await page.waitForFunction(() => (window.__orbita as unknown as Api).state().phase === 'eva', null, { timeout: 15_000 });
+    await call(page, 'pause', true);
+  };
   const visit = async (id: string) => {
     const p = level.points.find(q => q.id === id)!;
     await call(page, 'teleport', p.x, p.z);
@@ -108,11 +120,11 @@ test('design, fail, read the report, redesign and complete: the full mission loo
     await call(page, 'step', 2);
   };
 
-  // First attempt: light proposal without the drill.
-  await page.locator('[data-proposal="light"]').click();
-  await page.locator('[data-instrument="drill"]').uncheck();
-  await expect(page.locator('.checks li.bad')).toContainText('Caché de Aurora');
-  await page.locator('[data-start]').click();
+  // First attempt: the default light suit without the drill. The top bar marks the cache as impossible.
+  for (const id of ['battery', 'thruster', 'antenna']) await station(id);
+  await station('instruments', '[data-instrument="drill"]');
+  await expect(page.locator('.ship-bar .goals b.bad')).toHaveAttribute('title', 'Caché de Aurora');
+  await leave();
   await settle(page);
   for (const id of ['sample', 'relay', 'archive']) await visit(id);
   expect((await call(page, 'state') as { completed: string[] }).completed).toEqual(['sample', 'relay']);
@@ -127,10 +139,13 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   await expect(report.locator('[data-missed="archive"]')).toContainText('taladro');
   await settle(page);
 
-  // Second attempt: redesign with the science proposal and complete the mission.
+  // Second attempt: redesign toward the science proposal (bigger battery, drill instead of kit) and complete.
   await page.locator('[data-redesign]').click();
-  await page.locator('[data-proposal="science"]').click();
-  await page.locator('[data-start]').click();
+  await call(page, 'pause', false);
+  await station('battery', '[data-option="extended"]');
+  await station('instruments', '[data-instrument="drill"]', '[data-instrument="kit"]');
+  await expect(page.locator('.ship-bar .goals b.bad')).toHaveCount(0);
+  await leave();
   await settle(page);
   for (const id of ['sample', 'archive', 'relay', 'terminal']) await visit(id);
   await call(page, 'step', 120);
@@ -141,6 +156,7 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   // Attempts survive a reload.
   await page.reload();
   await page.locator('[data-menu="continue"]').click({ timeout: 30_000 });
+  await expect(page.locator('.history')).toContainText('2', { timeout: 30_000 });
   await expect(page.locator('.history')).toContainText('completa', { timeout: 30_000 });
   await expect(page.locator('.history')).toContainText('repliegue');
   expect(errors).toEqual([]);

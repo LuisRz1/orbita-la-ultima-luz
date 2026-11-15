@@ -4,6 +4,7 @@ import type { Attempt } from '../core/save/progress3d.ts';
 import type { Report } from '../core/sortie.ts';
 import type { SuitDesign } from '../core/suit.ts';
 import type { Tier } from '../engine/quality.ts';
+import type { LevelFacts } from '../levels/facts.ts';
 
 export type Objective = { id: string; title: Localized; required: boolean; done: boolean; action: string; power: number };
 export type Prompt = { verb: Localized; title: Localized; blocked: Localized[]; cost: number; missing: Localized | null };
@@ -48,7 +49,16 @@ export type HudState = {
   achievements: string[];
   hasProgress: boolean;
   ship: ShipState | null;
+  /** Destination being played, its title-screen card and the text that closes a completed mission. */
+  levelId: string;
+  facts: LevelFacts | null;
+  outcome: Localized | null;
+  /** Story route: which destinations exist, which one is open and which can be travelled to. */
+  destinations: Destination[];
+  /** Next destination, once this one has a completed sortie. */
+  next: { id: string; name: Localized } | null;
 };
+export type Destination = { id: string; name: Localized; current: boolean; unlocked: boolean };
 
 export const hud = createStore<HudState>(() => ({
   ready: false, phase: 'loading', tier: 'medium', frameMs: 0, renderScale: 1, drawCalls: 0, triangles: 0,
@@ -56,6 +66,7 @@ export const hud = createStore<HudState>(() => ({
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
   paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,
+  levelId: 'moon', facts: null, outcome: null, destinations: [], next: null,
 }));
 
 /** Commands the interface sends to the engine. The running game replaces these no-ops. */
@@ -74,4 +85,6 @@ export const commands = {
   pick: (_draft: SuitDesign) => {},
   confirmStation: () => {},
   closeStation: () => {},
+  /** Opens another unlocked destination (reloads the page with ?level=). */
+  travel: (_id: string) => {},
 };

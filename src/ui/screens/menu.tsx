@@ -12,34 +12,37 @@ type Sub = 'settings' | 'achievements' | 'credits' | null;
 
 export function MainMenu() {
   const { t } = useT();
-  const { hasProgress, realGravity } = useStore(hud);
+  const { hasProgress, facts, destinations } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
   return <div className="screen menu-screen">
     <section className="menu-main">
       <h1 className="game-title">ÓRBITA</h1>
       <p className="game-subtitle">{t('subtitle')}</p>
-      <p className="premise">{t('premise')}</p>
+      <p className="premise">{facts ? t(facts.premise) : t('premise')}</p>
       <nav className="menu-list" aria-label="menu">
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
+        {destinations.filter(d => !d.current).map(d => d.unlocked
+          ? <button key={d.id} data-sfx="ui-confirm" data-travel={d.id} onClick={() => commands.travel(d.id)}>{t('travelTo')} {t(d.name)} ↗</button>
+          : <button key={d.id} disabled data-travel-locked={d.id}>{t(d.name)} · {t('routeLocked')}</button>)}
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
         <button data-sfx="ui-open" data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
       </nav>
     </section>
-    <aside className="panel data-card" aria-label={t('operation')}>
+    {facts && <aside className="panel data-card" aria-label={t('operation')}>
       <dl>
-        <dt>{t('operation')}</dt><dd>AURORA / C2</dd>
-        <dt>{t('body')}</dt><dd>{t('moonBody')}</dd>
-        <dt>{t('gravity')}</dt><dd>{realGravity.toFixed(2)} m/s² · 1/6 g</dd>
-        <dt>{t('atmosphere')}</dt><dd>{t('exosphere')}</dd>
-        <dt>{t('temperature')}</dt><dd>−173 … +127 °C</dd>
-        <dt>{t('lastContact')}</dt><dd>{t('searchHalted')}</dd>
-        <dt>{t('status')}</dt><dd className="blink">{t('silent')}</dd>
+        <dt>{t('operation')}</dt><dd>{facts.operation}</dd>
+        <dt>{t('body')}</dt><dd>{t(facts.body)}</dd>
+        <dt>{t('gravity')}</dt><dd>{facts.gravity}</dd>
+        <dt>{t('atmosphere')}</dt><dd>{t(facts.atmosphere)}</dd>
+        <dt>{t('temperature')}</dt><dd>{facts.temperature}</dd>
+        <dt>{t('lastContact')}</dt><dd>{t(facts.lastContact)}</dd>
+        <dt>{t('status')}</dt><dd className="blink">{t(facts.status)}</dd>
       </dl>
-      <a className="source" href="https://science.nasa.gov/moon/facts/" target="_blank" rel="noreferrer">NASA · Moon Facts ↗</a>
-    </aside>
+      <a className="source" href={facts.source.url} target="_blank" rel="noreferrer">{facts.source.name} ↗</a>
+    </aside>}
   </div>;
 }
 
@@ -118,6 +121,11 @@ const sources = [
   { url: 'https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/', name: 'NASA Space Apps · Space Mission Design Game', use: { es: 'Reto que responde el bucle de diseño, simulación, informe y rediseño.', en: 'Challenge answered by the design, simulation, report and redesign loop.' }, kind: 'reference' as const },
   { url: 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf#page=8', name: 'NASA · Design and Develop Science Missions', use: { es: 'Idea de compromisos entre masa, energía e instrumentos.', en: 'Trade-offs between mass, power and instruments.' }, kind: 'simplified' as const },
   { url: 'https://pds-geosciences.wustl.edu/missions/lro/lola.htm', name: 'PDS · LRO LOLA', use: { es: 'Referencia de topografía lunar; el cráter del juego es procedural, no un producto LOLA.', en: 'Lunar topography reference; the game crater is procedural, not a LOLA product.' }, kind: 'fiction' as const },
+  { url: 'https://science.nasa.gov/mars/facts/', name: 'NASA · Mars Facts', use: { es: 'Gravedad (0,38 g), temperaturas y atmósfera de CO₂ del menú de Marte.', en: 'Gravity (0.38 g), temperatures and CO₂ atmosphere in the Mars menu.' }, kind: 'observed' as const },
+  { url: 'https://science.nasa.gov/mission/msl-curiosity/', name: 'NASA · Curiosity (Gale crater)', use: { es: 'Capas sedimentarias depositadas por agua antigua; inspiran el valle y la meseta, que son inventados.', en: 'Sedimentary layers laid down by ancient water; they inspire the valley and mesa, which are invented.' }, kind: 'simplified' as const },
+  { url: 'https://www.nasa.gov/sounds-from-beyond/', name: 'NASA · Sounds from Beyond (Perseverance)', use: { es: 'Marte transmite sonido en su atmósfera tenue (viento, remolinos): base del viento del nivel, generado por código.', en: 'Mars carries sound in its thin atmosphere (wind, dust devils): basis for the level’s wind, generated in code.' }, kind: 'simplified' as const },
+  { url: 'https://science.nasa.gov/resource/dust-devils-on-mars/', name: 'NASA · Dust devils on Mars', use: { es: 'Remolinos de polvo observados por los rovers; la tormenta que provoca el relé es ficción de juego.', en: 'Dust devils seen by the rovers; the storm set off by the relay is game fiction.' }, kind: 'fiction' as const },
+  { url: 'https://science.nasa.gov/solar-system/planets/mars/what-does-a-sunrise-sunset-look-like-on-mars/', name: 'NASA · Sunrises and sunsets on Mars', use: { es: 'Cielo diurno anaranjado y halo azul junto al Sol por el polvo fino.', en: 'Orange daytime sky and a blue halo near the Sun from fine dust.' }, kind: 'observed' as const },
 ];
 
 function Credits() {

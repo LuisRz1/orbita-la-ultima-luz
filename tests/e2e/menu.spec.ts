@@ -19,9 +19,15 @@ test('title menu, English, story dialogue, pause and an achievement', async ({ p
   await expect(page.locator('[data-menu="new"]')).toHaveText('New expedition');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
+  // A new expedition starts inside the lander: each station is one suit decision, then locker and airlock.
   await page.locator('[data-menu="new"]').click();
-  await expect(page.getByRole('dialog', { name: 'Suit design' })).toContainText('EVA SUIT DESIGN');
-  await page.locator('[data-start]').click();
+  await expect(page.getByRole('status', { name: 'Suit status' })).toBeVisible();
+  for (const id of ['battery', 'thruster', 'antenna', 'instruments']) {
+    await call(page, 'station', id);
+    await page.locator(`[data-station="${id}"] [data-confirm]`).click();
+  }
+  await call(page, 'station', 'locker');
+  await call(page, 'station', 'airlock');
   const box = page.locator('[data-dialogue]');
   await expect(box).toContainText('Surface link open');
   for (let i = 0; i < 3; i++) await box.getByRole('button').click();
@@ -38,7 +44,7 @@ test('title menu, English, story dialogue, pause and an achievement', async ({ p
   await expect(page.getByRole('dialog', { name: 'Paused' })).toBeVisible();
   await page.locator('[data-pause="menu"]').click();
   await page.locator('[data-menu="achievements"]').click();
-  await expect(page.getByRole('dialog', { name: 'Achievements' })).toContainText('1/10');
+  await expect(page.getByRole('dialog', { name: 'Achievements' })).toContainText('1/11');
   await expect(page.locator('[data-achievement="first-dash"]')).toHaveClass(/got/);
   expect(errors).toEqual([]);
 });

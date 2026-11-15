@@ -17,6 +17,8 @@ import { createViewport } from './renderer.ts';
 import { tuning } from './tuning.ts';
 import { buildInterior, type StationId } from './interior.ts';
 import { buildWorldView, palette } from './world-view.ts';
+import { biome, setBiome } from './style.ts';
+import { zoneDrain } from '../core/contract/level-v2.ts';
 
 export type Game = { dispose(): void };
 
@@ -42,10 +44,15 @@ const angleLerp = (a: number, b: number, t: number) => {
   return a + d * t;
 };
 
-/** Mounts the engine with the lunar level. Resolves once the level is built and the first frame is queued. */
+/** Mounts the engine with the requested level. Resolves once the level is built and the first frame is queued. */
 export async function createGame(host: HTMLElement): Promise<Game> {
-  const { levels, requestedLevel } = await import('../levels/registry.ts');
-  const { level, dialogue: moonDialogue } = await levels[requestedLevel(window.location.search)]();
+  const { levels, requestedLevel, route, levelUrl } = await import('../levels/registry.ts');
+  const levelId = requestedLevel(window.location.search);
+  const { level, dialogue: script, facts, biome: biomeId } = await levels[levelId]();
+  // The palette must be chosen before any material, texture or model is built.
+  setBiome(biomeId);
+  audio.setWind(biome.wind);
+  audio.setStorm(0);
   const tier = startingTier();
   const viewport = createViewport(host, tier);
   const hf = buildHeightfield(level.terrain.size, level.terrain.res, level.terrain.height);
@@ -80,6 +87,25 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   } catch { saveError = true; }
   const save = () => writeProgress(progress).then(() => { saveError = false; }).catch(() => { saveError = true; }).finally(() => publish(true));
 
+  // Destinations follow the story order: each opens once the previous one has a completed sortie.
+  const completedHere = () => progress.attempts.some(a => a.outcome === 'complete');
+  const unlocked = new Set<string>([route[0].id, levelId]);
+  for (let i = 1; i < route.length; i++) {
+    try {
+      const prior = route[i - 1].id === levelId ? progress : await readProgress(route[i - 1].id);
+      if (prior && prior !== 'invalid' && prior.attempts.some(a => a.outcome === 'complete')) unlocked.add(route[i].id);
+    } catch { /* storage unavailable: only the current destination is listed */ }
+  }
+  const routeIndex = route.findIndex(r => r.id === levelId);
+  const nextStop = routeIndex >= 0 && routeIndex < route.length - 1 ? route[routeIndex + 1] : null;
+  const travel = (id: string) => { if (unlocked.has(id)) window.location.assign(levelUrl(id, window.location.search)); };
+  let storm = false;
+  function setStorm(on: boolean) {
+    storm = on;
+    view.ambience.setStorm(on ? 2.2 : 1);
+    audio.setStorm(on ? 1 : 0);
+  }
+
   let phase: 'menu' | 'ship' | 'eva' | 'report' = 'menu';
   // Ship (lander interior): the suit is assembled station by station; `draft` is what the player is wearing.
   const slotStations = ['battery', 'thruster', 'antenna', 'instruments'] as const;
@@ -106,7 +132,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
   /** Plays a story sequence once per save. */
   function play(key: string) {
-    const lines = moonDialogue[key];
+    const lines = script[key];
     if (!lines || progress.seen.includes(key)) return;
     progress = { ...progress, seen: [...progress.seen, key] };
     void save();
@@ -158,6 +184,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     teleport(level.spawn.x, level.spawn.z);
     input.look.yaw = 0; input.look.pitch = 0.32;
     zone = null; lostFor = 0; fade = 1; recalling = false; ending = 0; endReason = null; returning = false; lowWarned = false;
+    setStorm(false);
     resetPointsView();
     phase = 'eva'; paused = false;
     tell(level.arrival);
@@ -173,6 +200,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       used: Math.round(report.used * 10) / 10, time: Math.round(report.time), echoes: report.echoes,
     }].slice(-50) };
     void save();
+    if (report.outcome === 'complete' && nextStop) unlocked.add(nextStop.id);
+    setStorm(false);
     phase = 'report';
     hud.setState({ report });
     if (document.pointerLockElement) document.exitPointerLock();
@@ -265,6 +294,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   commands.resume = () => { paused = false; publish(true); };
   commands.abandon = toDesign;
   commands.advance = advance;
+  commands.travel = travel;
 
   function updateEva(dt: number) {
     const params = suitMovement(tuning, sortie.stats);
@@ -293,6 +323,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         resetPointsView();
         tell(result.point.result);
         if (sortie.outcome === 'complete') ending = 1.2;
+        // Contingency: a point can set off a hazard (the relay repair on Mars brings a dust front over the dunes).
+        const surge = level.zones.find(z => z.surge?.after === result.point.id)?.surge;
+        if (surge) { setStorm(true); tell(surge.warning, 'warn'); play('storm'); }
       } else if (result.error === 'none') {
         // Nothing in reach: no feedback needed.
       } else if (result.error === 'requirements') {
@@ -322,8 +355,12 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (nowZone && nowZone !== zone) {
       const z = level.zones.find(q => q.id === nowZone)!;
       hud.setState({ zone: z.title, zoneAt: time });
-      if (z.drain) tell(say('Sombra permanente: el frío gasta batería más rápido.', 'Permanent shadow: the cold drains the battery faster.'), 'warn');
-      award({ kind: 'zone', cold: !!z.drain });
+      const dusty = z.hazard === 'dust';
+      if (zoneDrain(z, sortie.session.completed)) tell(dusty
+        ? (storm ? say('Tormenta de polvo: cada segundo aquí gasta mucha batería.', 'Dust storm: every second here costs a lot of battery.')
+          : say('Dunas: el polvo y el viento gastan batería.', 'Dunes: dust and wind drain the battery.'))
+        : say('Sombra permanente: el frío gasta batería más rápido.', 'Permanent shadow: the cold drains the battery faster.'), 'warn');
+      award({ kind: 'zone', cold: !!z.drain && !dusty, dust: dusty });
       pendingZoneLine = z.id;
     }
     zone = nowZone;
@@ -379,7 +416,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   function currentMood(): Mood {
     if (phase === 'menu' || phase === 'ship') return 'menu';
     if (phase === 'report') return sortie.outcome === 'complete' ? 'complete' : 'recalled';
-    return level.zones.find(q => q.id === zone)?.drain ? 'cold' : 'surface';
+    return zoneDrain(level.zones.find(q => q.id === zone), sortie.session.completed) ? 'cold' : 'surface';
   }
 
   function update(dt: number) {
@@ -418,7 +455,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const reach = phase === 'eva' ? pointInReach(level, sortie.session, body.x, body.z) : null;
     const needs = reach ? instrumentFor[reach.action] : undefined;
     const info = viewport.renderer.info.render;
-    const cold = level.zones.find(q => q.id === zone)?.drain;
+    const here = level.zones.find(q => q.id === zone);
+    const cold = zoneDrain(here, sortie.session.completed) > 0;
     // Compass: the next objective that can be done now, or the lander when heading home.
     const goal = level.points.find(p => p.required && !sortie.session.completed.includes(p.id) && missingFor(level, sortie.session, p).length === 0);
     const marks: { id: string; label: Notice['text'] | null; bearing: number; dist: number; kind: 'goal' | 'home' }[] = [];
@@ -438,7 +476,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       player: { x: body.x, y: body.y, z: body.z, speed: Math.hypot(body.vx, body.vz), grounded: body.grounded },
       realGravity: level.realGravity, elapsed: sortie.time, now: time,
       design: progress.design, energy: sortie.energy, capacity: sortie.stats.capacity,
-      draining: cold && phase === 'eva' ? say('frío', 'cold') : null,
+      draining: cold && phase === 'eva' ? (here?.hazard === 'dust' ? say('polvo', 'dust') : say('frío', 'cold')) : null,
+      levelId, facts, outcome: level.outcome,
+      destinations: route.map(r => ({ id: r.id, name: r.name, current: r.id === levelId, unlocked: unlocked.has(r.id) })),
+      next: nextStop && unlocked.has(nextStop.id) && completedHere() ? { id: nextStop.id, name: nextStop.name } : null,
       attempts: progress.attempts, saveError,
       paused, dialogue: dialogue ? dialogue.lines[dialogue.index] : null, toast, achievements: progress.achievements,
       hasProgress: progress.attempts.length > 0,
@@ -520,7 +561,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const loop = new Loop({ update, render });
   const hideDebug = exposeDebug({
     state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
-      zone, completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
+      zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger },
+      completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
       signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length }),
     step: (count: number) => loop.step(count),
     pause: (value: boolean) => { loop.paused = value; },

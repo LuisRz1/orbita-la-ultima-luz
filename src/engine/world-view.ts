@@ -9,15 +9,17 @@ import {
 import type { LevelV2 } from '../core/contract/level-v2.ts';
 import { heightAt, normalAt, type Heightfield } from '../core/heightfield.ts';
 import { buildAstronaut, buildLuma, buildProp, colors, type Astronaut, type Luma } from './models.ts';
-import { biome, earthTexture, footprintTexture, glowTexture, ink, outlineMaterial, terrainMaterial, toon } from './style.ts';
+import { biome, earthTexture, footprintTexture, glowTexture, marsMoonTexture, outlineMaterial, terrainMaterial, toon } from './style.ts';
 
-export const palette = {
-  sky: biome.skyTop, lit: biome.lit, mid: biome.mid, shadow: biome.shadow, deep: biome.deep, ink,
+const fromBiome = () => ({
+  sky: biome.skyTop, lit: biome.lit, mid: biome.mid, shadow: biome.shadow, deep: biome.deep, ink: biome.ink,
   accent: biome.cyan, warn: biome.amber,
-};
+});
+/** Scene colours of the active biome; refreshed when a level's view is built. */
+export const palette = fromBiome();
 
 export type PointView = { id: string; beam: Mesh; ring: Mesh };
-export type Ambience = { update(dt: number, camera: Vector3, time: number): void };
+export type Ambience = { update(dt: number, camera: Vector3, time: number): void; setStorm(level: number): void };
 export type Footprints = { place(x: number, y: number, z: number, facing: number): void };
 export type Dust = { burst(x: number, y: number, z: number, count: number, spread: number): void; update(dt: number): void };
 export type WorldView = {
@@ -48,7 +50,7 @@ function sunVisibility(hf: Heightfield, x: number, z: number, sun: [number, numb
   return Math.min(1, lit);
 }
 
-type Circle = { x: number; z: number; r: number };
+type Circle = { x: number; z: number; r: number; hazard?: 'cold' | 'dust' };
 
 function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[]) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
@@ -70,6 +72,7 @@ function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: nu
     // Inside cold zones the unlit band sinks to the deeper violet.
     let inCold = 0;
     for (const zone of cold) {
+      if (zone.hazard === 'dust') continue;
       const edge = (Math.hypot(x - zone.x, z - zone.z) - zone.r * 0.6) / (zone.r * 0.4);
       inCold = Math.max(inCold, 1 - Math.min(1, Math.max(0, edge)));
     }
@@ -197,7 +200,9 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
   const cloud = (count: number, color: string, size: number, opacity: number, additive = false) => {
     const pos = new Float32Array(count * 3);
     const geo = new BufferGeometry();
-    const attr = new Float32BufferAttribute(pos, 3);
+    // BufferAttribute keeps a reference to `pos` (Float32BufferAttribute would copy it, and the per-frame updates
+    // below would never reach the GPU: every particle stayed at the origin).
+    const attr = new BufferAttribute(pos, 3);
     attr.setUsage(DynamicDrawUsage);
     geo.setAttribute('position', attr);
     const pts = new Points(geo, new PointsMaterial({ color, size, transparent: true, opacity, depthWrite: false,
@@ -208,7 +213,7 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
   };
 
   const radius = 20;
-  const dust = cloud(Math.round(300 * density), '#f6e9ff', 0.08, 0.4);
+  const dust = cloud(Math.round(300 * density), biome.airDust, 0.08, 0.4);
   const drift = new Float32Array(dust.count * 2);
   for (let i = 0; i < dust.count; i++) {
     dust.pos.set([(rand() - 0.5) * radius * 2, rand() * 6, (rand() - 0.5) * radius * 2], i * 3);
@@ -216,7 +221,9 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
   }
   const sparks = cloud(6 * echoes.size, '#ffd59a', 0.09, 0.9, true);
   const frostZone = cold[0];
-  const frost = cloud(frostZone ? Math.round(120 * density) : 0, '#bfe9ff', 0.07, 0.75);
+  // Cold zones get falling frost (fiction); dust zones get sand swirling up in a slow devil.
+  const swirling = frostZone?.hazard === 'dust';
+  const frost = cloud(frostZone ? Math.round((swirling ? 320 : 120) * density) : 0, biome.hazardParticle, swirling ? 0.32 : 0.07, swirling ? 0.6 : 0.75);
   for (let i = 0; i < frost.count; i++) {
     const a = rand() * Math.PI * 2, r = Math.sqrt(rand()) * (frostZone?.r ?? 1) * 0.8;
     frost.pos.set([(frostZone?.x ?? 0) + Math.cos(a) * r, rand() * 8, (frostZone?.z ?? 0) + Math.sin(a) * r], i * 3);
@@ -225,11 +232,14 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
   (group.children.at(-1) as Points).material = new PointsMaterial({ color: '#ffe3a3', size: 3, sizeAttenuation: false, fog: false, transparent: true });
 
   const echoList = [...echoes.values()];
-  const ambience: Ambience = {
+  let storm = 1;  const ambience: Ambience = {
+    setStorm(level) { storm = level; },
     update(dt, cam, time) {
+      // With wind, airborne dust streams downwind instead of drifting.
+      const gust = biome.wind * (1.2 + Math.sin(time * 0.3) * 0.8);
       for (let i = 0; i < dust.count; i++) {
         const k = i * 3;
-        dust.pos[k] += drift[i * 2] * dt;
+        dust.pos[k] += (drift[i * 2] + gust) * dt;
         dust.pos[k + 1] += 0.05 * dt;
         dust.pos[k + 2] += drift[i * 2 + 1] * dt;
         for (const [axis, c] of [[0, cam.x], [2, cam.z]] as const) {
@@ -250,6 +260,17 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
       sparks.attr.needsUpdate = true;
       for (let i = 0; i < frost.count; i++) {
         const k = i * 3;
+        if (swirling && frostZone) {
+          // Each grain circles the zone centre while rising; a storm widens and speeds the swirl.
+          const a = time * (0.35 + (i % 7) * 0.05) * storm + i * 2.4;
+          const r = (0.15 + ((i * 7919) % 1000) / 1000) * frostZone.r * (0.3 + 0.2 * storm);
+          frost.pos[k] = frostZone.x + Math.cos(a) * r;
+          frost.pos[k + 2] = frostZone.z + Math.sin(a) * r;
+          frost.pos[k + 1] += (0.3 + 0.4 * storm) * dt;
+          const floor = heightAt0(frost.pos[k], frost.pos[k + 2]);
+          if (frost.pos[k + 1] > floor + 1.5 + 2.5 * storm || frost.pos[k + 1] < floor) frost.pos[k + 1] = floor + (i % 3) * 0.3;
+          continue;
+        }
         frost.pos[k + 1] -= 0.2 * dt;
         frost.pos[k] += Math.sin(time + i) * 0.003;
         const floor = heightAt0(frost.pos[k], frost.pos[k + 2]);
@@ -266,14 +287,14 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
 }
 
 /** Pooled dust puffs for landings and dashes. */
-function dustPool(): { points: Points; dust: Dust } {
+function dustPool(gravity: number, air: number): { points: Points; dust: Dust } {
   const max = 96;
   const pos = new Float32Array(max * 3), vel = new Float32Array(max * 3), life = new Float32Array(max);
   const geometry = new BufferGeometry();
-  const attr = new Float32BufferAttribute(pos, 3);
+  const attr = new BufferAttribute(pos, 3);
   attr.setUsage(DynamicDrawUsage);
   geometry.setAttribute('position', attr);
-  const points = new Points(geometry, new PointsMaterial({ color: '#d8d2c4', size: 0.22, transparent: true, opacity: 0.8, depthWrite: false }));
+  const points = new Points(geometry, new PointsMaterial({ color: biome.puff, size: 0.22, transparent: true, opacity: 0.8, depthWrite: false }));
   points.frustumCulled = false;
   let next = 0, seed = 3;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -293,9 +314,10 @@ function dustPool(): { points: Points; dust: Dust } {
       update(dt) {
         for (let i = 0; i < max; i++) {
           if (life[i] <= 0) continue;
-          life[i] -= dt;
-          // Low gravity and no air: dust flies in clean arcs and does not linger.
-          vel[i * 3 + 1] -= 1.62 * dt;
+          // In vacuum dust flies in clean arcs and does not linger; with air it is slowed and hangs longer.
+          life[i] -= dt / (1 + air * 0.6);
+          vel[i * 3 + 1] -= gravity * dt;
+          if (air) { const k = Math.max(0, 1 - air * dt); vel[i * 3] *= k; vel[i * 3 + 1] *= k; vel[i * 3 + 2] *= k; }
           pos[i * 3] += vel[i * 3] * dt; pos[i * 3 + 1] += vel[i * 3 + 1] * dt; pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
           if (life[i] <= 0) pos[i * 3 + 1] = -1e4;
         }
@@ -306,25 +328,44 @@ function dustPool(): { points: Points; dust: Dust } {
 }
 
 export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, octaves = 4): WorldView {
+  Object.assign(palette, fromBiome());
   const scene = new Scene();
   scene.background = new Color(palette.sky);
-  // Fog is a style choice (the Moon has no air): it softens the far rim into the indigo horizon.
-  scene.fog = new Fog(biome.fog, 60, 230);
+  // On the Moon fog is a style choice (there is no air): it softens the far rim into the indigo horizon. On Mars
+  // it is the real dusty atmosphere, so it starts closer.
+  scene.fog = new Fog(biome.fog, biome.fogNear, biome.fogFar);
   const sun = sunDirection(level.sun.azimuth, level.sun.elevation);
 
-  const light = new DirectionalLight('#fff4e0', 2.4);
+  const light = new DirectionalLight(biome.sunColor, 2.4);
   light.position.set(sun[0] * 50, sun[1] * 50, sun[2] * 50);
-  scene.add(light, new HemisphereLight('#9fb0cc', '#2a2a33', 1.1));
-  const cold = level.zones.filter(z => z.drain).map(z => ({ x: z.center.x, z: z.center.z, r: z.radius }));
-  scene.add(terrainMesh(hf, sun, octaves, cold), starfield(1800), scatterRocks(level, hf, scatter));
+  scene.add(light, new HemisphereLight(biome.hemiSky, biome.hemiGround, 1.1));
+  const cold = level.zones.filter(z => z.drain || z.surge).map(z => ({ x: z.center.x, z: z.center.z, r: z.radius, hazard: z.hazard }));
+  scene.add(terrainMesh(hf, sun, octaves, cold), scatterRocks(level, hf, scatter));
+  if (biome.starCount) scene.add(starfield(biome.starCount));
 
-  const glow = new Sprite(new SpriteMaterial({ map: glowTexture('#fff1cf'), blending: AdditiveBlending, depthWrite: false, fog: false }));
+  const glow = new Sprite(new SpriteMaterial({ map: glowTexture(biome.sunGlow), blending: AdditiveBlending, depthWrite: false, fog: false }));
   glow.position.set(sun[0] * 400, sun[1] * 400, sun[2] * 400);
-  glow.scale.setScalar(110);
-  const earth = new Mesh(new SphereGeometry(16, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
-  earth.position.set(-140, 150, -330);
-  earth.rotation.set(0.3, 1.2, 0.1);
-  scene.add(glow, earth, skyBand());
+  glow.scale.setScalar(biome.sunScale);
+  scene.add(glow, skyBand());
+  if (biome.sky === 'earth') {
+    const earth = new Mesh(new SphereGeometry(16, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
+    earth.position.set(-140, 150, -330);
+    earth.rotation.set(0.3, 1.2, 0.1);
+    scene.add(earth);
+  } else {
+    // Mars as seen from its surface: a smaller Sun with a blue halo (dust scatters blue light forward around it),
+    // and Phobos and Deimos, small and dark. Their sizes are exaggerated so they read on screen.
+    const core = new Sprite(new SpriteMaterial({ map: glowTexture('#fff8ea'), blending: AdditiveBlending, depthWrite: false, fog: false }));
+    core.position.copy(glow.position);
+    core.scale.setScalar(26);
+    scene.add(core);
+    for (const [x, y, z, r, seed] of [[160, 120, -300, 7, 3], [-230, 170, -260, 3.5, 9]] as const) {
+      const moonlet = new Mesh(new SphereGeometry(r, 18, 12), new MeshLambertMaterial({ map: marsMoonTexture(seed), fog: false }));
+      moonlet.scale.set(1.25, 0.9, 1);
+      moonlet.position.set(x, y, z);
+      scene.add(moonlet);
+    }
+  }
 
   const blinkers: Mesh[] = [];
   for (const p of level.props) {
@@ -369,7 +410,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   const luma = lumaModel.group;
   const shadow = new Mesh(new CircleGeometry(0.5, 20), new MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.45, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2;
-  const { points: dustPoints, dust } = dustPool();
+  const { points: dustPoints, dust } = dustPool(level.realGravity, biome.air);
   const { mesh: printMesh, footprints } = footprintPool();
   const { group: ambienceGroup, ambience } = ambienceSystem(echoes, scatter, cold, (x, z) => heightAt(hf, x, z));
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);

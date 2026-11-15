@@ -45,9 +45,9 @@ export function buildInterior(): Interior {
   for (const x of [-1.2, 1.2]) for (const z of [-1, 1]) {
     const strip = new Mesh(new BoxGeometry(0.9, 0.04, 0.12), warm); strip.position.set(x, H - 0.03, z); scene.add(strip);
   }
-  // Portholes on both side walls, glowing with the lunar day outside.
+  // Portholes on both side walls, glowing with the daylight outside (lunar pearl, Martian peach).
   for (const x of [-W / 2 + 0.02, W / 2 - 0.02]) {
-    const glass = new Mesh(new CircleGeometry(0.32, 20), new MeshBasicMaterial({ color: '#cbbfe6' }));
+    const glass = new Mesh(new CircleGeometry(0.32, 20), new MeshBasicMaterial({ color: biome.porthole }));
     glass.position.set(x, 1.55, -1.6); glass.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2;
     const rim = new Mesh(new TorusGeometry(0.34, 0.05, 6, 20), frame);
     rim.position.copy(glass.position); rim.rotation.copy(glass.rotation);

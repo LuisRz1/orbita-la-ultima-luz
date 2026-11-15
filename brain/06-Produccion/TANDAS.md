@@ -24,7 +24,7 @@ Diseñas la salida en una terminal → eso define tu traje y lo que puedes hacer
 | 4 | Look | Luz horneada, toon, contornos, cielo, props | 30 fps o más en Iris Xe a 720p | Cerrada; falta medir fps en Iris Xe |
 | 5 | Audio | ZzFX y efectos generados | Volumen en ajustes | Cerrada; audio procedural verificado con earshot |
 | 6 | Capítulo 1 en 3D | Estación y vuelo; se retira Phaser | Capítulo 1 hasta la llegada a la Luna | Pendiente |
-| 7 | Marte y Bennu | Mismo molde; Bennu con gravedad radial | Nivel nuevo solo con datos y horneado | Pendiente |
+| 7 | Marte y Bennu | Mismo molde; Bennu con gravedad radial | Nivel nuevo solo con datos y horneado | Marte jugable (`?level=mars`, se desbloquea tras la Luna; [ficha](../02-Diseno/MARTE-TERRACOTA.md)); Bennu pendiente |
 | 8 | Entrega | Despliegue (Vercel, a cargo del equipo), README, fuentes, vídeo | URL abierta en otro equipo | Pendiente |
 
 Mínimo entregable: tandas 0 a 3, la luz horneada del terreno y la tanda 8. El 2D en `/?legacy` es la red de seguridad. Orden de recorte: tanda 7, audio generado, vuelo en 3D, cámara del menú, contornos.
