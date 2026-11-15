@@ -193,3 +193,16 @@ test('the Aurora beacons light one by one and the last gives the hint towards th
   await expect(page.getByText('cuenco del oeste')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('opening the buried shelter costs energy and shows the first journal page', async ({ page }) => {
+  const errors = await open(page);
+  await call(page, 'teleport', -40.5, -24);
+  await call(page, 'step', 2);
+  await settle(page);
+  await expect(page.locator('[data-prompt]')).toContainText('Refugio sepultado');
+  await call(page, 'press', 'interact');
+  await call(page, 'step', 2);
+  await expect(page.locator('[data-dialogue]')).toContainText('Día 12');
+  await expect(page.locator('[data-pages]')).toContainText('1/3');
+  expect(errors).toEqual([]);
+});

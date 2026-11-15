@@ -26,8 +26,17 @@ export type Specimen = {
 };
 /** Side mission: unlit posts that the player can repair; the last one gives a hint (`reward`). Never blocks the mission. */
 export type BeaconLine = { title: Localized; posts: { id: string; position: Vec2 }[]; reward: Localized };
+/**
+ * Optional ruin with loot: opening its entrance costs `cost` and yields a crew journal page. Pages are written
+ * during Aurora's lunar stay and never mention LUMA, later destinations or mission evidence. `card` adds a sourced fact.
+ */
+export type Ruin = {
+  id: string; title: Localized; entrance: Vec2; cost: number;
+  page: { title: Localized; text: Localized };
+  card?: { fact: Localized; basis: 'observation' | 'simplification'; source: { name: string; url: string } };
+};
 export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover'
-  | 'capsule' | 'module' | 'panel';
+  | 'capsule' | 'module' | 'panel' | 'ruin-dome' | 'ruin-arch' | 'ruin-dish';
 export type Prop = { kind: PropKind; solid: Solid };
 
 export type LevelV2 = {
@@ -48,6 +57,7 @@ export type LevelV2 = {
   /** Optional rock atlas: scanning each one costs energy and never blocks the mission. */
   specimens?: Specimen[];
   beacons?: BeaconLine;
+  ruins?: Ruin[];
 };
 
 /**
@@ -79,6 +89,12 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
     if (ids.has(b.id)) problems.push('duplicate id ' + b.id);
     ids.add(b.id);
     if (slopeAt(hf, b.position.x, b.position.z) > maxSlope) problems.push('beacon on a steep slope: ' + b.id);
+  }
+  for (const r of level.ruins ?? []) {
+    if (ids.has(r.id)) problems.push('duplicate id ' + r.id);
+    ids.add(r.id);
+    if (slopeAt(hf, r.entrance.x, r.entrance.z) > maxSlope) problems.push('ruin entrance on a steep slope: ' + r.id);
+    if (r.card && !/^https:\/\//.test(r.card.source.url)) problems.push('ruin card without an https source: ' + r.id);
   }
   const exit = level.points.find(p => p.id === level.exit);
   if (!exit || exit.action !== 'upload' || !exit.required) problems.push('exit must be a required upload point');

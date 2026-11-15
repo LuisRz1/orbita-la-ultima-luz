@@ -13,7 +13,7 @@ const clock = (s: number) => {
 
 export function MissionPanel() {
   const { t } = useT();
-  const { levelTitle, objectives, echoes, atlas, beacons, elapsed, compass } = useStore(hud);
+  const { levelTitle, objectives, echoes, atlas, beacons, pages, elapsed, compass } = useStore(hud);
   if (!levelTitle) return null;
   const required = objectives.filter(o => o.required);
   const goal = compass.marks.find(m => m.kind === 'goal');
@@ -32,6 +32,7 @@ export function MissionPanel() {
     </div>
     <div className="row"><span>{t('echoes')}</span><b>{echoes.found}/{echoes.total}</b></div>
     {atlas.total > 0 && <div className="row" data-atlas><span>{t('atlas')}</span><b className="atlas">▲ {atlas.found}/{atlas.total}</b></div>}
+    {pages.total > 0 && <div className="row" data-pages><span>{t('pages')}</span><b className="pages">{pages.found}/{pages.total}</b></div>}
     {beacons.lit > 0 && <div className="row" data-beacons><span>{t('beacons')}</span><b>{beacons.lit}/{beacons.total}</b></div>}
   </section>;
 }

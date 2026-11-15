@@ -20,6 +20,8 @@ Logros opcionales de la Luna y Marte. Premian explorar, moverse bien y aprender 
 | first-rock | Ojo de geóloga | Escanear una roca del atlas. |
 | full-atlas | Atlas completo | Escanear todas las rocas del atlas de un destino. |
 | beacons | Faro | Reparar las cuatro balizas de Aurora (Luna). |
+| first-page | Su letra | Encontrar una página del diario de Aurora. |
+| all-pages | Diario completo | Encontrar todas las páginas del diario de un destino. |
 | complete | Transmisión recibida | Completar una misión de superficie. |
 | tight-reserve | Al límite | Completar con 5 u. o menos sobre la reserva. |
 | no-recall | Enlace firme | Completar sin perder el enlace. |

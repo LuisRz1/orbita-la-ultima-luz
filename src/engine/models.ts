@@ -370,6 +370,24 @@ export function buildProp(prop: Prop, base: number): Group {
     for (let x = -solid.hx + 4; x < solid.hx; x += 4) add(new Mesh(new BoxGeometry(0.06, 0.1, solid.hz * 2), toon('#c9d3e6')), x, 0.02, 0);
     const reach = Math.abs(solid.x) - solid.hx - 3.5;
     if (reach > 0) add(part(new BoxGeometry(reach, 0.25, 0.25), dark, 0.015), -Math.sign(solid.x) * (solid.hx + reach / 2), -0.1, 0);
+  } else if (kind === 'ruin-dome' && solid.kind === 'cylinder') {
+    // R1: a cracked habitat dome half-buried in regolith, its hatch on the east side.
+    const shell = add(part(new SphereGeometry(solid.r * 1.15, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), toonMapped(hullTexture('AUR-H2')), 0.03), 0, -0.6, 0);
+    shell.scale.y = (h + 0.6) / (solid.r * 1.15);
+    for (const a of [0.6, 2.4, 4.1]) { const drift = add(part(new SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), rock, 0.02), Math.cos(a) * solid.r, 0, Math.sin(a) * solid.r); drift.scale.set(2.2, 0.9, 1.4); drift.rotation.y = a; }
+    add(part(new BoxGeometry(0.3, 1.5, 1.1), dark, 0.015), solid.r * 1.08, 0.75, 0);
+  } else if (kind === 'ruin-arch' && solid.kind === 'box') {
+    // R2: rock jambs and a lintel framing the dark mouth of a lava tube.
+    for (const sx of [-1, 1]) { const jamb = add(part(new BoxGeometry(0.9, h, 1.1), rockDark, 0.04), sx * (solid.hx - 0.45), h / 2, 0); jamb.rotation.y = sx * 0.1; }
+    add(part(new BoxGeometry(solid.hx * 2.2, 0.8, 1.3), rock, 0.04), 0, h - 0.2, 0);
+    add(new Mesh(new BoxGeometry(solid.hx * 2 - 1.8, h - 0.6, 0.2), new MeshBasicMaterial({ color: '#07060b' })), 0, (h - 0.6) / 2, 0.45);
+  } else if (kind === 'ruin-dish' && solid.kind === 'cylinder') {
+    // R3: a 6 m dish toppled onto its rim over a small shed.
+    add(part(new BoxGeometry(solid.r * 1.6, h, solid.r * 1.4), toonMapped(hullTexture('AUR-R3'))), 0, h / 2, 0);
+    const dish = add(part(new SphereGeometry(3, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2.6), hull, 0.03), 0.8, h + 0.6, -0.4);
+    dish.rotation.set(-1.9, 0.5, 0.3);
+    const boom = add(part(new CylinderGeometry(0.08, 0.08, 3.4, 6), dark, 0.01), 2.2, 0.6, 1.2);
+    boom.rotation.set(0.2, 0, 1.35);
   } else if (kind === 'step' && solid.kind === 'box') {
     // A rock slab column from the rift floor; its flat top is the step.
     const slab = add(part(new BoxGeometry(solid.hx * 2, h, solid.hz * 2), rock, 0.04), 0, h / 2, 0);

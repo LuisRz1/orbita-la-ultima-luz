@@ -337,3 +337,5 @@
 .orbita .station-foot .primary { width: auto; margin: 0; padding: 8px 18px; }
 @media (max-width: 640px) { .orbita .options { grid-template-columns: 1fr; } }
 .mission .atlas { color: #9dffc8; }
+.orbita .speaker.aurora { background: #f2a7c3; }
+.mission .pages { color: #f2a7c3; }

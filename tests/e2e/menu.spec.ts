@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { achievementIds } from '../../src/core/achievements.ts';
 
 type Api = Record<string, (...args: unknown[]) => unknown>;
 const call = (page: Page, fn: string, ...args: unknown[]) =>
@@ -44,7 +45,7 @@ test('title menu, English, story dialogue, pause and an achievement', async ({ p
   await expect(page.getByRole('dialog', { name: 'Paused' })).toBeVisible();
   await page.locator('[data-pause="menu"]').click();
   await page.locator('[data-menu="achievements"]').click();
-  await expect(page.getByRole('dialog', { name: 'Achievements' })).toContainText('1/11');
+  await expect(page.getByRole('dialog', { name: 'Achievements' })).toContainText(`1/${achievementIds.length}`);
   await expect(page.locator('[data-achievement="first-dash"]')).toHaveClass(/got/);
   expect(errors).toEqual([]);
 });

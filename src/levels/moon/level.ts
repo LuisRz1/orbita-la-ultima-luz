@@ -2,6 +2,7 @@
 // versions describe the same mission; only positions and the terrain are new.
 import type { LevelPoint, LevelV2, Prop } from '../../core/contract/level-v2.ts';
 import { moonSpecimens } from './atlas.ts';
+import { moonRuins } from './ruins.ts';
 import { moon } from '../../core/worlds/moon.ts';
 import { landmarks, moonHeight } from './terrain.ts';
 
@@ -46,6 +47,11 @@ const props: Prop[] = [
   ...[9, 14, 20, 26].map(r => ({ kind: 'marker' as const, solid: cylinder(-r * Math.SQRT1_2 - 1.2, r * Math.SQRT1_2 + 1.2, 0.12, 1.3) })),
   // Rock steps up both walls of the rift, about 2.2 m apart: a way out for anyone who falls in.
   ...riftSteps(8, -50.6), ...riftSteps(-8, -61.4),
+  // Ruins (LUNA-NACAR.md): a half-buried dome in the west bowl, an arch at the mouth of a tube in the rift's north wall
+  // and a fallen dish over a shed in the east.
+  { kind: 'ruin-dome', solid: cylinder(-46, -24, 3.6, 2.6) },
+  { kind: 'ruin-arch', solid: { kind: 'box', x: -24, z: -61.8, hx: 2.2, hz: 0.6, top: ground(-24, -61.8) + 3.4 } },
+  { kind: 'ruin-dish', solid: cylinder(78.5, 19.5, 2.2, 1.8) },
 ];
 
 function riftSteps(x0: number, z: number) {
@@ -81,6 +87,7 @@ export const moonLevel: LevelV2 = {
     { id: 'archive', title: t('Archivo norte', 'North archive'), center: landmarks.archive, radius: 15 },
   ],
   specimens: moonSpecimens,
+  ruins: moonRuins,
   // S2 (LUNA-NACAR.md): the posts run from the lander towards the buried shelter R1 in the west bowl.
   beacons: {
     title: t('Baliza de Aurora', 'Aurora beacon'),

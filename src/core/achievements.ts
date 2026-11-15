@@ -15,6 +15,8 @@ export const achievements = {
   'first-rock': { title: t('Ojo de geóloga', 'Geologist\'s eye'), desc: t('Escanea una roca del atlas.', 'Scan a rock for the atlas.') },
   'full-atlas': { title: t('Atlas completo', 'Full atlas'), desc: t('Escanea todas las rocas del atlas de un destino.', 'Scan every atlas rock at one destination.') },
   'beacons': { title: t('Faro', 'Lighthouse'), desc: t('Repara todas las balizas de Aurora.', 'Repair every Aurora beacon.') },
+  'first-page': { title: t('Su letra', 'Her handwriting'), desc: t('Encuentra una página del diario de Aurora.', 'Find a page of the Aurora journal.') },
+  'all-pages': { title: t('Diario completo', 'Full journal'), desc: t('Encuentra todas las páginas del diario de un destino.', 'Find every journal page at one destination.') },
   'complete': { title: t('Transmisión recibida', 'Transmission received'), desc: t('Completa una misión de superficie.', 'Complete a surface mission.') },
   'tight-reserve': { title: t('Al límite', 'On the edge'), desc: t('Completa la misión con 5 u. o menos sobre la reserva.', 'Complete the mission with 5 u or less above the reserve.') },
   'no-recall': { title: t('Enlace firme', 'Steady link'), desc: t('Completa la misión sin perder el enlace.', 'Complete the mission without losing the link.') },
@@ -31,6 +33,7 @@ export type GameEvent =
   | { kind: 'echo'; found: number; total: number }
   | { kind: 'atlas'; found: number; total: number }
   | { kind: 'beacon'; lit: number; total: number }
+  | { kind: 'page'; found: number; total: number }
   | { kind: 'sortie'; designs: SuitDesign[] }
   | { kind: 'report'; report: Report; previous: ('complete' | 'recalled')[] };
 
@@ -45,6 +48,7 @@ export function unlocks(event: GameEvent, held: readonly string[]): AchievementI
     case 'echo': add('first-echo', event.found >= 1); add('all-echoes', event.found >= event.total); break;
     case 'atlas': add('first-rock', event.found >= 1); add('full-atlas', event.found >= event.total); break;
     case 'beacon': add('beacons', event.lit >= event.total); break;
+    case 'page': add('first-page', event.found >= 1); add('all-pages', event.found >= event.total); break;
     case 'sortie': add('two-designs', new Set(event.designs.map(d => JSON.stringify(d))).size >= 2); break;
     case 'report': {
       const done = event.report.outcome === 'complete';

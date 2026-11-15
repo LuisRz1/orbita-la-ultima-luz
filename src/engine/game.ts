@@ -4,7 +4,8 @@ import { createBody, groundAt, stepBody, type Body, type Ground } from '../core/
 import { emptyProgress, readProgress, writeProgress, type Progress } from '../core/save/progress3d.ts';
 import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
 import { beaconCost, beaconInReach } from '../core/beacons.ts';
-import type { Specimen } from '../core/contract/level-v2.ts';
+import { ruinInReach } from '../core/ruins.ts';
+import type { Ruin, Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
 import { buildReport, dashCost, drain, sortieInteract, spend, spendable, startSortie, type Sortie } from '../core/sortie.ts';
 import { actionCost, assessSuit, instrumentFor, instruments, proposals, suitMovement, type SuitDesign } from '../core/suit.ts';
@@ -339,6 +340,26 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     publish(true);
   }
 
+  /** Ruin: opening the entrance costs energy; the journal page is read at once and kept in the save. */
+  function openRuin(ruin: Ruin) {
+    if (spendable(sortie) < ruin.cost) {
+      audio.play('blocked');
+      tell(say(`Abrir la entrada cuesta ${ruin.cost} u. y no puedes tocar la reserva de retorno.`, `Opening the entrance costs ${ruin.cost} u and the return reserve is off limits.`), 'warn');
+      return;
+    }
+    spend(sortie, 'actions', ruin.cost);
+    audio.play('objective');
+    progress = { ...progress, ruins: [...progress.ruins, ruin.id] };
+    void save();
+    award({ kind: 'page', found: progress.ruins.length, total: level.ruins!.length });
+    if (ruin.card) {
+      const basis = ruin.card.basis === 'observation' ? say('observación', 'observation') : say('simplificación', 'simplification');
+      tell({ es: `${ruin.card.fact.es} [${basis.es} · ${ruin.card.source.name}]`, en: `${ruin.card.fact.en} [${basis.en} · ${ruin.card.source.name}]` }, 'system');
+    } else tell(say(`${ruin.page.title.es} encontrada.`, `${ruin.page.title.en} found.`), 'system');
+    dialogue = { key: 'page:' + ruin.id, lines: [{ speaker: 'AURORA', text: ruin.page.text }], index: 0 };
+    publish(true);
+  }
+
   /** Side mission S2: repairing a post is saved at once and never touches the return reserve. */
   function repairBeacon(id: string) {
     const cost = beaconCost(sortie.design);
@@ -398,8 +419,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         play('point:' + result.point.id);
       } else if (result.error === 'none') {
         // No mission point in reach: maybe an atlas rock. Nothing at all needs no feedback.
-        const rock = specimenInReach(level, progress.atlas, body.x, body.z);
-        if (rock) scanSpecimen(rock);
+        const ruin = ruinInReach(level, progress.ruins, body.x, body.z);
+        const rock = ruin ? null : specimenInReach(level, progress.atlas, body.x, body.z);
+        if (ruin) openRuin(ruin);
+        else if (rock) scanSpecimen(rock);
         else { const post = beaconInReach(level, progress.beacons, body.x, body.z); if (post) repairBeacon(post.id); }
       } else if (result.error === 'requirements') {
         audio.play('blocked');
@@ -543,7 +566,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     sincePublish = 0;
     const reach = phase === 'eva' ? pointInReach(level, sortie.session, body.x, body.z) : null;
     const needs = reach ? instrumentFor[reach.action] : undefined;
-    const rock = phase === 'eva' && !reach ? specimenInReach(level, progress.atlas, body.x, body.z) : null;
+    const ruin = phase === 'eva' && !reach ? ruinInReach(level, progress.ruins, body.x, body.z) : null;
+    const rock = phase === 'eva' && !reach && !ruin ? specimenInReach(level, progress.atlas, body.x, body.z) : null;
     const post = phase === 'eva' && !reach && !rock ? beaconInReach(level, progress.beacons, body.x, body.z) : null;
     const info = viewport.renderer.info.render;
     const here = level.zones.find(q => q.id === zone);
@@ -563,9 +587,11 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       prompt: reach ? { verb: verbs[reach.action], title: reach.title, cost: actionCost(reach.power, reach.action, sortie.design),
         blocked: missingFor(level, sortie.session, reach).map(id => level.points.find(p => p.id === id)!.title),
         missing: needs && !sortie.design.instruments.includes(needs) ? instruments[needs].name : null }
+        : ruin ? { verb: say('Abrir', 'Open'), title: ruin.title, cost: ruin.cost, blocked: [], missing: null }
         : rock ? { verb: say('Catalogar', 'Catalogue'), title: rock.title, cost: scanCost, blocked: [],
           missing: sortie.design.instruments.includes('camera') ? null : instruments.camera.name }
         : post ? { verb: say('Reparar', 'Repair'), title: level.beacons!.title, cost: beaconCost(sortie.design), blocked: [], missing: null } : null,
+      pages: { found: progress.ruins.length, total: level.ruins?.length ?? 0 },
       beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },
       atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },
       notice, signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), fade, locked: input.locked,

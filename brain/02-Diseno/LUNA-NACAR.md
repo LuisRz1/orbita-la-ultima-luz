@@ -166,7 +166,7 @@ Lo que queda oculto hasta que hace falta:
 
 **Regla de historia:** el botín son páginas del diario de la tripulación de Aurora escritas durante su estancia lunar. Hablan de rutinas, de cuidados y de la hermana manteniendo el relé. **No mencionan a LUMA** (aún no lo habían encontrado), ni destinos posteriores, ni el registro de campo, que es la prueba AUR-E03 del objetivo principal. Recogido ≠ validado: las páginas no son pruebas.
 
-**Ruinas** (interiores con la misma tecnología `InteriorCell`, oscuras y alumbradas solo por la lámpara del casco con un cono `SpotLight` local):
+**Ruinas** (15-nov: implementadas como exteriores con entrada, página y tarjeta en `src/levels/moon/ruins.ts`; la entrada de R2 quedó en (−24; −59,8), sobre el suelo de la grieta. Pendiente: interiores, Forro térmico, Panel de muñeca y la ranura `accessories`) (interiores con la misma tecnología `InteriorCell`, oscuras y alumbradas solo por la lámpara del casco con un cono `SpotLight` local):
 
 - **R1. Refugio sepultado**
   - Dónde: cúpula medio enterrada en el cuenco (−46, −24), de r 7 y 1,4 m de hondo. Escotilla en el lado este, en (−41, −24).

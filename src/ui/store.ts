@@ -13,7 +13,7 @@ export type CompassMark = { id: string; label: Localized | null; bearing: number
 export type Phase = 'loading' | 'menu' | 'ship' | 'eva' | 'report';
 export type StationId = 'battery' | 'thruster' | 'antenna' | 'instruments' | 'locker' | 'airlock';
 export type ShipState = { draft: SuitDesign; done: StationId[]; next: StationId | null; open: StationId | null; near: StationId | null; guided: boolean };
-export type DialogueLine = { speaker: 'LUMA' | 'CONTROL'; text: Localized };
+export type DialogueLine = { speaker: 'LUMA' | 'CONTROL' | 'AURORA'; text: Localized };
 
 /** State the engine publishes for the DOM interface. Continuous values are refreshed ten times per second. */
 export type HudState = {
@@ -27,6 +27,7 @@ export type HudState = {
   echoes: { found: number; total: number };
   atlas: { found: number; total: number };
   beacons: { lit: number; total: number };
+  pages: { found: number; total: number };
   prompt: Prompt | null;
   notice: Notice | null;
   signal: number;
@@ -64,7 +65,7 @@ export type Destination = { id: string; name: Localized; current: boolean; unloc
 
 export const hud = createStore<HudState>(() => ({
   ready: false, phase: 'loading', tier: 'medium', frameMs: 0, renderScale: 1, drawCalls: 0, triangles: 0,
-  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, prompt: null, notice: null,
+  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, pages: { found: 0, total: 0 }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
   paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,
