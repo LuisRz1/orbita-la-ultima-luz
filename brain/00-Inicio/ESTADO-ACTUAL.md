@@ -9,7 +9,7 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
-**15 de noviembre: el juego 3D va del nivel 1 al 4** (Órbita → Luna → Marte → Bennu), todo en `main`. Detalle y evidencia en la [bitácora del 15](../08-Bitacora/2026-11-15.md).
+**15 de noviembre: el juego 3D va del nivel 1 al 4** (Órbita → Luna → Marte → Bennu), todo en `main`. Detalle y evidencia en la [bitácora del 15](../08-Bitacora/2026-11-15.md); para retomar, el [handoff del 15](../08-Bitacora/HANDOFF-2026-11-15.md).
 
 - Luna: atlas de 6 rocas con fuentes NASA, misión secundaria «Balizas de Aurora», ruinas R1–R3 con páginas del diario y entrada «Atlas y diario» en el menú ([Nácar](../02-Diseno/LUNA-NACAR.md)).
 - Bennu jugable, capítulo 4 M02–M03: anclaje, voz, dos accesos, archivo, muestra y refugio con AUR-E06 y el reencuentro; microgravedad estilizada con línea de anclaje; atlas de 5 rocas ([Carbono](../02-Diseno/BENNU-CARBONO.md)).
