@@ -17,7 +17,7 @@ tags: [orbita, continuidad]
 - Accesorios del traje: Forro térmico y Panel solar de muñeca, desde las ruinas.
 - Evacuación y despedida de LUMA (C4-M04–M05) en `/?level=extraction`, con recuerdos reales y muerte definitiva.
 - Cielo pintado opcional en ajustes (nebulosa por shader, apagado por defecto).
-- Voces de LUMA: Luna ES/EN, Órbita ES/EN y Marte ES en el juego. En generación: Marte EN, retakes de 6 líneas y Bennu ES/EN.
+- Voces de LUMA en los cinco destinos, ES/EN, verificadas con Whisper (la despedida, sin voz a propósito).
 - **Verificado:** build, 63 pruebas de reglas y 20 recorridos en Brave; capturas de rocas, balizas, ruinas, cielo y Bennu.
 - **Pendiente:** M06 pilotado (regreso); interiores de ruinas y ranura `accessories`; vuelo 3D; fps en Iris Xe; equilibrio con jugadores.
 - **Siguiente paso:** procesar y verificar con Whisper las voces pendientes y hacer commit; luego vuelo 3D para M01/M06 y medir fps en Iris Xe.
