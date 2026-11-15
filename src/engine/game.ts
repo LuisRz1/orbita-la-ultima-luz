@@ -316,6 +316,13 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   commands.preview = d => view.astronaut.setLoadout(d);
   commands.retry = () => start(sortie.design);
   commands.redesign = toDesign;
+  commands.redesignWith = (d: SuitDesign) => {
+    if (assessSuit(d).problems.length) return;
+    progress = { ...progress, design: d };
+    void save();
+    enterShip(false);
+    tell(say('Propuesta del informe cargada. Revisa los puestos si quieres, ponte el casco y sal.', 'Report proposal loaded. Review the stations if you like, take your helmet and head out.'), 'system');
+  };
   commands.continueGame = toDesign;
   commands.newGame = () => enterShip(true);
   commands.pick = (draft: SuitDesign) => { ship.draft = draft; view.astronaut.setLoadout(draft); publish(true); };

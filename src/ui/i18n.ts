@@ -34,6 +34,13 @@ export const strings = {
   required: s('obligatorios', 'required'), energyUsed: s('energía usada', 'energy used'), duration: s('duración', 'duration'),
   missedWhy: s('pendiente y por qué', 'pending and why'), whereEnergy: s('a dónde fue la batería', 'where the battery went'),
   engineering: s('lectura de ingeniería', 'engineering reading'), redesign: s('Rediseñar traje', 'Redesign suit'), retry: s('Repetir con este diseño', 'Retry with this design'),
+  energyTrace: s('energía durante la salida', 'battery during the sortie'), hazardEntered: s('zona de gasto', 'drain zone'),
+  linkLostMark: s('enlace perdido', 'link lost'), reserveReached: s('reserva alcanzada', 'reserve reached'),
+  decisionResult: s('decisión → resultado', 'decision → result'), vsPrevious: s('frente al intento anterior', 'versus the previous attempt'),
+  sameDesign: s('Mismo diseño: solo cambió cómo jugaste.', 'Same design: only your play changed.'), result: s('resultado', 'result'),
+  tryNext: s('qué probar ahora', 'what to try next'), loadProposal: s('Probar esta propuesta ↗', 'Try this proposal ↗'),
+  environment: s('entorno', 'environment'), attemptN: s('intento', 'attempt'),
+  adviceNote: s('Las propuestas salen de reglas fijas sobre este informe; no cambian tu progreso.', 'Proposals come from fixed rules over this report; they never change your progress.'),
   modelNote: s('Valores de juego. La gravedad, la batería y el enlace son simplificaciones educativas, no datos de una misión real.',
     'Gameplay values. Gravity, battery and link are educational simplifications, not data from a real mission.'),
   // ship

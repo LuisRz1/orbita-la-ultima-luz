@@ -4,19 +4,29 @@ import { zoneDrain, type LevelPoint, type LevelV2 } from './contract/level-v2.ts
 import { createSession, missingFor, pointInReach, type Session } from './session.ts';
 import {
   actionCost, antennas, assessSuit, batteries, dashCost, instrumentFor, instruments, lifeDrain, moveDrain, reserve, thrusters,
-  type SuitDesign, type SuitStats,
+  type Action, type SuitDesign, type SuitStats,
 } from './suit.ts';
 
 const t = (es: string, en: string): Localized => ({ es, en });
 
 export type LedgerKey = 'life' | 'move' | 'dash' | 'thruster' | 'actions' | 'cold' | 'dust' | 'sun';
 export type Outcome = 'complete' | 'recalled';
+/** Battery level over mission time, for the report chart. */
+export type TraceSample = { t: number; e: number };
+/** Moments the report chart labels: objectives done, hazard zones entered, link losses and the reserve reached. */
+export type TraceMark = { t: number; kind: 'point' | 'hazard' | 'recall' | 'reserve'; id: string; label: Localized; hazard?: 'cold' | 'dust' | 'sun' };
 export type Sortie = {
   design: SuitDesign; stats: SuitStats; energy: number; ledger: Record<LedgerKey, number>;
   session: Session; time: number; outcome: Outcome | null; blocked: string[];
   /** True when the battery ran out on the way back and LUMA had to drag the player home. */
   emergency: boolean;
+  trace: TraceSample[]; marks: TraceMark[];
+  /** Seconds between trace samples; doubles whenever the trace grows past `traceLimit`. */
+  traceStep: number;
+  /** Zone and link-loss count already seen by the trace, to mark changes once. */
+  traceZone: string | null; traceRecalls: number;
 };
+export const traceLimit = 400;
 
 export const ledgerLabels: Record<LedgerKey, Localized> = {
   life: t('Soporte vital', 'Life support'), move: t('Desplazamiento', 'Walking'), dash: t('Dash', 'Dash'),
@@ -27,7 +37,19 @@ export const ledgerLabels: Record<LedgerKey, Localized> = {
 export function startSortie(design: SuitDesign): Sortie {
   const stats = assessSuit(design);
   return { design, stats, energy: stats.capacity, ledger: { life: 0, move: 0, dash: 0, thruster: 0, actions: 0, cold: 0, dust: 0, sun: 0 },
-    session: createSession(), time: 0, outcome: null, blocked: [], emergency: false };
+    session: createSession(), time: 0, outcome: null, blocked: [], emergency: false,
+    trace: [{ t: 0, e: stats.capacity }], marks: [], traceStep: 1, traceZone: null, traceRecalls: 0 };
+}
+
+/** Records the current battery level; long sorties keep every other sample so the trace stays small. */
+export function sample(s: Sortie) {
+  const last = s.trace[s.trace.length - 1];
+  if (last && last.t === s.time && last.e === s.energy) return;
+  s.trace.push({ t: s.time, e: s.energy });
+  if (s.trace.length > traceLimit) {
+    s.trace = s.trace.filter((_, i) => i % 2 === 0 || i === s.trace.length - 1);
+    s.traceStep *= 2;
+  }
 }
 
 /** Energy above the return reserve, i.e. what actions may still spend. */
@@ -49,7 +71,18 @@ export function drain(s: Sortie, level: LevelV2, dt: number, moving: boolean, zo
   if (extra) spend(s, hazard, extra * dt * (hazard === 'cold' ? s.stats.coldFactor : 1));
   // Wrist panel: a trickle while standing still, except in shadowed cold zones.
   if (s.stats.solar && !moving && !(extra && hazard === 'cold')) s.energy = Math.min(s.stats.capacity, s.energy + s.stats.solar * dt);
-  return s.energy <= reserve;
+  if (zone !== s.traceZone) {
+    s.traceZone = zone;
+    if (here && extra) s.marks.push({ t: s.time, kind: 'hazard', id: here.id, label: here.title, hazard });
+  }
+  if (s.session.recalls > s.traceRecalls) {
+    s.traceRecalls = s.session.recalls;
+    s.marks.push({ t: s.time, kind: 'recall', id: 'recall-' + s.traceRecalls, label: t('Enlace perdido', 'Link lost') });
+  }
+  const atReserve = s.energy <= reserve;
+  if (atReserve && !s.marks.some(m => m.kind === 'reserve')) s.marks.push({ t: s.time, kind: 'reserve', id: 'reserve', label: t('Reserva de retorno', 'Return reserve') });
+  if (s.time - s.trace[s.trace.length - 1].t >= s.traceStep) sample(s);
+  return atReserve;
 }
 
 export type InteractError = 'none' | 'requirements' | 'instrument' | 'power';
@@ -69,17 +102,25 @@ export function sortieInteract(level: LevelV2, s: Sortie, x: number, z: number):
     if (!s.blocked.includes(point.id)) s.blocked.push(point.id);
     return { ok: false, error: 'power', point, cost };
   }
+  sample(s);
   spend(s, 'actions', cost);
+  sample(s);
   s.session.completed.push(point.id);
+  s.marks.push({ t: s.time, kind: 'point', id: point.id, label: point.title });
   if (point.id === level.exit) s.outcome = 'complete';
   return { ok: true, point, cost };
 }
 
+/** Why a required objective was left: the suit lacked its instrument, the energy above the reserve ran short, the
+ * battery reached the reserve on the way, or the player simply did not go. */
+export type MissReason = 'instrument' | 'power' | 'reserve' | 'unvisited';
 export type Report = {
   outcome: Outcome; completed: string[]; required: number; requiredDone: number;
-  missed: { id: string; title: Localized; cause: Localized }[];
+  missed: { id: string; title: Localized; cause: Localized; reason: MissReason; action: Action; power: number }[];
   ledger: Record<LedgerKey, number>; capacity: number; used: number; left: number; time: number;
   insights: Localized[]; echoes: number; recalls: number; emergency: boolean;
+  design: SuitDesign; mass: number; jumpFactor: number;
+  trace: TraceSample[]; marks: TraceMark[];
 };
 
 /** Explains the sortie in terms of the design: every missed objective gets the decision that caused it. */
@@ -88,16 +129,20 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
   const done = new Set(s.session.completed);
   const missed = level.points.filter(p => p.required && !done.has(p.id)).map(p => {
     const needs = instrumentFor[p.action];
-    let cause: Localized;
-    if (needs && !s.design.instruments.includes(needs))
+    let cause: Localized, reason: MissReason;
+    if (needs && !s.design.instruments.includes(needs)) {
+      reason = 'instrument';
       cause = t(`El traje no llevaba ${instruments[needs].name.es.toLowerCase()}.`, `The suit carried no ${instruments[needs].name.en.toLowerCase()}.`);
-    else if (s.blocked.includes(p.id))
+    } else if (s.blocked.includes(p.id)) {
+      reason = 'power';
       cause = t(`No quedaba energía sobre la reserva para su coste (${actionCost(p.power, p.action, s.design)} u.).`, `Not enough energy above the reserve for its cost (${actionCost(p.power, p.action, s.design)} u).`);
-    else if (outcome === 'recalled')
+    } else if (outcome === 'recalled') {
+      reason = 'reserve';
       cause = t('La batería llegó a la reserva antes de alcanzarlo.', 'The battery reached the reserve before you got there.');
-    else cause = t('No se visitó.', 'Not visited.');
-    return { id: p.id, title: p.title, cause };
+    } else { reason = 'unvisited'; cause = t('No se visitó.', 'Not visited.'); }
+    return { id: p.id, title: p.title, cause, reason, action: p.action, power: p.power };
   });
+  sample(s);
   const used = s.stats.capacity - s.energy;
   const top = (Object.keys(s.ledger) as LedgerKey[]).sort((a, b) => s.ledger[b] - s.ledger[a])[0];
   const insights: Localized[] = [
@@ -121,6 +166,8 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
     outcome, completed: [...s.session.completed], required: required.length, requiredDone: required.filter(p => done.has(p.id)).length,
     missed, ledger: { ...s.ledger }, capacity: s.stats.capacity, used, left: s.energy, time: s.time, insights,
     echoes: s.session.collected.length, recalls: s.session.recalls, emergency: s.emergency,
+    design: s.design, mass: s.stats.mass, jumpFactor: s.stats.jumpFactor,
+    trace: s.trace.map(q => ({ ...q })), marks: s.marks.map(m => ({ ...m })),
   };
 }
 
