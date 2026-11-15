@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { checkLevel, walkable, zoneDrain } from '../../src/core/contract/level-v2.ts';
 import { marsLevel } from '../../src/levels/mars/level.ts';
+import { orbitLevel } from '../../src/levels/orbit/level.ts';
+import { deckMask, voidDepth } from '../../src/levels/orbit/terrain.ts';
 import { channelZ, landmarks as marsLandmarks } from '../../src/levels/mars/terrain.ts';
 import { buildHeightfield, slopeAt } from '../../src/core/heightfield.ts';
 import { defaultParams } from '../../src/core/movement.ts';
@@ -63,6 +65,37 @@ test('the Martian mission keeps chapter 3 rules: free M04/M05 order, a contingen
   assert.equal(zoneDrain(dunes, []), 0.3);
   assert.equal(zoneDrain(dunes, ['relay']), 1.6);
   assert.equal(marsLevel.collectibles.length, 8);
+});
+
+const orbitHf = buildHeightfield(orbitLevel.terrain.size, orbitLevel.terrain.res, orbitLevel.terrain.height);
+
+test('the chapter 1 station passes its checks: every required point on a deck and reachable on foot', () => {
+  assert.deepEqual(checkLevel(orbitLevel, orbitHf, defaultParams.maxSlope), []);
+  for (const p of orbitLevel.points) assert.ok(deckMask(p.position.x, p.position.z) > 0.99, 'on deck: ' + p.id);
+  // Every prop except the solar wings (which hang over the void) stands on fully flat deck.
+  for (const pr of orbitLevel.props) if (pr.kind !== 'panel') assert.ok(deckMask(pr.solid.x, pr.solid.z) > 0.99, `prop ${pr.kind} at ${pr.solid.x}, ${pr.solid.z}`);
+});
+
+test('the station decks are joined without gaps and the void is far below the tether limit', () => {
+  const reach = walkable(orbitHf, orbitLevel.spawn, defaultParams.maxSlope);
+  const step = orbitHf.size / (orbitHf.res - 1);
+  const at = (x: number, z: number) => reach[Math.round((z + orbitHf.size / 2) / step) * orbitHf.res + Math.round((x + orbitHf.size / 2) / step)];
+  // Both routes to the recorder are walkable: the sunlit truss and the shaded handrail through the cradle.
+  for (const [x, z] of [[0, -15], [-37, -28], [-20, -72], [-36, 22], [-30, 60]]) assert.equal(at(x, z), 1, `deck at ${x}, ${z}`);
+  assert.equal(at(20, 0), 0, 'void beside the truss');
+  assert.ok(orbitLevel.fallLimit! > voidDepth);
+});
+
+test('chapter 1: LUMA joins at the protected bay, the sun costs battery and the airlock closes everything', () => {
+  const byId = (id: string) => orbitLevel.points.find(p => p.id === id)!;
+  assert.equal(orbitLevel.companionAfter, 'protected-bay');
+  assert.deepEqual(byId('protected-bay').prerequisites, ['capsule']);
+  assert.deepEqual(byId('recorder').prerequisites, ['sun-record']);
+  const sunlit = orbitLevel.zones.find(z => z.id === 'sunlit')!;
+  assert.equal(sunlit.hazard, 'sun');
+  assert.ok(zoneDrain(sunlit, []) > 0);
+  assert.equal(orbitLevel.exit, 'airlock');
+  assert.equal(orbitLevel.collectibles.length, 8);
 });
 
 test('every v1 lunar point has a 3D placement and keeps its rules', () => {

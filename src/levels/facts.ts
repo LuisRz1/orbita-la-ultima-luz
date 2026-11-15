@@ -9,6 +9,17 @@ export type LevelFacts = {
 
 const t = (es: string, en: string): Localized => ({ es, en });
 
+export const orbitFacts: LevelFacts = {
+  operation: 'AURORA / C1', body: t('Órbita terrestre baja · estación de recepción', 'Low Earth orbit · reception station'),
+  // Gravity at 400 km is still about 8.7 m/s²; the station is in free fall, so on board it feels like microgravity.
+  gravity: 'μg · 8.7 m/s² @ 400 km',
+  atmosphere: t('vacío; botas magnéticas y cable de seguridad', 'vacuum; magnetic boots and safety tether'), temperature: '−157 … +121 °C',
+  lastContact: t('cápsula de Aurora recuperada', 'Aurora capsule recovered'), status: t('compartimento con movimiento', 'movement in the bay'),
+  premise: t('La expedición Aurora desapareció y la búsqueda se suspendió. Tu hermana iba a bordo. Meses después, una estación recupera una cápsula de emergencia de Aurora con registros dañados… y algo vivo dentro. Diseña cada salida, gestiona la batería y descubre por dónde empezar a buscar.',
+    'The Aurora expedition vanished and the search was called off. Your sister was on board. Months later, a station recovers an Aurora emergency capsule with damaged records… and something alive inside. Design each sortie, manage the battery and find out where to start looking.'),
+  source: { url: 'https://www.nasa.gov/international-space-station/space-station-facts-and-figures/', name: 'NASA · Space Station Facts' },
+};
+
 export const moonFacts: LevelFacts = {
   operation: 'AURORA / C2', body: t('Luna · cráter de referencia', 'Moon · reference crater'), gravity: '1.62 m/s² · 1/6 g',
   atmosphere: t('exosfera, no respirable', 'exosphere, not breathable'), temperature: '−173 … +127 °C',

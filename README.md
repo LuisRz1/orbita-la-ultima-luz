@@ -4,7 +4,7 @@ Juego de exploración espacial en 3D para navegador (three.js): diseñas el traj
 
 Una cápsula de la expedición desaparecida Aurora regresa con LUMA y registros dañados. Tu hermana viajaba en esa expedición. Debes reconstruir su ruta, encontrar a los supervivientes y traerlos a la Tierra.
 
-**Estado:** la Luna («Nácar») es jugable en 3D con diseño de traje, energía, informe, logros, diálogos, audio procedural, ES/EN. El juego 2D anterior sigue en `/?legacy`. **¿Vas a colaborar? Empieza por la [guía para colaboradores 3D](brain/06-Produccion/GUIA-COLABORADORES-3D.md).**
+**Estado:** los niveles 1 a 3 son jugables en 3D, en orden: la estación de recepción en órbita (capítulo 1, donde aparece LUMA), la Luna «Nácar» (capítulo 2) y el valle de Aurora en Marte (capítulo 3). Incluyen diseño de traje, energía, contingencias, informe, logros, diálogos, audio procedural y ES/EN. Cada informe completo abre el destino siguiente. Faltan el vuelo 3D (despegue, cruceros y aproximaciones) y Bennu. El juego 2D anterior sigue en `/?legacy`, con Primera luz completa en `/?legacy&world=orbit`. **¿Vas a colaborar? Empieza por la [guía para colaboradores 3D](brain/06-Produccion/GUIA-COLABORADORES-3D.md).**
 
 Este espacio local empezó con la documentación y un historial Git propio. Reutiliza la planificación de octubre, cuyo origen está registrado en la [bitácora del 14 de noviembre](brain/08-Bitacora/2026-11-14.md).
 
@@ -19,7 +19,7 @@ pnpm dev
 
 Abre la URL local de Vite. Para integradores: `pnpm test`, `pnpm build` y `pnpm test:e2e` (la prueba en Windows reutiliza Chrome instalado).
 
-En `feat/world-orbit`, elige **Órbita** para jugar **Primera luz** desde el diseño de la misión hasta el nodo lunar. Puedes abrir directamente Vite con `?world=orbit`. Consulta [cómo probar C1 e integrarlo con Luna](brain/08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md).
+`/` empieza en el nivel 1. Para abrir un destino concreto usa `?level=orbit`, `?level=moon` o `?level=mars`, y añade `&debug` para ver el panel de render. Fichas: [estación](brain/02-Diseno/ESTACION-QUIROFANO.md), [Luna](brain/02-Diseno/LUNA-NACAR.md) y [Marte](brain/02-Diseno/MARTE-TERRACOTA.md). La versión 2D completa de Primera luz se abre con `?legacy&world=orbit` ([guía](brain/08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md)).
 
 ## Empieza aquí
 

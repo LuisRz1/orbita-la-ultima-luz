@@ -23,7 +23,7 @@ Diseñas la salida en una terminal → eso define tu traje y lo que puedes hacer
 | 3 | Interfaz y LUMA | HUD terminal, menú, diálogos, LUMA, logros, ES/EN | Recorrido completo en ambos idiomas | Cerrada |
 | 4 | Look | Luz horneada, toon, contornos, cielo, props | 30 fps o más en Iris Xe a 720p | Cerrada; falta medir fps en Iris Xe |
 | 5 | Audio | ZzFX y efectos generados | Volumen en ajustes | Cerrada; audio procedural verificado con earshot |
-| 6 | Capítulo 1 en 3D | Estación y vuelo; se retira Phaser | Capítulo 1 hasta la llegada a la Luna | Pendiente |
+| 6 | Capítulo 1 en 3D | Estación y vuelo; se retira Phaser | Capítulo 1 hasta la llegada a la Luna | Estación jugable y primer nivel (`/`, [ficha](../02-Diseno/ESTACION-QUIROFANO.md)); vuelo 3D pendiente, Phaser se mantiene para M01, M02 y M06 |
 | 7 | Marte y Bennu | Mismo molde; Bennu con gravedad radial | Nivel nuevo solo con datos y horneado | Marte jugable (`?level=mars`, se desbloquea tras la Luna; [ficha](../02-Diseno/MARTE-TERRACOTA.md)); Bennu pendiente |
 | 8 | Entrega | Despliegue (Vercel, a cargo del equipo), README, fuentes, vídeo | URL abierta en otro equipo | Pendiente |
 

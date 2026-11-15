@@ -20,7 +20,8 @@ mise exec node@24.22.1 -- corepack pnpm@12.4.1 dev
 
 | URL | Qué abre |
 | --- | --- |
-| `/` | Juego 3D (menú → diseño del traje → salida a la Luna) |
+| `/` | Juego 3D desde el nivel 1 (estación). Al completar cada destino se abre el siguiente: Órbita → Luna → Marte |
+| `/?level=orbit\|moon\|mars` | Abre ese destino directamente |
 | `/?debug` | Más panel de render, ajuste de movimiento en vivo y `window.__orbita` |
 | `/?level=<id>` | Un nivel del [registro](../../src/levels/registry.ts) |
 | `/?quality=low\|medium\|high` | Fuerza la calidad gráfica |

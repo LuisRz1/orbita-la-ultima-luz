@@ -12,11 +12,12 @@ export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: numbe
  * `surge`: a contingency. Once the point `after` is completed the zone drains `drain` instead (for example a dust
  * storm that a relay repair sets off), so the planned way home may no longer be the cheapest one.
  */
-export type Hazard = 'cold' | 'dust';
+export type Hazard = 'cold' | 'dust' | 'sun';
 export type Surge = { after: string; drain: number; warning: Localized };
 export type Zone = { id: string; title: Localized; center: Vec2; radius: number; drain?: number; hazard?: Hazard; surge?: Surge };
 export type Collectible = { id: string; position: Vec2; y?: number };
-export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover';
+export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover'
+  | 'capsule' | 'module' | 'panel';
 export type Prop = { kind: PropKind; solid: Solid };
 
 export type LevelV2 = {
@@ -30,6 +31,10 @@ export type LevelV2 = {
   /** Radio link: full signal inside `radius`, lost at `radius + falloff`; beyond that the player is recalled. */
   comms: { center: Vec2; radius: number; falloff: number };
   zones: Zone[]; points: LevelPoint[]; props: Prop[]; collectibles: Collectible[]; exit: string;
+  /** LUMA joins only once this point is done (chapter 1: the player meets it in the protected bay). */
+  companionAfter?: string;
+  /** Below this height the safety tether pulls the player back to the spawn (orbital decks over the void). */
+  fallLimit?: number;
 };
 
 /**
@@ -50,6 +55,7 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
     for (const pre of p.prerequisites) if (!level.points.some(q => q.id === pre)) problems.push('unknown prerequisite ' + pre);
   }
   for (const z of level.zones) if (z.surge && !level.points.some(p => p.id === z.surge!.after)) problems.push('surge after unknown point in ' + z.id);
+  if (level.companionAfter && !level.points.some(p => p.id === level.companionAfter && p.required)) problems.push('companion joins after an unknown or optional point');
   const exit = level.points.find(p => p.id === level.exit);
   if (!exit || exit.action !== 'upload' || !exit.required) problems.push('exit must be a required upload point');
 

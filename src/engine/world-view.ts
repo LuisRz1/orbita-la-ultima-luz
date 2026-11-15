@@ -4,7 +4,7 @@ import {
   AdditiveBlending, BufferAttribute, BufferGeometry, CircleGeometry, Color, CylinderGeometry, DirectionalLight,
   DodecahedronGeometry, DynamicDrawUsage, Float32BufferAttribute, Fog, Group, HemisphereLight, InstancedMesh, Matrix4,
   BackSide, Euler, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PlaneGeometry, Points, PointsMaterial, Quaternion, ShaderMaterial,
-  RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material,
+  RepeatWrapping, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material,
 } from 'three';
 import type { LevelV2 } from '../core/contract/level-v2.ts';
 import { heightAt, normalAt, type Heightfield } from '../core/heightfield.ts';
@@ -50,7 +50,7 @@ function sunVisibility(hf: Heightfield, x: number, z: number, sun: [number, numb
   return Math.min(1, lit);
 }
 
-type Circle = { x: number; z: number; r: number; hazard?: 'cold' | 'dust' };
+type Circle = { x: number; z: number; r: number; hazard?: 'cold' | 'dust' | 'sun' };
 
 function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[]) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
@@ -58,7 +58,7 @@ function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: nu
   const pos = geometry.attributes.position as BufferAttribute;
   const colorsOut = new Float32Array(pos.count * 3);
   const lit = new Color(palette.lit), mid = new Color(palette.mid), line = new Color(palette.ink), c = new Color();
-  const shadow = new Color(palette.shadow), deep = new Color(palette.deep), dark = new Color();
+  const shadow = new Color(palette.shadow), deep = new Color(palette.deep), dark = new Color(), space = new Color(biome.fog);
   const h = (x: number, z: number) => heightAt(hf, x, z);
   for (let k = 0; k < pos.count; k++) {
     const x = pos.getX(k), z = pos.getZ(k);
@@ -72,7 +72,7 @@ function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: nu
     // Inside cold zones the unlit band sinks to the deeper violet.
     let inCold = 0;
     for (const zone of cold) {
-      if (zone.hazard === 'dust') continue;
+      if (zone.hazard && zone.hazard !== 'cold') continue;
       const edge = (Math.hypot(x - zone.x, z - zone.z) - zone.r * 0.6) / (zone.r * 0.4);
       inCold = Math.max(inCold, 1 - Math.min(1, Math.max(0, edge)));
     }
@@ -82,11 +82,13 @@ function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: nu
     const lap = (h(x + 2, z) + h(x - 2, z) + h(x, z + 2) + h(x, z - 2) - 4 * hf.data[k]) / 4;
     c.multiplyScalar(Math.min(1.0, Math.max(0.62, 1 - lap * 0.7)));
     if (Math.abs(lap) > 0.55) c.lerp(line, Math.min(0.75, (Math.abs(lap) - 0.55) * 1.2));
+    // Under a station deck the terrain is the void: it takes the space colour so the deck sides fade into it.
+    if (biome.voidBelow !== null && hf.data[k] < biome.voidBelow) c.copy(space);
     colorsOut[k * 3] = c.r; colorsOut[k * 3 + 1] = c.g; colorsOut[k * 3 + 2] = c.b;
   }
   geometry.setAttribute('color', new Float32BufferAttribute(colorsOut, 3));
   geometry.computeVertexNormals();
-  return new Mesh(geometry, terrainMaterial(octaves));
+  return new Mesh(geometry, terrainMaterial(octaves, biome.plating));
 }
 
 function starfield(count: number) {
@@ -104,7 +106,8 @@ function starfield(count: number) {
 
 /** Small decorative rocks: one instanced draw call, no collision, kept away from points of interest. */
 function scatterRocks(level: LevelV2, hf: Heightfield, density: number) {
-  const count = Math.round(320 * density);
+  const count = Math.round(320 * density * biome.rockScatter);
+  if (!count) return new Group();
   const geo = new DodecahedronGeometry(1, 0);
   const rocks = new InstancedMesh(geo, toon(biome.rockLit), count);
   const outline = new InstancedMesh(geo, outlineMaterial(0.08), count);
@@ -213,14 +216,15 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
   };
 
   const radius = 20;
-  const dust = cloud(Math.round(300 * density), biome.airDust, 0.08, 0.4);
+  const dust = cloud(Math.round(300 * density * biome.ambientDust), biome.airDust, 0.08, 0.4);
   const drift = new Float32Array(dust.count * 2);
   for (let i = 0; i < dust.count; i++) {
     dust.pos.set([(rand() - 0.5) * radius * 2, rand() * 6, (rand() - 0.5) * radius * 2], i * 3);
     drift.set([(rand() - 0.5) * 0.12, (rand() - 0.5) * 0.12], i * 2);
   }
   const sparks = cloud(6 * echoes.size, '#ffd59a', 0.09, 0.9, true);
-  const frostZone = cold[0];
+  // Sunlit zones have no particles of their own; cold and dust zones do.
+  const frostZone = cold.find(z => z.hazard !== 'sun');
   // Cold zones get falling frost (fiction); dust zones get sand swirling up in a slow devil.
   const swirling = frostZone?.hazard === 'dust';
   const frost = cloud(frostZone ? Math.round((swirling ? 320 : 120) * density) : 0, biome.hazardParticle, swirling ? 0.32 : 0.07, swirling ? 0.6 : 0.75);
@@ -352,6 +356,17 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
     earth.position.set(-140, 150, -330);
     earth.rotation.set(0.3, 1.2, 0.1);
     scene.add(earth);
+  } else if (biome.sky === 'earth-below') {
+    // Low orbit: Earth fills the lower sky beneath the decks, with a thin blue limb of atmosphere.
+    const map = earthTexture();
+    map.repeat.set(3, 2);
+    map.wrapS = map.wrapT = RepeatWrapping;
+    const earth = new Mesh(new SphereGeometry(330, 64, 40), new MeshLambertMaterial({ map, fog: false }));
+    earth.position.set(40, -520, -260);
+    earth.rotation.set(0.4, 0.8, 0);
+    const limb = new Mesh(new SphereGeometry(342, 64, 40), new MeshBasicMaterial({ color: '#5fa8ff', transparent: true, opacity: 0.22, side: BackSide, fog: false, depthWrite: false }));
+    limb.position.copy(earth.position);
+    scene.add(earth, limb);
   } else {
     // Mars as seen from its surface: a smaller Sun with a blue halo (dust scatters blue light forward around it),
     // and Phobos and Deimos, small and dark. Their sizes are exaggerated so they read on screen.

@@ -11,7 +11,10 @@ const nacar = {
   rockLit: '#c7bcdc', rockDark: '#7f71a6', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
   cyan: '#7fe3e0', amber: '#ffaf68',
   /** Sky objects, light and air. */
-  sky: 'earth' as 'earth' | 'mars-moons', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
+  sky: 'earth' as 'earth' | 'mars-moons' | 'earth-below', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
+  /** Ground: scattered rocks and boot prints (factor and switch), regolith or metal plating, and the height below
+   * which the terrain is the void under a station deck (vertices there take the sky colour and vanish in fog). */
+  rockScatter: 1, footprints: true, plating: false, voidBelow: null as number | null, ambientDust: 1,
   hemiSky: '#9fb0cc', hemiGround: '#2a2a33', fogNear: 60, fogFar: 230, starCount: 1800,
   airDust: '#f6e9ff', puff: '#d8d2c4', hazardParticle: '#bfe9ff', porthole: '#cbbfe6',
   /** Drag on dust puffs: 0 in vacuum, so they fly in clean arcs. */
@@ -31,13 +34,31 @@ const terracota: Biome = {
   rockLit: '#d98f68', rockDark: '#8f4f45', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
   cyan: '#7fe3e0', amber: '#ffaf68',
   sky: 'mars-moons', sunGlow: '#8fb7e6', sunScale: 80, sunColor: '#ffe6cc',
+  rockScatter: 1, footprints: true, plating: false, voidBelow: null, ambientDust: 1,
   hemiSky: '#e9b98c', hemiGround: '#5a2e2a', fogNear: 45, fogFar: 200, starCount: 0,
   airDust: '#f3c9a6', puff: '#c98a66', hazardParticle: '#8a4a35', porthole: '#f2b98e',
   air: 1.4, wind: 1,
   luma: '#e8553f', lumaCore: '#ffd2b8',
 };
 
-export const biomes = { nacar, terracota };
+/**
+ * Low Earth orbit («Quirófano azul»): clean white plating, blue shadows lit by earthshine, coral accents, black
+ * space above and Earth filling the sky below the decks. No air, no rocks, no prints on metal.
+ */
+const quirofano: Biome = {
+  lit: '#eef2f8', mid: '#b9c6dc', shadow: '#6f83a8', deep: '#3a4766', ink: '#141b2e',
+  skyTop: '#02040b', skyHorizon: '#0b1636', fog: '#02040b', stars: '#eef3ff', milkyWay: '#4a5a8a',
+  rockLit: '#c9d3e6', rockDark: '#7d8fb3', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
+  cyan: '#7fe3e0', amber: '#ffaf68',
+  sky: 'earth-below', sunGlow: '#fff6e6', sunScale: 120, sunColor: '#ffffff',
+  rockScatter: 0, footprints: false, plating: true, voidBelow: -20, ambientDust: 0.25,
+  hemiSky: '#7fb0e8', hemiGround: '#1a2440', fogNear: 140, fogFar: 255, starCount: 1800,
+  airDust: '#cfe0ff', puff: '#dfe8f5', hazardParticle: '#fff6d8', porthole: '#7fb0e8',
+  air: 0, wind: 0,
+  luma: '#ffe2a0', lumaCore: '#ffffff',
+};
+
+export const biomes = { nacar, terracota, quirofano };
 export type BiomeId = keyof typeof biomes;
 
 /** Active biome. Mutated in place by setBiome so every importer sees the level's palette. */
@@ -181,8 +202,32 @@ export function toonMapped(map: Texture, color: ColorRepresentation = '#ffffff')
  * no visible tiling) and rock strata on steep faces, fading with distance.
  * `octaves` trades detail for cost on low-end GPUs.
  */
-export function terrainMaterial(octaves: number) {
+export function terrainMaterial(octaves: number, plating = false) {
   const m = new MeshBasicMaterial({ vertexColors: true, toneMapped: false });
+  if (plating) {
+    // Station deck: panel seams every 3 m, rivet rows and a faint brushed variation instead of regolith.
+    m.onBeforeCompile = shader => {
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWorld;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWorld;\nfloat h2(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }')
+        .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  // The void under the decks is not drawn: each deck reads as a 1.5 m slab floating over Earth.
+  if (vWorld.y < -1.5) discard;
+  vec2 cell = vWorld.xz / 3.0;
+  vec2 f = abs(fract(cell) - 0.5);
+  float seam = smoothstep(0.47, 0.495, max(f.x, f.y));
+  vec2 r = abs(fract(cell * 4.0) - 0.5);
+  float rivet = (1.0 - smoothstep(0.06, 0.1, length(r))) * step(0.4, max(f.x, f.y));
+  float tone = 0.94 + (h2(floor(cell)) - 0.5) * 0.08;
+  diffuseColor.rgb *= tone * (1.0 - seam * 0.35) * (1.0 - rivet * 0.25);
+}`);
+    };
+    m.customProgramCacheKey = () => 'plating';
+    return m;
+  }
   m.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vWorld;\nvarying vec3 vN;\nvarying float vDist;')

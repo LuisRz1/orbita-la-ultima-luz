@@ -64,6 +64,20 @@ Ocho ecos: techo del módulo, dos columnas, dos rocas grandes, cima del pico, cr
 
 Los textos y reglas de los seis objetivos vienen del mundo lunar v1 ([moon.ts](../../src/core/worlds/moon.ts)): la versión 2D y la 3D describen la misma misión.
 
+## Ficha: Estación (capítulo 1)
+
+Primer nivel del juego (`/`). Cubiertas sobre el vacío con botas magnéticas; detalle en [Estación «Quirófano azul»](ESTACION-QUIROFANO.md).
+
+| Zona | Posición | Objetivo | Cómo se llega |
+| --- | --- | --- | --- |
+| Puerto de acople | sur (0, 62) | Suministros, medición de luz y esclusa (salida) | Inicio |
+| Cuna de recepción | (−36, 37) | Cápsula, compartimento (aparece LUMA), traductor | Pasarela oeste |
+| Armadura al sol | (0, −15) | — | Directo; gasta refrigeración |
+| Baranda en sombra | x ≈ −37 | — | Largo, balizado, sin gasto |
+| Brazo de antena | (0, −85) | Registrador exterior | Por cualquiera de las dos rutas |
+
+Campos del contrato usados aquí: `companionAfter` (LUMA se une tras un punto), `fallLimit` (el cable de seguridad recoge al jugador por debajo de esa altura) y la zona `hazard: 'sun'`.
+
 ## Ficha: Marte
 
 Valle de Aurora, capítulo 3: hábitat, valle, relé y contingencia de polvo. Coordenadas, misión, paleta y fuentes en [Marte «Terracota»](MARTE-TERRACOTA.md).

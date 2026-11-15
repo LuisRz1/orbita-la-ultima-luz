@@ -13,7 +13,7 @@ async function open(page: Page, design: unknown = 'science') {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('/?debug&quality=low');
+  await page.goto('/?level=moon&debug&quality=low');
   await page.waitForFunction(() => typeof window.__orbita?.teleport === 'function', null, { timeout: 30_000 });
   await call(page, 'pause', true);
   await call(page, 'start', design);
@@ -94,7 +94,7 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('/?debug&quality=low');
+  await page.goto('/?level=moon&debug&quality=low');
   await page.locator('[data-menu="new"]').click({ timeout: 30_000 });
   await expect(page.getByRole('status', { name: 'Estado del traje' })).toBeVisible();
   const level = await call(page, 'level') as { points: { id: string; x: number; z: number }[] };

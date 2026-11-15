@@ -75,7 +75,7 @@ export function Telemetry() {
     </section>
     <section className="panel energy-panel" aria-label={t('systems')}>
       <span className="panel-title">{t('systems')}</span>
-      <div className="row nowrap"><span>{t('battery')}{draining ? <em className="cold" title={t(draining)}> {draining.en === 'dust' ? '≋' : '❄'}</em> : ''}</span><b className={low ? 'warn' : ''}>{energy.toFixed(0)} / {capacity} u.</b></div>
+      <div className="row nowrap"><span>{t('battery')}{draining ? <em className="cold" title={t(draining)}> {draining.en === 'dust' ? '≋' : draining.en === 'sun' ? '☀' : '❄'}</em> : ''}</span><b className={low ? 'warn' : ''}>{energy.toFixed(0)} / {capacity} u.</b></div>
       <div className="bar energy" role="progressbar" aria-label={t('energy')} aria-valuenow={Math.round(energy)} aria-valuemin={0} aria-valuemax={capacity}>
         <i style={{ width: pct + '%' }} className={low ? 'warn' : ''} />
         <s style={{ left: (capacity ? reserve / capacity * 100 : 0) + '%' }} title={t('reserve')} />

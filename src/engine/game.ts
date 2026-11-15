@@ -87,15 +87,21 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   } catch { saveError = true; }
   const save = () => writeProgress(progress).then(() => { saveError = false; }).catch(() => { saveError = true; }).finally(() => publish(true));
 
-  // Destinations follow the story order: each opens once the previous one has a completed sortie.
+  // Destinations follow the story order: each opens once the previous one has a completed sortie. A destination
+  // already played (it has attempts of its own) stays open, so the player can always go back to it.
   const completedHere = () => progress.attempts.some(a => a.outcome === 'complete');
   const unlocked = new Set<string>([route[0].id, levelId]);
-  for (let i = 1; i < route.length; i++) {
+  const saves = new Map<string, Progress | null>();
+  for (const r of route) {
     try {
-      const prior = route[i - 1].id === levelId ? progress : await readProgress(route[i - 1].id);
-      if (prior && prior !== 'invalid' && prior.attempts.some(a => a.outcome === 'complete')) unlocked.add(route[i].id);
-    } catch { /* storage unavailable: only the current destination is listed */ }
+      const p = r.id === levelId ? progress : await readProgress(r.id);
+      saves.set(r.id, p && p !== 'invalid' ? p : null);
+    } catch { saves.set(r.id, null); /* storage unavailable: only the current destination is listed */ }
   }
+  route.forEach((r, i) => {
+    const own = saves.get(r.id), prior = i > 0 ? saves.get(route[i - 1].id) : null;
+    if (own?.attempts.length || prior?.attempts.some(a => a.outcome === 'complete')) unlocked.add(r.id);
+  });
   const routeIndex = route.findIndex(r => r.id === levelId);
   const nextStop = routeIndex >= 0 && routeIndex < route.length - 1 ? route[routeIndex + 1] : null;
   const travel = (id: string) => { if (unlocked.has(id)) window.location.assign(levelUrl(id, window.location.search)); };
@@ -125,10 +131,16 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   let camDist = 6.4;
 
   const untag = (v: string) => v.replace(/^LUMA:\s*/, '');
+  /** LUMA is with the player unless the level makes it join later (chapter 1: once the protected bay is open). */
+  const lumaHere = () => !level.companionAfter || (phase === 'eva' && sortie.session.completed.includes(level.companionAfter));
   const tell = (text: Notice['text'], tone: Notice['tone'] = 'luma') => {
+    // Before LUMA has joined, its messages come from the suit system instead.
+    if (tone === 'luma' && !lumaHere()) tone = 'system';
     notice = { text: tone === 'luma' ? { es: untag(text.es), en: untag(text.en) } : text, at: time, tone };
     publish(true);
   };
+  /** The same line said by LUMA when it is present, or by Control before it joins. */
+  const guide = (luma: Notice['text'], control: Notice['text']) => (lumaHere() ? luma : control);
 
   /** Plays a story sequence once per save. */
   function play(key: string) {
@@ -314,7 +326,13 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (events.landed) { view.dust.burst(body.x, body.y, body.z, 14, 1.8); audio.play('land'); }
     if (events.airJumped) { spend(sortie, 'thruster', sortie.stats.airJumpCost); award({ kind: 'air-jump' }); audio.play('thrust'); }
     if (events.jumped) audio.play('jump');
-    if (body.grounded) { stepDistance += Math.hypot(body.vx, body.vz) * dt; if (stepDistance > 1.15) { stepDistance = 0; audio.play('step'); view.footprints.place(body.x, groundAt(ground, body.x, body.z, body.y + 0.1), body.z, body.facing); } }
+    if (body.grounded) {
+      stepDistance += Math.hypot(body.vx, body.vz) * dt;
+      if (stepDistance > 1.15) {
+        stepDistance = 0; audio.play('step');
+        if (biome.footprints) view.footprints.place(body.x, groundAt(ground, body.x, body.z, body.y + 0.1), body.z, body.facing);
+      }
+    }
 
     if (!frozen && input.wasPressed('interact')) {
       const result = sortieInteract(level, sortie, body.x, body.z);
@@ -326,6 +344,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         // Contingency: a point can set off a hazard (the relay repair on Mars brings a dust front over the dunes).
         const surge = level.zones.find(z => z.surge?.after === result.point.id)?.surge;
         if (surge) { setStorm(true); tell(surge.warning, 'warn'); play('storm'); }
+        if (result.point.id === level.companionAfter) lumaPos.set(result.point.position.x, body.y + 1.2, result.point.position.z);
+        play('point:' + result.point.id);
       } else if (result.error === 'none') {
         // Nothing in reach: no feedback needed.
       } else if (result.error === 'requirements') {
@@ -359,8 +379,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       if (zoneDrain(z, sortie.session.completed)) tell(dusty
         ? (storm ? say('Tormenta de polvo: cada segundo aquí gasta mucha batería.', 'Dust storm: every second here costs a lot of battery.')
           : say('Dunas: el polvo y el viento gastan batería.', 'Dunes: dust and wind drain the battery.'))
+        : z.hazard === 'sun' ? say('Sol directo: la refrigeración del traje gasta batería.', 'Direct sunlight: suit cooling drains the battery.')
         : say('Sombra permanente: el frío gasta batería más rápido.', 'Permanent shadow: the cold drains the battery faster.'), 'warn');
-      award({ kind: 'zone', cold: !!z.drain && !dusty, dust: dusty });
+      award({ kind: 'zone', cold: !!z.drain && (z.hazard ?? 'cold') === 'cold', dust: dusty });
       pendingZoneLine = z.id;
     }
     zone = nowZone;
@@ -382,14 +403,28 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         tell(say('Reserva de retorno: vuelve al módulo (⌂). Solo puedes caminar.', 'Return reserve: walk back to the lander (⌂). Walking only.'), 'warn');
       }
       if (returning && !endReason && Math.hypot(body.x - level.spawn.x, body.z - level.spawn.z) < 9) endReason = 'reserve';
-      if (returning && !endReason && sortie.energy <= 0) { sortie.emergency = true; endReason = 'reserve'; tell(say('Sin energía. LUMA te arrastra al módulo.', 'Out of power. LUMA drags you to the lander.'), 'warn'); }
+      if (returning && !endReason && sortie.energy <= 0) {
+        sortie.emergency = true; endReason = 'reserve';
+        tell(guide(say('Sin energía. LUMA te arrastra al módulo.', 'Out of power. LUMA drags you to the lander.'),
+          say('Sin energía. El cable de seguridad te recoge hasta el acople.', 'Out of power. The safety tether reels you back to the dock.')), 'warn');
+      }
+    }
+
+    // Off the edge of a station deck: the safety tether stops the fall and reels the player back.
+    if (level.fallLimit !== undefined && body.y < level.fallLimit && !recalling && !endReason) {
+      recalling = true; audio.play('recall');
+      tell(say('Fuera de la cubierta. El cable de seguridad te recoge.', 'Off the deck. The safety tether reels you in.'), 'warn');
     }
 
     // Radio link: losing it for a moment is a warning; losing it for longer triggers LUMA's recall.
     const signal = signalAt(level, body.x, body.z, sortie.stats.commsRadius);
     lostFor = signal <= 0 ? lostFor + dt : 0;
     if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae. Vuelve hacia el cráter.', 'Signal fading. Head back into the crater.'), 'warn');
-    if (lostFor > 1.5 && !recalling) { recalling = true; audio.play('recall'); tell(say('Sin enlace. LUMA te guía de vuelta al módulo.', 'Link lost. LUMA guides you back to the lander.'), 'warn'); }
+    if (lostFor > 1.5 && !recalling) {
+      recalling = true; audio.play('recall');
+      tell(guide(say('Sin enlace. LUMA te guía de vuelta al módulo.', 'Link lost. LUMA guides you back to the lander.'),
+        say('Sin enlace. Control te guía de vuelta al acople.', 'Link lost. Control guides you back to the dock.')), 'warn');
+    }
     if (recalling || endReason) {
       fade = Math.min(1, fade + dt * 1.6);
       if (fade >= 1) {
@@ -476,7 +511,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       player: { x: body.x, y: body.y, z: body.z, speed: Math.hypot(body.vx, body.vz), grounded: body.grounded },
       realGravity: level.realGravity, elapsed: sortie.time, now: time,
       design: progress.design, energy: sortie.energy, capacity: sortie.stats.capacity,
-      draining: cold && phase === 'eva' ? (here?.hazard === 'dust' ? say('polvo', 'dust') : say('frío', 'cold')) : null,
+      draining: cold && phase === 'eva' ? (here?.hazard === 'dust' ? say('polvo', 'dust') : here?.hazard === 'sun' ? say('sol', 'sun') : say('frío', 'cold')) : null,
       levelId, facts, outcome: level.outcome,
       destinations: route.map(r => ({ id: r.id, name: r.name, current: r.id === levelId, unlocked: unlocked.has(r.id) })),
       next: nextStop && unlocked.has(nextStop.id) && completedHere() ? { id: nextStop.id, name: nextStop.name } : null,
@@ -496,6 +531,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     view.astronaut.setBattery(sortie.energy / sortie.stats.capacity, phase === 'eva' && spendable(sortie) <= 0.5);
     view.astronaut.animate((phase === 'eva' && !paused && !dialogue) || phase === 'ship' ? frameDt : 0, Math.hypot(body.vx, body.vz), body.grounded, body.vy);
     view.lumaModel.animate(time, idleFor > 2);
+    view.luma.visible = lumaHere();
     view.dust.update(frameDt);
     view.ambience.update(frameDt, camera.position, time);
 
@@ -561,7 +597,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const loop = new Loop({ update, render });
   const hideDebug = exposeDebug({
     state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
-      zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger },
+      zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
       completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
       signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length }),
     step: (count: number) => loop.step(count),

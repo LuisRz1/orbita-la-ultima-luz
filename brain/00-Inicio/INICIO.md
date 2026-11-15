@@ -24,7 +24,7 @@ Este vault reúne las decisiones y el punto de continuación del proyecto. Puede
 | Decisiones técnicas | [ADR 001](../03-Arquitectura/ADR/ADR-001.md), [ADR 002](../03-Arquitectura/ADR/ADR-002.md), [ADR 003](../03-Arquitectura/ADR/ADR-003.md), [ADR 004](../03-Arquitectura/ADR/ADR-004.md) |
 | Ciencia | [Realismo](../04-Ciencia/DATOS-Y-REALISMO.md), [fuentes](../04-Ciencia/FUENTES.md), [requisitos NASA](../04-Ciencia/REQUISITOS-NASA.md) |
 | Arte | [Guía visual](../05-Arte/GUIA-VISUAL.md), [animación y audio](../05-Arte/ANIMACIONES-Y-AUDIO.md) |
-| Niveles 3D | [Niveles](../02-Diseno/NIVELES.md), [Luna Nácar](../02-Diseno/LUNA-NACAR.md), [Marte Terracota — spoilers](../02-Diseno/MARTE-TERRACOTA.md) |
+| Niveles 3D | [Niveles](../02-Diseno/NIVELES.md), [Estación Quirófano](../02-Diseno/ESTACION-QUIROFANO.md), [Luna Nácar](../02-Diseno/LUNA-NACAR.md), [Marte Terracota — spoilers](../02-Diseno/MARTE-TERRACOTA.md) |
 | Kit de mundos | [Integración](../06-Produccion/KIT-DE-MUNDOS.md), [assets](../05-Arte/ASSETS-COMPARTIDOS.md), [ADR 005](../03-Arquitectura/ADR/ADR-005.md), [plantilla de mundo](../09-Plantillas/MUNDO.md) |
 | Primera luz | [Entrega de Órbita a Luna](../08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md) y [contraste con el reto](../04-Ciencia/REQUISITOS-NASA.md) |
 | Producción | [Backlog](../06-Produccion/BACKLOG.md), [equipo y agentes](../06-Produccion/EQUIPO-Y-AGENTES.md), [entorno](../06-Produccion/ENTORNO.md) |

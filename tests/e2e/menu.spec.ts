@@ -9,7 +9,7 @@ test('title menu, English, story dialogue, pause and an achievement', async ({ p
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('/?debug&quality=low');
+  await page.goto('/?level=moon&debug&quality=low');
   await expect(page.locator('.game-title')).toHaveText('ÓRBITA', { timeout: 30_000 });
   await expect(page.locator('.data-card')).toContainText('1.62 m/s²');
 

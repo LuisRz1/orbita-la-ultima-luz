@@ -5,6 +5,19 @@ import { actionCost, assessSuit, massLimit, proposals, reserve, suitMovement, ty
 import { defaultParams } from '../../src/core/movement.ts';
 import { moonLevel } from '../../src/levels/moon/level.ts';
 import { marsLevel } from '../../src/levels/mars/level.ts';
+import { orbitLevel } from '../../src/levels/orbit/level.ts';
+
+test('chapter 1 completes in story order and the sunlit truss is charged to cooling', () => {
+  const s = startSortie(proposals[0].design);
+  const go = (id: string) => { const p = orbitLevel.points.find(q => q.id === id)!.position; return sortieInteract(orbitLevel, s, p.x, p.z); };
+  const early = go('protected-bay');
+  assert.equal(!early.ok && early.error, 'requirements');
+  for (const id of ['supplies', 'capsule', 'protected-bay', 'translator', 'sun-record', 'recorder', 'airlock']) assert.equal(go(id).ok, true, id);
+  assert.equal(s.outcome, 'complete');
+  drain(s, orbitLevel, 2, false, 'sunlit');
+  assert.ok(s.ledger.sun > 1);
+  assert.ok(buildReport(orbitLevel, s).insights.some(i => /sombra/.test(i.es)));
+});
 
 const at = (id: string) => moonLevel.points.find(p => p.id === id)!.position;
 const visit = (s: ReturnType<typeof startSortie>, id: string) => sortieInteract(moonLevel, s, at(id).x, at(id).z);
@@ -24,7 +37,7 @@ test('mass lowers the jump and the thruster decides air jumps', () => {
 });
 
 test('every required objective fits in both proposals with the reserve and three minutes of life support', () => {
-  for (const level of [moonLevel, marsLevel]) for (const p of proposals) {
+  for (const level of [orbitLevel, moonLevel, marsLevel]) for (const p of proposals) {
     const required = level.points.filter(q => q.required).reduce((sum, q) => sum + actionCost(q.power, q.action, p.design), 0);
     assert.ok(required + reserve + 180 * 0.16 <= assessSuit(p.design).capacity, `${level.id} ${p.id}: ${required}`);
   }

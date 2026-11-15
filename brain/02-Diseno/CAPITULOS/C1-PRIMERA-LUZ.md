@@ -11,6 +11,8 @@ tags: [orbita, campana, capitulo-1]
 
 La [rama de C1](https://github.com/LuisRz1/orbita-la-ultima-luz/tree/feat/world-orbit) tiene las seis misiones jugables en versión compacta; la duración anterior sigue como objetivo de campaña. Ver [guía de integración y pruebas](../../08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md). Se mantienen las tres regiones y los assets del kit.
 
+**Juego 3D:** la estación es el primer nivel (`/`) y cubre M03–M05 con la autenticación de AUR-E01 y AUR-E02. Ver [Estación «Quirófano azul»](../ESTACION-QUIROFANO.md). M01, M02 y M06 siguen en la versión 2D hasta que exista el vuelo 3D.
+
 ## Objetivo y regiones
 
 Validar la cápsula de Aurora, conocer a LUMA y encontrar dónde recuperar los registros perdidos. La hermana del protagonista sigue desaparecida; la cápsula justifica reabrir la búsqueda, sin probar que siga viva. Ver [historia principal — spoilers](../HISTORIA-PRINCIPAL.md).

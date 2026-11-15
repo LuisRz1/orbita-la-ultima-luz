@@ -1,13 +1,28 @@
 ---
 id: estado-actual
 type: estado
-status: marte-3d-jugable
+status: niveles-1-a-3-jugables
 updated: 2026-11-14
 tags: [orbita, continuidad]
 ---
 # Estado actual
 
 ## Punto de continuación
+
+**El juego 3D va del nivel 1 al 3.** `/` abre la estación del capítulo 1 ([ficha](../02-Diseno/ESTACION-QUIROFANO.md)):
+
+- Se coteja la cápsula, LUMA aparece al abrir el compartimento y se calibra el traductor.
+- La EVA ofrece dos rutas: una corta al sol, que gasta refrigeración, y otra larga en sombra. Hay que recuperar el registrador.
+- La esclusa valida AUR-E01 y AUR-E02.
+
+Al completarla se abre la Luna, y al completar la Luna, Marte.
+
+- **Verificado:** build, 48 pruebas de reglas y 15 recorridos en Chrome, incluido el paso Órbita → Luna → Marte. Revisé las capturas de la estación.
+- **Pendiente:**
+  - Vuelo 3D: M01, M02 y M06 de cada capítulo. El despegue y el crucero de C1 siguen en `/?legacy&world=orbit`.
+  - Bennu.
+  - fps en Iris Xe.
+  - Equilibrio con jugadores.
 
 **Último avance (rama local `feat/level-mars`, sobre un `main` que une `feat/3d` y `feat/world-orbit`):** Marte es el segundo destino 3D jugable ([ficha](../02-Diseno/MARTE-TERRACOTA.md)). Hábitat, bitácora, valle, relé y terminal cubren C3-M03–M05 y autentican AUR-E04/E05; la reparación del relé desata una contingencia de polvo que obliga a elegir la ruta de vuelta. Se desbloquea al completar la Luna (`?level=mars` lo abre directamente). El bioma pasa a ser por nivel y la Luna conserva Nácar. Verificado: build, 43 pruebas de reglas y 13 recorridos en Chrome, con capturas revisadas de seis zonas. Sin verificar: fps en Iris Xe, escucha humana del viento y equilibrio con partidas reales. Siguiente paso: vuelo 3D (tanda 6) para M01–M02 y el reabastecimiento de M06, y luego Bennu. La rama local `codex/campana-completa` del propietario, citada en los Issues #15–#18, no está publicada; al recibirla, compararla con esta antes de fusionar. Detalle en la [bitácora](../08-Bitacora/2026-11-14.md#nivel-3d-de-marte).
 

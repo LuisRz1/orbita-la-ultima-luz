@@ -7,6 +7,8 @@ import { moonLevel } from '../../src/levels/moon/level.ts';
 import { moonDialogue } from '../../src/levels/moon/dialogue.ts';
 import { marsDialogue } from '../../src/levels/mars/dialogue.ts';
 import { marsLevel } from '../../src/levels/mars/level.ts';
+import { orbitDialogue } from '../../src/levels/orbit/dialogue.ts';
+import { orbitLevel } from '../../src/levels/orbit/level.ts';
 
 const completed = () => {
   const s = startSortie(proposals[1].design);
@@ -57,6 +59,17 @@ test('Martian dialogue is bilingual and only the authenticated close names Bennu
   // Point results report only what was recovered; the destination appears only in the authenticated outcome.
   for (const p of marsLevel.points) assert.doesNotMatch(p.result.es + p.result.en + p.hint.es + p.hint.en, /Bennu/, p.id);
   assert.match(marsLevel.outcome.es, /Bennu/);
+});
+
+test('chapter 1 dialogue: only Control speaks before LUMA joins, and nothing names later destinations', () => {
+  // Sequences that can play before the protected bay is opened.
+  for (const key of ['intro', 'zone:cradle', 'zone:sunlit', 'zone:shade', 'zone:boom', 'recalled', 'point:protected-bay'])
+    for (const line of orbitDialogue[key]) assert.equal(line.speaker, 'CONTROL', key);
+  for (const [key, lines] of Object.entries(orbitDialogue)) for (const line of lines) {
+    assert.ok(line.text.es && line.text.en, key);
+    assert.doesNotMatch(line.text.es + line.text.en, /Marte|Mars|Bennu|supervivientes|survivors|AUR-E0[3-7]/, key);
+  }
+  for (const p of orbitLevel.points) assert.doesNotMatch(p.result.es + p.result.en, /Marte|Mars|Bennu/, p.id);
 });
 
 test('the dust achievement unlocks on entering a dust zone', () => {

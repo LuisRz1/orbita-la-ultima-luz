@@ -341,6 +341,35 @@ export function buildProp(prop: Prop, base: number): Group {
       const wheel = add(part(new CylinderGeometry(0.42, 0.42, 0.3, 12), dark, 0.02), sx * (solid.hx + 0.05), 0.42, sz * solid.hz * 0.7);
       wheel.rotation.z = Math.PI / 2;
     }
+  } else if (kind === 'capsule' && solid.kind === 'box') {
+    // Aurora's emergency capsule: a blunt cone on a dark heat shield, held by a three-arm cradle.
+    const shell = toonMapped(hullTexture('AURORA-EC'));
+    add(part(new CylinderGeometry(solid.hx * 0.38, solid.hx * 0.92, h * 0.72, 18), shell), 0, h * 0.5, 0);
+    add(part(new CylinderGeometry(solid.hx * 0.95, solid.hx * 0.95, 0.22, 18), toon('#3b2f2a'), 0.02), 0, h * 0.13, 0);
+    add(new Mesh(new BoxGeometry(0.5, 0.06, 1.2), toon(colors.accent)), solid.hx * 0.66, h * 0.5, 0).rotation.z = 0.5;
+    add(part(new CylinderGeometry(solid.hx * 0.4, solid.hx * 0.4, 0.1, 18), dark, 0.015), 0, h * 0.87, 0);
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      const arm = add(part(new BoxGeometry(0.16, h * 0.4, 0.16), dark, 0.015), Math.cos(a) * solid.hx * 0.98, h * 0.2, Math.sin(a) * solid.hz * 0.98);
+      arm.rotation.z = Math.cos(a) * 0.3; arm.rotation.x = -Math.sin(a) * 0.3;
+    }
+  } else if (kind === 'module' && solid.kind === 'box') {
+    // Pressurised module that holds the protected bay: a white cylinder along z with a lit hatch facing east.
+    const can = add(part(new CylinderGeometry(h * 0.5, h * 0.5, solid.hz * 2, 18), toonMapped(hullTexture('BAY-2'))), 0, h * 0.5, 0);
+    can.rotation.x = Math.PI / 2;
+    for (const z of [-solid.hz, solid.hz]) add(part(new CylinderGeometry(h * 0.52, h * 0.52, 0.18, 18), dark, 0.02), 0, h * 0.5, z).rotation.x = Math.PI / 2;
+    add(part(new BoxGeometry(0.12, 1.4, 1.0), dark, 0.015), solid.hx * 0.6, h * 0.42, 0);
+    const lamp = add(new Mesh(new SphereGeometry(0.1, 10, 8), new MeshBasicMaterial({ color: '#7fe3e0' })), solid.hx * 0.62, h * 0.42 + 0.9, 0);
+    lamp.userData.blink = true;
+    add(new Mesh(new BoxGeometry(0.06, 0.3, solid.hz * 1.6), toon(colors.accent)), solid.hx * 0.58, h * 0.78, 0);
+  } else if (kind === 'panel' && solid.kind === 'box') {
+    // Solar wing over the void: it hangs at deck height (its top is absolute), joined to the truss by an arm.
+    g.position.y = solid.top - 0.3;
+    const cells = add(part(new BoxGeometry(solid.hx * 2, 0.08, solid.hz * 2), toon('#2b3a5c'), 0.02), 0, 0, 0);
+    cells.rotation.z = 0.06 * Math.sign(solid.x);
+    for (let x = -solid.hx + 4; x < solid.hx; x += 4) add(new Mesh(new BoxGeometry(0.06, 0.1, solid.hz * 2), toon('#c9d3e6')), x, 0.02, 0);
+    const reach = Math.abs(solid.x) - solid.hx - 3.5;
+    if (reach > 0) add(part(new BoxGeometry(reach, 0.25, 0.25), dark, 0.015), -Math.sign(solid.x) * (solid.hx + reach / 2), -0.1, 0);
   } else if (kind === 'step' && solid.kind === 'box') {
     // A rock slab column from the rift floor; its flat top is the step.
     const slab = add(part(new BoxGeometry(solid.hx * 2, h, solid.hz * 2), rock, 0.04), 0, h / 2, 0);

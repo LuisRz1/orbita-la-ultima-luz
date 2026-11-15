@@ -81,7 +81,7 @@ test('Mars: the habitat gates the log, the relay sets off the dust storm and the
 test('completing the Moon opens Mars from the report, and Mars keeps its own save', async ({ page }) => {
   test.setTimeout(90_000);
   const errors = watch(page);
-  await ready(page, '/?debug&quality=low');
+  await ready(page, '/?level=moon&debug&quality=low');
   await expect(page.locator('[data-travel-locked="mars"]')).toBeVisible();
   await call(page, 'pause', true);
   await call(page, 'start', 'science');

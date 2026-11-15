@@ -1,5 +1,13 @@
 # Registro de cambios
 
+## 2026-11-14 — Capítulo 1 en 3D: el juego va del nivel 1 al 3
+
+- Estación de recepción «Quirófano azul» (C1-M03–M05): suministros, cotejo de la cápsula, compartimento donde aparece LUMA, traductor, medición de luz, registrador exterior y esclusa que valida AUR-E01 y AUR-E02.
+- Elección de ruta en la EVA: armadura al sol (corta, gasta refrigeración) o baranda en sombra (larga, balizada).
+- Cubiertas sobre el vacío con la Tierra debajo, chapa en lugar de regolito y cable de seguridad que recoge al jugador si cae.
+- `/` abre el nivel 1; ruta Órbita → Luna → Marte con «Continuar a…» en cada informe. Los destinos ya jugados quedan abiertos.
+- Contrato v2: `companionAfter`, `fallLimit`, `hazard: 'sun'` y diálogos `point:<id>`.
+
 ## 2026-11-14 — Nivel 3D de Marte y ramas unidas
 
 - `main` une `feat/3d` (motor 3D, Luna Nácar, interior de nave, audio) y Primera luz (`feat/world-orbit`).
