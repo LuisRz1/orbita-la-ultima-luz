@@ -22,7 +22,7 @@ export function SortieReport({ report, onRedesign, onRetry, onEpilogue }: { repo
   const { t } = useT();
   const { outcome, next, finale, attempts, objectives, accessories } = useStore(hud);
   const done = report.outcome === 'complete';
-  const keys = (Object.keys(report.ledger) as LedgerKey[]).filter(k => report.ledger[k] > 0.05).sort((a, b) => report.ledger[b] - report.ledger[a]);
+  const keys = (Object.keys(report.ledger) as LedgerKey[]).filter(k => report.ledger[k] >= 0.5).sort((a, b) => report.ledger[b] - report.ledger[a]);
   const links = decisionLinks(report);
   const advice = recommend(report, objectives, accessories);
   // The current attempt is already saved as the last one; compare it with the one before.

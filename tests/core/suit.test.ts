@@ -132,3 +132,11 @@ test('a fall off the deck is reported as the safety tether, not as a link loss o
   assert.ok(report.insights.some(i => /cable de seguridad/.test(i.es) && /safety tether/.test(i.en)));
   assert.ok(!report.insights.some(i => /perdiste el enlace/.test(i.es)));
 });
+
+test('the report never lists an environment cost that rounds to 0 u.', () => {
+  const s = startSortie(proposals[0].design);
+  spend(s, 'cold', 0.3);
+  assert.ok(!buildReport(moonLevel, s).insights.some(i => /0 u\. por el frío/.test(i.es)));
+  spend(s, 'cold', 1);
+  assert.ok(buildReport(moonLevel, s).insights.some(i => /1 u\. por el frío/.test(i.es)));
+});

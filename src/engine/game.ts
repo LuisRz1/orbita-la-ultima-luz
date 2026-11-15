@@ -589,7 +589,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     // Radio link: losing it for a moment is a warning; losing it for longer triggers LUMA's recall.
     const signal = signalAt(level, body.x, body.z, sortie.stats.commsRadius);
     lostFor = signal <= 0 ? lostFor + dt : 0;
-    if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae. Vuelve hacia el cráter.', 'Signal fading. Head back into the crater.'), 'warn');
+    if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae: vuelve hacia el centro de la zona de enlace.', 'Signal fading: head back toward the middle of the link area.'), 'warn');
     if (lostFor > 1.5 && !recalling) {
       recalling = true; audio.play('recall');
       tell(guide(say('Sin enlace. LUMA te guía de vuelta al módulo.', 'Link lost. LUMA guides you back to the lander.'),

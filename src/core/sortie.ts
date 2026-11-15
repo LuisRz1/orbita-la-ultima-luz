@@ -152,10 +152,10 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
       `Suit mass ${s.stats.mass} kg: jump at ${Math.round(s.stats.jumpFactor * 100)}% of a light suit.`),
   ];
   if (s.ledger.thruster > 0) insights.push(t(`${thrusters[s.design.thruster].name.es}: ${Math.round(s.ledger.thruster)} u. en saltos en el aire.`, `${thrusters[s.design.thruster].name.en}: ${Math.round(s.ledger.thruster)} u on air jumps.`));
-  if (s.ledger.cold > 0) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
-  if (s.ledger.dust > 0) insights.push(t(`Cruzar el polvo costó ${Math.round(s.ledger.dust)} u.: tras la contingencia, rodear las dunas suele salir más barato.`,
+  if (s.ledger.cold >= 0.5) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
+  if (s.ledger.dust >= 0.5) insights.push(t(`Cruzar el polvo costó ${Math.round(s.ledger.dust)} u.: tras la contingencia, rodear las dunas suele salir más barato.`,
     `Crossing the dust cost ${Math.round(s.ledger.dust)} u: after the contingency, going around the dunes is usually cheaper.`));
-  if (s.ledger.sun > 0) insights.push(t(`La ruta al sol costó ${Math.round(s.ledger.sun)} u. de refrigeración: la baranda en sombra es más larga pero no calienta el traje.`,
+  if (s.ledger.sun >= 0.5) insights.push(t(`La ruta al sol costó ${Math.round(s.ledger.sun)} u. de refrigeración: la baranda en sombra es más larga pero no calienta el traje.`,
     `The sunlit route cost ${Math.round(s.ledger.sun)} u of cooling: the shaded handrail is longer but does not heat the suit.`));
   if (outcome === 'recalled') insights.push(s.emergency
     ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
