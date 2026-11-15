@@ -2,7 +2,7 @@
 // (prerequisites, power, required/optional, single upload exit) so the same mission logic applies.
 import type { Localized, POI } from './grid-v1.ts';
 import { heightAt, slopeAt, type Heightfield } from '../heightfield.ts';
-import type { Solid } from '../movement.ts';
+import type { MoveParams, Solid } from '../movement.ts';
 
 export type Vec2 = { x: number; z: number };
 
@@ -54,6 +54,10 @@ export type LevelV2 = {
   companionAfter?: string;
   /** Below this height the safety tether pulls the player back to the spawn (orbital decks over the void). */
   fallLimit?: number;
+  /** Stylised movement for this destination (microgravity on Bennu), merged over the tuned defaults. */
+  movement?: Partial<Omit<MoveParams, 'radius' | 'maxSlope'>>;
+  /** Anchor line: the player can rise at most this many metres above the ground before the line holds them. */
+  tether?: number;
   /** Optional rock atlas: scanning each one costs energy and never blocks the mission. */
   specimens?: Specimen[];
   beacons?: BeaconLine;

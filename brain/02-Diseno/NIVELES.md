@@ -93,6 +93,21 @@ Valle de Aurora, capítulo 3: hábitat, valle, relé y contingencia de polvo. Co
 
 Una zona puede tener `hazard` (`cold` o `dust`) y `surge` (contingencia: gasto mayor desde que se completa un punto). `checkLevel` comprueba que el punto de la contingencia exista.
 
+## Ficha: Bennu
+
+Refugio de Aurora, capítulo 4 (C4-M02 y M03). Diseño completo en [Bennu «Carbono»](BENNU-CARBONO.md).
+
+| Zona | Posición | Objetivo | Cómo se llega |
+| --- | --- | --- | --- |
+| Punto de contacto | sur (0, 64) | Anclaje y enlace de voz | Inicio |
+| El gran bloque | centro (0, 6) | Mirador (opcional) arriba | Ladera de cascotes del suroeste |
+| Cara diurna | (62, 22) | — | A pie; el sol gasta batería |
+| Campo de bloques | (44, −24) | Acceso este | A pie, terreno irregular |
+| Cresta de grava | (−46, −20) | Acceso oeste | A pie; postes iluminados |
+| Hondonada del refugio | norte (0, −72) | Archivo, muestra y refugio (salida) | A pie |
+
+Campos nuevos del contrato: `movement` (microgravedad estilizada) y `tether` (la línea de anclaje sujeta al jugador a 6 m del suelo).
+
 ## Pendiente
 
 - Energía, traje y consola de diseño (tanda 2): hoy los objetivos solo exigen sus requisitos.

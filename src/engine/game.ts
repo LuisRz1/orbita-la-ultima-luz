@@ -83,6 +83,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   window.addEventListener('keydown', unlockAudio);
   const onVisibility = () => audio.suspend(document.hidden);
   document.addEventListener('visibilitychange', onVisibility);
+  let tetherWarned = false;
   let stepDistance = 0, lastLine: unknown = null, pendingZoneLine: string | null = null;
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
@@ -381,7 +382,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   }
 
   function updateEva(dt: number) {
-    const params = suitMovement(tuning, sortie.stats);
+    const params = suitMovement({ ...tuning, ...level.movement }, sortie.stats);
     const k = input.look.yaw, fx = -Math.sin(k), fz = -Math.cos(k), rx = Math.cos(k), rz = -Math.sin(k);
     const ax = (input.isHeld('right') ? 1 : 0) - (input.isHeld('left') ? 1 : 0);
     const ay = (input.isHeld('up') ? 1 : 0) - (input.isHeld('down') ? 1 : 0);
@@ -491,6 +492,15 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (level.fallLimit !== undefined && body.y < level.fallLimit && !recalling && !endReason) {
       recalling = true; audio.play('recall');
       tell(say('Fuera de la cubierta. El cable de seguridad te recoge.', 'Off the deck. The safety tether reels you in.'), 'warn');
+    }
+
+    // Microgravity: the anchor line stops the player drifting off the surface after a jump or a dash.
+    if (level.tether !== undefined) {
+      const above = body.y - heightAt(hf, body.x, body.z);
+      if (above > level.tether && body.vy > 0) {
+        body.vy = 0;
+        if (!tetherWarned) { tetherWarned = true; audio.play('blocked'); tell(say('La línea de anclaje te sujeta: aquí casi no hay gravedad.', 'The anchor line holds you: there is almost no gravity here.'), 'warn'); }
+      }
     }
 
     // Radio link: losing it for a moment is a warning; losing it for longer triggers LUMA's recall.

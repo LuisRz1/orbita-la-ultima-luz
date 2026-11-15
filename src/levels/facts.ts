@@ -37,3 +37,14 @@ export const marsFacts: LevelFacts = {
     'The lunar record pointed to Mars. Aurora camped in a valley of ancient layers and then vanished. With LUMA, more tired every day, you bring their habitat back, read what your sister left and look for the message the relay never sent.'),
   source: { url: 'https://science.nasa.gov/mars/facts/', name: 'NASA · Mars Facts' },
 };
+
+export const bennuFacts: LevelFacts = {
+  operation: 'AURORA / C4', body: t('Bennu · asteroide de cascotes', 'Bennu · rubble-pile asteroid'),
+  // NASA gives no surface value on the fact sheet; it says Bennu cannot hold an atmosphere.
+  gravity: 'μg · sin atmósfera / no atmosphere',
+  atmosphere: t('ninguna; partículas expulsadas a veces', 'none; particles sometimes ejected'), temperature: '−73 … +116 °C',
+  lastContact: t('voz local desde el refugio', 'local voice from the refuge'), status: t('supervivientes', 'survivors'),
+  premise: t('El mensaje de Marte apuntaba a Bennu: un montón de rocas de medio kilómetro que gira cada 4,3 horas. Aurora siguió una baliza hasta aquí. Ancla el vehículo, encuentra un paso estable y llega al refugio.',
+    'The message from Mars pointed to Bennu: a half-kilometre pile of rock that spins every 4.3 hours. Aurora followed a beacon here. Anchor the vehicle, find a stable way and reach the refuge.'),
+  source: { url: 'https://science.nasa.gov/solar-system/asteroids/101955-bennu/facts/', name: 'NASA · Bennu Facts' },
+};

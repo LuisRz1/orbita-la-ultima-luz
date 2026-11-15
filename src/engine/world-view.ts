@@ -437,7 +437,13 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   const painted = biome.nebula ? paintedSky(biome.nebula) : null;
   if (painted) { painted.visible = false; scene.add(painted); }
   scene.add(glow, band);
-  if (biome.sky === 'earth') {
+  if (biome.sky === 'deep') {
+    // Deep space (Bennu): Earth is only a faint blue point, far from the Sun.
+    const dot = new Sprite(new SpriteMaterial({ map: glowTexture('#9fc4ff'), blending: AdditiveBlending, depthWrite: false, fog: false }));
+    dot.position.set(-160, 120, -330);
+    dot.scale.setScalar(5);
+    scene.add(dot);
+  } else if (biome.sky === 'earth') {
     const earth = new Mesh(new SphereGeometry(16, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
     earth.position.set(-140, 150, -330);
     earth.rotation.set(0.3, 1.2, 0.1);

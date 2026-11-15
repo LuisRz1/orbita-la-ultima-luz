@@ -11,7 +11,7 @@ const nacar = {
   rockLit: '#c7bcdc', rockDark: '#7f71a6', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
   cyan: '#7fe3e0', amber: '#ffaf68',
   /** Sky objects, light and air. */
-  sky: 'earth' as 'earth' | 'mars-moons' | 'earth-below', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
+  sky: 'earth' as 'earth' | 'mars-moons' | 'earth-below' | 'deep', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
   /** Ground: scattered rocks and boot prints (factor and switch), regolith or metal plating, and the height below
    * which the terrain is the void under a station deck (vertices there take the sky colour and vanish in fog). */
   rockScatter: 1, footprints: true, plating: false, voidBelow: null as number | null, ambientDust: 1,
@@ -62,7 +62,25 @@ const quirofano: Biome = {
   nebula: ['#2f5fa8', '#7fe3e0'],
 };
 
-export const biomes = { nacar, terracota, quirofano };
+/**
+ * Bennu («Carbono»): one of the darkest surfaces known, so the ground is charcoal with warm sand highlights, deep
+ * blue shadows and a black sky. LUMA is in its blue-white phase. No air: dust flies in clean arcs.
+ */
+const carbono: Biome = {
+  lit: '#726b62', mid: '#4a4642', shadow: '#262838', deep: '#1a1b29', ink: '#0d0d16',
+  skyTop: '#020208', skyHorizon: '#0a0c1c', fog: '#05060f', stars: '#f4f6ff', milkyWay: '#4b4f7a',
+  rockLit: '#6a645c', rockDark: '#34312f', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
+  cyan: '#7fe3e0', amber: '#ffaf68',
+  sky: 'deep', sunGlow: '#fff6e6', sunScale: 70, sunColor: '#ffffff',
+  rockScatter: 2.2, footprints: true, plating: false, voidBelow: null, ambientDust: 0.6,
+  hemiSky: '#8a94c8', hemiGround: '#141420', fogNear: 90, fogFar: 260, starCount: 2200,
+  airDust: '#c9c2b6', puff: '#6f6a62', hazardParticle: '#ffd9a8', porthole: '#8a94c8',
+  air: 0, wind: 0,
+  luma: '#cfe6ff', lumaCore: '#ffffff',
+  nebula: ['#3b3f8a', '#9fb8ff'],
+};
+
+export const biomes = { nacar, terracota, quirofano, carbono };
 export type BiomeId = keyof typeof biomes;
 
 /** Active biome. Mutated in place by setBiome so every importer sees the level's palette. */

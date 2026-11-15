@@ -20,6 +20,10 @@ export const levels: Record<string, () => Promise<LevelModule>> = {
     const [{ marsLevel }, { marsDialogue }, { marsFacts }] = await Promise.all([import('./mars/level.ts'), import('./mars/dialogue.ts'), import('./facts.ts')]);
     return { level: marsLevel, dialogue: marsDialogue, facts: marsFacts, biome: 'terracota' };
   },
+  bennu: async () => {
+    const [{ bennuLevel }, { bennuDialogue }, { bennuFacts }] = await Promise.all([import('./bennu/level.ts'), import('./bennu/dialogue.ts'), import('./facts.ts')]);
+    return { level: bennuLevel, dialogue: bennuDialogue, facts: bennuFacts, biome: 'carbono' };
+  },
 };
 
 /**
@@ -30,6 +34,7 @@ export const route = [
   { id: 'orbit', name: { es: 'Órbita', en: 'Orbit' } },
   { id: 'moon', name: { es: 'Luna', en: 'Moon' } },
   { id: 'mars', name: { es: 'Marte', en: 'Mars' } },
+  { id: 'bennu', name: { es: 'Bennu', en: 'Bennu' } },
 ] as const;
 
 export const defaultLevel = 'orbit';
