@@ -71,7 +71,11 @@ const above = (index: number, lift = 0.9) => {
 
 export const moonLevel: LevelV2 = {
   kitVersion: 2, id: 'moon', mission: 'c2-surface',
-  title: moon.title, subtitle: moon.subtitle, briefing: moon.briefing, arrival: moon.arrival, outcome: moon.outcome,
+  title: moon.title, subtitle: moon.subtitle, briefing: moon.briefing, arrival: moon.arrival,
+  // In the campaign the lunar report authenticates AUR-E03 (HISTORIA-PRINCIPAL.md): field record, protected cache and
+  // relay together say that Aurora went on to Mars. The 2D demo world keeps its partial-record ending.
+  outcome: t('AUR-E03 validada: el registro de campo, la caché de Aurora y el relé se autentican juntos. Aurora salió de la Luna rumbo a Marte; el tramo de navegación señala un valle marciano.',
+    'AUR-E03 validated: the field record, Aurora’s cache and the relay are authenticated together. Aurora left the Moon for Mars; the navigation segment points to a Martian valley.'),
   terrain: { size: 256, res: 257, height: moonHeight },
   realGravity: 1.62,
   sun: { azimuth: 115, elevation: 16 },

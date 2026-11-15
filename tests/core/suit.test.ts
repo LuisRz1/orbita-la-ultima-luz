@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildReport, drain, sortieInteract, spend, startSortie } from '../../src/core/sortie.ts';
+import { decisionLinks } from '../../src/core/debrief.ts';
 import { actionCost, assessSuit, massLimit, proposals, reserve, suitMovement, type SuitDesign } from '../../src/core/suit.ts';
 import { defaultParams } from '../../src/core/movement.ts';
 import { moonLevel } from '../../src/levels/moon/level.ts';
@@ -121,4 +122,35 @@ test('a complete sortie ends at the terminal with every required point, and cold
 test('the repair kit halves the relay cost', () => {
   const relay = moonLevel.points.find(p => p.id === 'relay')!;
   assert.equal(actionCost(relay.power, 'service', proposals[0].design), actionCost(relay.power, 'service', proposals[1].design) / 2);
+});
+
+test('a fall off the deck is reported as the safety tether, not as a link loss of the antenna', () => {
+  const s = startSortie(proposals[0].design);
+  s.session.falls = 1;
+  const report = buildReport(orbitLevel, s);
+  assert.equal(report.falls, 1);
+  assert.equal(report.recalls, 0);
+  assert.ok(report.insights.some(i => /cable de seguridad/.test(i.es) && /safety tether/.test(i.en)));
+  assert.ok(!report.insights.some(i => /perdiste el enlace/.test(i.es)));
+});
+
+test('before LUMA joins, the report never says LUMA brought or dragged the player back', () => {
+  const s = startSortie(proposals[0].design);
+  s.session.recalls = 1; s.emergency = true;
+  const report = buildReport(orbitLevel, s);
+  const text = [...report.insights, ...decisionLinks(report).map(l => l.effect)].map(i => i.es + i.en).join(' ');
+  assert.doesNotMatch(text, /LUMA/);
+  assert.match(text, /cable de seguridad/);
+  // On the Moon LUMA is there from the start.
+  const moon = startSortie(proposals[0].design);
+  moon.emergency = true;
+  assert.ok(buildReport(moonLevel, moon).insights.some(i => /LUMA/.test(i.es)));
+});
+
+test('the report never lists an environment cost that rounds to 0 u.', () => {
+  const s = startSortie(proposals[0].design);
+  spend(s, 'cold', 0.3);
+  assert.ok(!buildReport(moonLevel, s).insights.some(i => /0 u\. por el frío/.test(i.es)));
+  spend(s, 'cold', 1);
+  assert.ok(buildReport(moonLevel, s).insights.some(i => /1 u\. por el frío/.test(i.es)));
 });

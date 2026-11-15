@@ -43,13 +43,6 @@ test('report achievements: completion, steady link, learning from a recall and a
   assert.deepEqual(unlocks({ kind: 'report', report: buildReport(moonLevel, recalled), previous: [] }, []), []);
 });
 
-test('lunar dialogue is bilingual and never names later destinations', () => {
-  for (const lines of Object.values(moonDialogue)) for (const line of lines) {
-    assert.ok(line.text.es && line.text.en);
-    assert.doesNotMatch(line.text.es + line.text.en, /Marte|Mars|Bennu|AUR-E0[3-7]/);
-  }
-});
-
 test('Martian dialogue is bilingual and only the authenticated close names Bennu or the survivors', () => {
   for (const [key, lines] of Object.entries(marsDialogue)) for (const line of lines) {
     assert.ok(line.text.es && line.text.en, key);
@@ -59,6 +52,17 @@ test('Martian dialogue is bilingual and only the authenticated close names Bennu
   // Point results report only what was recovered; the destination appears only in the authenticated outcome.
   for (const p of marsLevel.points) assert.doesNotMatch(p.result.es + p.result.en + p.hint.es + p.hint.en, /Bennu/, p.id);
   assert.match(marsLevel.outcome.es, /Bennu/);
+});
+
+test('lunar dialogue: only the authenticated close (AUR-E03) names Mars, and the report validates it', () => {
+  for (const [key, lines] of Object.entries(moonDialogue)) for (const line of lines) {
+    assert.ok(line.text.es && line.text.en, key);
+    if (key !== 'complete') assert.doesNotMatch(line.text.es + line.text.en, /Marte|Mars|Bennu|supervivientes|survivors|AUR-E0[4-7]/, key);
+  }
+  assert.match(moonDialogue.complete.map(l => l.text.es).join(' '), /AUR-E03/);
+  for (const p of moonLevel.points) assert.doesNotMatch(p.result.es + p.result.en + p.hint.es + p.hint.en, /Marte|Mars/, p.id);
+  assert.match(moonLevel.outcome.es, /AUR-E03.*Marte/);
+  assert.match(moonLevel.outcome.en, /AUR-E03.*Mars/);
 });
 
 test('chapter 1 dialogue: only Control speaks before LUMA joins, and nothing names later destinations', () => {

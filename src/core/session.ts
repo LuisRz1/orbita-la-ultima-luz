@@ -2,10 +2,11 @@
 // Power and suit costs join in the mission-loop stage; the rules about prerequisites already apply.
 import type { LevelPoint, LevelV2 } from './contract/level-v2.ts';
 
-export type Session = { completed: string[]; collected: string[]; recalls: number };
+/** `recalls` counts link losses (antenna range); `falls` counts the safety tether catching the player off a deck. */
+export type Session = { completed: string[]; collected: string[]; recalls: number; falls: number };
 export type InteractResult = { ok: true; point: LevelPoint } | { ok: false; error: 'none' | 'requirements'; point?: LevelPoint };
 
-export const createSession = (): Session => ({ completed: [], collected: [], recalls: 0 });
+export const createSession = (): Session => ({ completed: [], collected: [], recalls: 0, falls: 0 });
 
 const dist = (x: number, z: number, p: { x: number; z: number }) => Math.hypot(x - p.x, z - p.z);
 

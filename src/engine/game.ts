@@ -194,6 +194,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   let body: Body = createBody(level.spawn.x, level.spawn.z, ground);
   const prev = { x: body.x, y: body.y, z: body.z };
   let time = 0, zone: string | null = null, lostFor = 0, fade = 0, recalling = false, idleFor = 0, ending = 0;
+  /** Recent grounded spots on a station deck; the safety tether reels the player back to the oldest one. */
+  let safeSpots: { x: number; z: number }[] = [], safeClock = 0, fallBack: { x: number; z: number } | null = null;
   let endReason: 'reserve' | null = null, returning = false, lowWarned = false;
   let notice: Notice | null = null;
   const lumaPos = new Vector3(body.x + 1, body.y + 1.6, body.z + 1);
@@ -244,6 +246,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   function teleport(x: number, z: number) {
     body = createBody(x, z, activeGround);
     Object.assign(prev, { x: body.x, y: body.y, z: body.z });
+    safeSpots = []; safeClock = 0;
     lumaPos.set(x + 1, body.y + 1.6, z + 1);
   }
 
@@ -275,7 +278,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     enterWorld('surface');
     teleport(level.spawn.x, level.spawn.z);
     input.look.yaw = 0; input.look.pitch = 0.32;
-    zone = null; lostFor = 0; fade = 1; recalling = false; ending = 0; endReason = null; returning = false; lowWarned = false;
+    zone = null; lostFor = 0; fade = 1; recalling = false; ending = 0; safeSpots = []; safeClock = 0; fallBack = null; endReason = null; returning = false; lowWarned = false;
     setStorm(false);
     resetPointsView();
     phase = 'eva'; paused = false;
@@ -698,7 +701,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (pendingZoneLine) {
       const z = level.zones.find(q => q.id === pendingZoneLine)!;
       if (zone !== z.id) pendingZoneLine = null;
-      else if (Math.hypot(body.x - z.center.x, body.z - z.center.z) < z.radius * 0.45) { play('zone:' + z.id); pendingZoneLine = null; }
+      // Only on the ground: a line that opens mid-jump or mid-fall would freeze the player in the air.
+      else if (body.grounded && Math.hypot(body.x - z.center.x, body.z - z.center.z) < z.radius * 0.45) { play('zone:' + z.id); pendingZoneLine = null; }
     }
 
     const moving = Math.hypot(body.vx, body.vz) > 0.5;
@@ -732,9 +736,19 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       }
     }
 
-    // Off the edge of a station deck: the safety tether stops the fall and reels the player back.
+    // Off the edge of a station deck: the safety tether stops the fall and reels the player back to where they last
+    // stood (about a second earlier), not to the dock. It is not a link loss, so the report does not blame the antenna.
+    if (level.fallLimit !== undefined) {
+      safeClock += dt;
+      if (body.grounded && !frozen && body.y > level.fallLimit && (safeClock >= 0.4 || !safeSpots.length)) {
+        safeClock = 0;
+        safeSpots.push({ x: body.x, z: body.z });
+        if (safeSpots.length > 3) safeSpots.shift();
+      }
+    }
     if (level.fallLimit !== undefined && body.y < level.fallLimit && !recalling && !endReason) {
       recalling = true; audio.play('recall');
+      fallBack = safeSpots[0] ?? { x: level.spawn.x, z: level.spawn.z };
       tell(say('Fuera de la cubierta. El cable de seguridad te recoge.', 'Off the deck. The safety tether reels you in.'), 'warn');
     }
 
@@ -750,7 +764,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     // Radio link: losing it for a moment is a warning; losing it for longer triggers LUMA's recall.
     const signal = signalAt(level, body.x, body.z, sortie.stats.commsRadius);
     lostFor = signal <= 0 ? lostFor + dt : 0;
-    if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae. Vuelve hacia el cráter.', 'Signal fading. Head back into the crater.'), 'warn');
+    if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae: vuelve hacia el centro de la zona de enlace.', 'Signal fading: head back toward the middle of the link area.'), 'warn');
     if (lostFor > 1.5 && !recalling) {
       recalling = true; audio.play('recall');
       tell(guide(say('Sin enlace. LUMA te guía de vuelta al módulo.', 'Link lost. LUMA guides you back to the lander.'),
@@ -760,7 +774,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       fade = Math.min(1, fade + dt * 1.6);
       if (fade >= 1) {
         if (endReason) { finish(); return; }
-        teleport(level.spawn.x, level.spawn.z); sortie.session.recalls++; recalling = false; lostFor = 0;
+        if (fallBack) { teleport(fallBack.x, fallBack.z); sortie.session.falls++; }
+        else { teleport(level.spawn.x, level.spawn.z); sortie.session.recalls++; }
+        recalling = false; lostFor = 0; fallBack = null; safeSpots = [];
       }
     } else fade = Math.max(0, fade - dt * 1.2);
     if (ending > 0) { ending -= dt; if (ending <= 0) { finish(); return; } }
@@ -793,6 +809,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       if (fade >= 1) { const id = leavingTo; leavingTo = null; window.location.assign(levelUrl(id, window.location.search)); }
       return;
     }
+    // The mouse is captured only on the surface: in the lander the camera is fixed and the station panels need it.
+    input.allowLock = phase === 'eva';
+    if (phase === 'ship' && input.locked) document.exitPointerLock();
     audio.mood(currentMood());
     audio.lumaMotif(phase === 'eva' && lumaHere() && !carried());
     audio.tick(phase === 'eva' && !paused ? signalAt(level, body.x, body.z, sortie.stats.commsRadius) : 1,
@@ -809,9 +828,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     // Losing pointer lock in the middle of a sortie (Esc, alt-tab) pauses it.
     const locked = input.locked;
     const lostLock = wasLocked && !locked;
-    if (lostLock && phase === 'eva' && !dialogue && !photo) { paused = true; publish(true); }
+    // Esc releases the mouse first: it pauses even with a story line open (the line waits under the pause menu).
+    if (lostLock && phase === 'eva' && !photo) { paused = true; publish(true); }
     wasLocked = locked;
-    if (dialogue && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
+    if (dialogue && !paused && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
     else if (phase === 'eva' && input.wasPressed('pause') && !lostLock && !photo) { paused = !paused; publish(true); }
     if (phase === 'eva' && !cine && !dialogue && !paused && input.wasPressed('view')) {
       prefs.setState({ view: prefs.getState().view === 'first' ? 'third' : 'first' });
@@ -1059,7 +1079,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const hideDebug = exposeDebug({
     state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
       zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
-      completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls,
+      completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls, falls: sortie.session.falls,
       signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length,
       cinematic: !!cine, fov: camera.fov, view: firstPerson() ? 'first' : 'third', photo, camera: camera.position.toArray(),
       lumaAbilities: { readyIn: cooldownLeft(abilities, sortie.time), fetchesLeft: abilities.fetchesLeft, warned: [...abilities.warned], sniffs: abilities.sniffs,
@@ -1079,7 +1099,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     station: (id: StationId) => { const st = interior.stations.find(q => q.id === id)!; teleport(st.x, st.z); useStation(id); },
     advance: () => advance(),
     audio: () => ({ state: audio.ctx?.state ?? 'locked', mood: currentMood() }),
-    setEnergy: (value: number) => { if (value < sortie.energy) spend(sortie, 'move', sortie.energy - value); else sortie.energy = value; },
+    setEnergy: (value: number) => { if (value < sortie.energy) spend(sortie, 'move', sortie.energy - value); else sortie.energy = Math.min(value, sortie.stats.capacity); },
     level: () => ({ points: level.points.map(p => ({ id: p.id, ...p.position, required: p.required })),
       collectibles: level.collectibles.map(c => ({ id: c.id, ...c.position, y: c.y })), spawn: level.spawn, comms: level.comms }),
   });

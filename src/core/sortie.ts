@@ -128,7 +128,7 @@ export type Report = {
   outcome: Outcome; completed: string[]; required: number; requiredDone: number;
   missed: { id: string; title: Localized; cause: Localized; reason: MissReason; action: Action; power: number }[];
   ledger: Record<LedgerKey, number>; capacity: number; used: number; left: number; time: number;
-  insights: Localized[]; echoes: number; recalls: number; emergency: boolean;
+  insights: Localized[]; echoes: number; recalls: number; falls: number; emergency: boolean;
   design: SuitDesign; mass: number; jumpFactor: number;
   trace: TraceSample[]; marks: TraceMark[];
 };
@@ -162,22 +162,27 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
       `Suit mass ${s.stats.mass} kg: jump at ${Math.round(s.stats.jumpFactor * 100)}% of a light suit.`),
   ];
   if (s.ledger.thruster > 0) insights.push(t(`${thrusters[s.design.thruster].name.es}: ${Math.round(s.ledger.thruster)} u. en saltos en el aire.`, `${thrusters[s.design.thruster].name.en}: ${Math.round(s.ledger.thruster)} u on air jumps.`));
-  if (s.ledger.cold > 0) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
+  if (s.ledger.cold >= 0.5) insights.push(t(`El cráter en sombra costó ${Math.round(s.ledger.cold)} u. por el frío.`, `The shadowed crater cost ${Math.round(s.ledger.cold)} u to the cold.`));
   if (s.lumaWarmth >= 0.5) insights.push(t(`El brillo de LUMA, a tu lado en la sombra, ahorró ${Math.round(s.lumaWarmth * 10) / 10} u. de frío.`,
     `LUMA's glow, close by in the shadow, saved ${Math.round(s.lumaWarmth * 10) / 10} u of cold.`));
-  if (s.ledger.dust > 0) insights.push(t(`Cruzar el polvo costó ${Math.round(s.ledger.dust)} u.: tras la contingencia, rodear las dunas suele salir más barato.`,
+  if (s.ledger.dust >= 0.5) insights.push(t(`Cruzar el polvo costó ${Math.round(s.ledger.dust)} u.: tras la contingencia, rodear las dunas suele salir más barato.`,
     `Crossing the dust cost ${Math.round(s.ledger.dust)} u: after the contingency, going around the dunes is usually cheaper.`));
-  if (s.ledger.sun > 0) insights.push(t(`La ruta al sol costó ${Math.round(s.ledger.sun)} u. de refrigeración: la baranda en sombra es más larga pero no calienta el traje.`,
+  if (s.ledger.sun >= 0.5) insights.push(t(`La ruta al sol costó ${Math.round(s.ledger.sun)} u. de refrigeración: la baranda en sombra es más larga pero no calienta el traje.`,
     `The sunlit route cost ${Math.round(s.ledger.sun)} u of cooling: the shaded handrail is longer but does not heat the suit.`));
   if (outcome === 'recalled') insights.push(s.emergency
-    ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
+    ? (!level.companionAfter || done.has(level.companionAfter)
+      ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
+      // Before LUMA joins (chapter 1), the safety tether does it, as the in-game warning says.
+      : t('La reserva se agotó antes de llegar al acople: el cable de seguridad tuvo que recogerte.', 'The reserve ran out before you reached the dock: the safety tether had to reel you in.'))
     : t('Volviste al módulo con la reserva de retorno: repliegue seguro.', 'You walked back to the lander on the return reserve: a safe recall.'));
   if (s.session.recalls > 0) insights.push(t(`${antennas[s.design.antenna].name.es} (${s.stats.commsRadius} m): perdiste el enlace ${s.session.recalls} vez/veces.`, `${antennas[s.design.antenna].name.en} (${s.stats.commsRadius} m): link lost ${s.session.recalls} time(s).`));
+  if (s.session.falls > 0) insights.push(t(`El cable de seguridad te recogió ${s.session.falls} vez/veces al salir de la cubierta (no es culpa de la antena).`,
+    `The safety tether caught you ${s.session.falls} time(s) off the deck (not the antenna's fault).`));
   const required = level.points.filter(p => p.required);
   return {
     outcome, completed: [...s.session.completed], required: required.length, requiredDone: required.filter(p => done.has(p.id)).length,
     missed, ledger: { ...s.ledger }, capacity: s.stats.capacity, used, left: s.energy, time: s.time, insights,
-    echoes: s.session.collected.length, recalls: s.session.recalls, emergency: s.emergency,
+    echoes: s.session.collected.length, recalls: s.session.recalls, falls: s.session.falls, emergency: s.emergency,
     design: s.design, mass: s.stats.mass, jumpFactor: s.stats.jumpFactor,
     trace: s.trace.map(q => ({ ...q })), marks: s.marks.map(m => ({ ...m })),
   };

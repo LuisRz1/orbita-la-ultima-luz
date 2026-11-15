@@ -120,7 +120,7 @@ export function buildInterior(): Interior {
 
   const ground: Ground = { height: () => 0, slope: () => 0, solids };
   return {
-    scene, ground, spawn: { x: -0.9, z: -0.6 }, stations,
+    scene, ground, spawn: { x: -1.5, z: -0.2 }, stations,
     highlight(next, done) {
       for (const s of stations) {
         const m = s.ring.material as MeshBasicMaterial;

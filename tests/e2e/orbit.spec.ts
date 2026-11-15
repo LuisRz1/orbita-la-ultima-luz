@@ -69,14 +69,33 @@ test('chapter 1 opens by default: LUMA joins at the protected bay, the airlock v
   expect(errors).toEqual([]);
 });
 
-test('stepping off a station deck: the safety tether brings the player back to the dock', async ({ page }) => {
+test('stepping off a station deck: the safety tether reels the player back to the deck, not counted as a link loss', async ({ page }) => {
   const errors = watch(page);
   await begin(page);
+  // Teleported straight over the void: no safe spot yet, so the tether brings the player to the dock.
   await call(page, 'teleport', 20, 0);
   await call(page, 'step', 400);
   await settle(page);
-  const state = await call(page, 'state') as State;
-  expect(state.recalls).toBe(1);
+  let state = await call(page, 'state') as State & { falls: number };
+  expect(state.falls).toBe(1);
+  expect(state.recalls).toBe(0);
   expect(Math.hypot(state.x - 0, state.z - 67)).toBeLessThan(1);
+  // Walking off the side of the sunlit truss: back onto the truss, near where the player left it.
+  await call(page, 'teleport', 0, -30);
+  await call(page, 'look', 0, 0.3);
+  await call(page, 'hold', 'right', true);
+  await call(page, 'step', 60);
+  await call(page, 'hold', 'right', false);
+  // Zone lines wait for the ground: none opens while the player is falling.
+  await call(page, 'step', 30);
+  const falling = await call(page, 'state') as State & { grounded: boolean; dialogue: boolean };
+  expect(falling.grounded).toBe(false);
+  expect(falling.dialogue).toBe(false);
+  for (let i = 0; i < 4; i++) { await settle(page); await call(page, 'step', 120); }
+  state = await call(page, 'state') as State & { falls: number; y: number };
+  expect(state.falls).toBe(2);
+  expect(state.recalls).toBe(0);
+  expect(Math.abs(state.z + 30)).toBeLessThan(3);
+  expect(state.y).toBeGreaterThan(-1);
   expect(errors).toEqual([]);
 });

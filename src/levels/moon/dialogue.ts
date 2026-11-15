@@ -1,5 +1,6 @@
 // Story lines for the lunar level. Each sequence plays once per save. Chapter 2 tone: LUMA is warm but tires sooner.
-// Rules from the main story: no line may name later destinations or evidence; the demo recovers only part of the trail.
+// Rules from the main story: no line may name later destinations or evidence, except `complete`, played once the
+// terminal has authenticated AUR-E03, which says where Aurora went next (Mars).
 import type { Localized } from '../../core/contract/grid-v1.ts';
 
 export type Speaker = 'LUMA' | 'CONTROL' | 'AURORA';
@@ -38,7 +39,7 @@ export const moonDialogue: Record<string, Line[]> = {
     l('LUMA', '…Y yo necesitaba descansar un poco. No se lo digas a Control.', '…And I needed a little rest. Do not tell Control.'),
   ],
   complete: [
-    l('CONTROL', 'Recibido el registro parcial de Aurora. Todavía no basta para saber adónde fue.', 'Partial Aurora record received. It is not enough yet to know where they went.'),
+    l('CONTROL', 'Registro, caché y relé autenticados juntos: AUR-E03. Aurora salió de aquí rumbo a Marte.', 'Record, cache and relay authenticated together: AUR-E03. Aurora left here for Mars.'),
     l('LUMA', 'Pero ya sabemos que pasó por aquí. Es más de lo que teníamos ayer.', 'But now we know she passed through here. That is more than we had yesterday.'),
   ],
 };

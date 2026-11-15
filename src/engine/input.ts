@@ -13,6 +13,8 @@ export class Input {
   sensitivity = 0.0025;
   /** Time of the last mouse look, used to decide when the camera may re-centre on its own. */
   lastLook = -Infinity;
+  /** Whether a click on the canvas may capture the mouse (only on the surface; the lander camera is fixed). */
+  allowLock = true;
   /** Camera distance in metres, changed with the mouse wheel. */
   zoom = 6.4;
   /** Lowest pitch the mouse may reach; the helmet view and the photo mode let the player look up further. */
@@ -36,7 +38,7 @@ export class Input {
     }, { signal });
     window.addEventListener('keyup', e => { const a = bindings[e.code]; if (a) this.held.delete(a); }, { signal });
     window.addEventListener('blur', () => this.held.clear(), { signal });
-    target.addEventListener('click', () => { if (document.pointerLockElement !== target) target.requestPointerLock?.(); }, { signal });
+    target.addEventListener('click', () => { if (this.allowLock && document.pointerLockElement !== target) target.requestPointerLock?.(); }, { signal });
     target.addEventListener('wheel', e => {
       e.preventDefault();
       this.zoom = Math.min(this.zoomMax, Math.max(3.2, this.zoom + Math.sign(e.deltaY) * 0.6));

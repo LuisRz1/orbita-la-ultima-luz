@@ -45,8 +45,12 @@ export async function readProgress(level: string): Promise<Progress | null | 'in
 
 let tail = Promise.resolve();
 /** Writes are serialised so a fast redesign cannot overwrite a newer save with an older one. */
-export function writeProgress(p: Progress) {
-  const data = progressSchema.parse(p);
+export function writeProgress(p: Progress): Promise<void> {
+  // An invalid save is reported through the promise (the HUD shows the save error) instead of throwing into the
+  // game loop, where it would stop the sortie halfway through its report.
+  const parsed = progressSchema.safeParse(p);
+  if (!parsed.success) return Promise.reject(parsed.error);
+  const data = parsed.data;
   tail = tail.then(() => open().progress.put({ id: data.level, data })).then(() => undefined);
   return tail;
 }

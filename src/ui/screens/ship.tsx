@@ -62,6 +62,13 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
         const i = ids.indexOf(draft[slot]) + (e.key === 'ArrowRight' ? 1 : -1);
         if (i >= 0 && i < ids.length) set({ ...draft, [slot]: ids[i] } as SuitDesign);
       }
+      // Instruments: 1, 2 and 3 toggle camera, drill and kit, so the bench works from the keyboard too.
+      const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
+      if (!slot && n >= 0) {
+        const inst = (Object.keys(instruments) as InstrumentId[])[n];
+        const on = draft.instruments.includes(inst);
+        set({ ...draft, instruments: on ? draft.instruments.filter(x => x !== inst) : [...draft.instruments, inst] });
+      }
       if (e.key === 'Enter' || e.code === 'KeyE') { e.preventDefault(); commands.confirmStation(); }
     };
     window.addEventListener('keydown', key);
@@ -77,12 +84,12 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
         onClick={() => set({ ...draft, [slot]: opt } as SuitDesign)}>
         <b>{t(catalogs[slot][opt].name)}</b><small>{optionLine(slot, opt, t, draft)}</small>
       </button>)}
-      {!slot && (Object.keys(instruments) as InstrumentId[]).map(inst => {
+      {!slot && (Object.keys(instruments) as InstrumentId[]).map((inst, i) => {
         const on = draft.instruments.includes(inst);
         const unlocks = objectives.filter(o => o.required && instrumentFor[o.action as keyof typeof instrumentFor] === inst);
         return <button key={inst} data-instrument={inst} aria-pressed={on} className={on ? 'on' : ''}
           onClick={() => set({ ...draft, instruments: on ? draft.instruments.filter(x => x !== inst) : [...draft.instruments, inst] })}>
-          <b>{on ? '■ ' : '□ '}{t(instruments[inst].name)}</b>
+          <b><kbd>{i + 1}</kbd> {on ? '■ ' : '□ '}{t(instruments[inst].name)}</b>
           <small>{t(instruments[inst].enables)} · {instruments[inst].mass} kg{unlocks.length ? ' · ' + unlocks.map(o => t(o.title)).join(', ') : ''}</small>
         </button>;
       })}
