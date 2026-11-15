@@ -60,5 +60,11 @@ test('extraction: everyone aboard, the undocking jams, LUMA frees it, is carried
   await call(page, 'step', 2);
   await expect(page.locator('.notice')).toContainText('Nadie corre delante');
   expect((await call(page, 'state') as { lumaAbilities: { sniffs: number } }).lumaAbilities.sniffs).toBe(0);
+  // Inside the helmet its slot is an empty socket.
+  await call(page, 'press', 'view');
+  await call(page, 'step', 2);
+  await expect(page.locator('[data-helmet-luma]')).toHaveAttribute('data-helmet-luma', 'gone');
+  await call(page, 'press', 'view');
+  await call(page, 'step', 2);
   expect(errors).toEqual([]);
 });

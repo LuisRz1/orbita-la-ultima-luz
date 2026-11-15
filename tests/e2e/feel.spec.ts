@@ -59,6 +59,10 @@ test('the helmet view puts the camera at eye height with a visor, and the photo 
   expect(s.camera[1] - s.y).toBeGreaterThan(1.3);
   await expect(page.locator('[data-visor]')).toBeVisible();
   await expect(page.locator('.energy-panel')).toBeHidden();
+  // The helmet replaces the corner panels with its own tape, gauges, scope and LUMA slot.
+  for (const part of ['hud', 'chin', 'battery', 'link', 'radar', 'luma']) await expect(page.locator(`[data-helmet-${part}]`)).toBeVisible();
+  for (const panel of ['.compass', '.telemetry', '.luma-card']) await expect(page.locator(panel)).toBeHidden();
+  await expect(page.locator('[data-helmet-battery]')).toHaveAttribute('data-helmet-battery', 'ok');
   // Movement still collides and walks as usual.
   await call(page, 'look', 0, 0.32);
   await call(page, 'hold', 'up', true);
@@ -74,6 +78,7 @@ test('the helmet view puts the camera at eye height with a visor, and the photo 
   await call(page, 'step', 2);
   expect((await state(page)).view).toBe('third');
   await expect(page.locator('[data-visor]')).toHaveCount(0);
+  for (const panel of ['.compass', '.telemetry', '.energy-panel']) await expect(page.locator(panel)).toBeVisible();
 
   await call(page, 'press', 'photo');
   await call(page, 'step', 2);

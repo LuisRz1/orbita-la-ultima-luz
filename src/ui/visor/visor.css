@@ -1,0 +1,96 @@
+/* Helmet view: frame, glass and chin cluster. Everything is drawn by code; sizes follow the viewport height. */
+.orbita .helmet { position: absolute; inset: 0; pointer-events: none; font-size: clamp(10px, 1.55vh, 17px); color: #7fe3e0; }
+.orbita .helmet > i, .orbita .helmet-hud, .orbita .helmet-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+.orbita .helmet .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Glass: a cool tint, a darker sun band at the top, a soft vignette, one reflection and a few hairline scratches. */
+.orbita .helmet-tint { background:
+  linear-gradient(to bottom, rgb(6 12 20 / 34%), transparent 20%),
+  radial-gradient(ellipse 75% 70% at 50% 42%, transparent 58%, rgb(4 8 14 / 46%) 100%),
+  rgb(127 227 224 / 2.5%); }
+.orbita .helmet-glint { background:
+  linear-gradient(118deg, transparent 17%, rgb(255 255 255 / 6%) 21%, transparent 27%, transparent 30%, rgb(255 255 255 / 3.5%) 31.5%, transparent 34%),
+  linear-gradient(72deg, transparent 61.9%, rgb(255 255 255 / 9%) 62%, transparent 62.15%),
+  linear-gradient(98deg, transparent 24.9%, rgb(255 255 255 / 7%) 25%, transparent 25.1%),
+  linear-gradient(141deg, transparent 77.9%, rgb(255 255 255 / 6%) 78%, transparent 78.12%);
+  mask-image: linear-gradient(to bottom, #000 30%, transparent 62%); }
+/* Breath on the glass when the battery is low. */
+.orbita .helmet-fog { opacity: 0; background: radial-gradient(ellipse 46% 26% at 50% 78%, rgb(205 228 236 / 30%), transparent 70%); }
+.orbita .helmet.low .helmet-fog { animation: helmet-breath 3.8s ease-in-out infinite; }
+.orbita .helmet.low.calm .helmet-fog { animation: none; opacity: 0.4; }
+@keyframes helmet-breath { 0%, 100% { opacity: 0.12; } 45% { opacity: 0.85; } }
+
+.orbita .helmet-frame path { fill: none; vector-effect: non-scaling-stroke; }
+.orbita .helmet-frame path:first-of-type { fill: url(#helmet-shell); }
+.orbita .helmet-frame .seal { stroke: #05070a; stroke-width: 22px; }
+.orbita .helmet-frame .ridge { stroke: #232d3a; stroke-width: 7px; }
+.orbita .helmet-frame .shine { stroke: rgb(127 227 224 / 42%); stroke-width: 1.2px; }
+.orbita .helmet-frame .stitch { stroke: rgb(160 180 200 / 22%); stroke-width: 1.5px; stroke-dasharray: 7 7; }
+.orbita .helmet-frame .plate { stroke: rgb(127 227 224 / 14%); stroke-width: 1px; }
+.orbita .helmet-frame .screw circle { fill: #1a222d; stroke: #2c3846; stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.orbita .helmet-frame .screw path { stroke: #05070a; stroke-width: 1.5px; }
+
+/* Power-on sweep when the view opens. */
+.orbita .helmet-sweep { height: 3px !important; background: linear-gradient(90deg, transparent, rgb(127 227 224 / 75%), transparent); box-shadow: 0 0 22px 6px rgb(127 227 224 / 22%);
+  animation: helmet-sweep 0.8s ease-out both; }
+@keyframes helmet-sweep { from { transform: translateY(4vh); opacity: 1; } 85% { opacity: 1; } to { transform: translateY(76vh); opacity: 0; } }
+
+/* Chin cluster. */
+.orbita .helmet-chin { position: absolute; left: 50%; bottom: 0.8vh; transform: translateX(-50%); height: 20.5vh; width: min(92vw, 150vh);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 3.2vh; animation: helmet-on 0.9s steps(6, end) both; }
+.orbita .helmet.calm .helmet-chin { animation: none; }
+@keyframes helmet-on { 0%, 30% { opacity: 0; } 45% { opacity: 0.7; } 55% { opacity: 0.25; } 100% { opacity: 1; } }
+.orbita .helmet-chin .side { display: flex; align-items: flex-end; gap: 2.4vh; padding-bottom: 1.2vh; }
+.orbita .helmet-chin .left { justify-content: flex-end; }
+.orbita .helmet-chin .gauge, .orbita .helmet-chin .luma-slot { display: grid; justify-items: center; width: 13.5vh; line-height: 1.25; text-align: center; }
+.orbita .helmet-chin svg { width: 11.5vh; height: 11.5vh; overflow: visible; }
+.orbita .helmet-chin span { color: #d7dee6; font-size: 0.82em; letter-spacing: 0.2em; text-transform: uppercase; }
+.orbita .helmet-chin em { color: #7d8a97; font-size: 0.8em; font-style: normal; white-space: nowrap; }
+.orbita .helmet-chin text { fill: #eafcff; text-anchor: middle; font-weight: 700; }
+.orbita .helmet-chin .num { font-size: 27px; }
+.orbita .helmet-chin .unit { font-size: 10.5px; font-weight: 400; fill: #7d8a97; }
+.orbita .helmet-chin .pct { font-size: 17px; }
+.orbita .helmet-chin .clock text { font-size: 21px; }
+.orbita .helmet-chin .clock .tag { font-size: 10.5px; font-weight: 400; fill: #7d8a97; letter-spacing: 0.2em; }
+.orbita .helmet-chin .clock rect { fill: rgb(0 0 0 / 35%); stroke: rgb(127 227 224 / 35%); stroke-width: 1.5; }
+.orbita .helmet-chin .clock .pip { fill: none; stroke: #7fe3e0; stroke-width: 1.5; }
+.orbita .helmet-chin .clock .pip.done { fill: #7fe3e0; }
+.orbita .gauge path { fill: none; stroke-width: 8; }
+.orbita .gauge .track { stroke: rgb(127 227 224 / 16%); }
+.orbita .gauge .value { stroke: #7fe3e0; filter: drop-shadow(0 0 3px rgb(127 227 224 / 60%)); }
+.orbita .gauge .reserve { stroke: #ffaf68; stroke-width: 3; }
+.orbita .gauge rect.on { fill: #7fe3e0; }
+.orbita .gauge rect.off { fill: rgb(127 227 224 / 14%); }
+.orbita .gauge.low .value { stroke: #ffaf68; filter: drop-shadow(0 0 3px rgb(255 175 104 / 60%)); }
+.orbita .gauge.low rect.on { fill: #ffaf68; }
+.orbita .gauge.low em, .orbita .gauge em.hot { color: #ffaf68; }
+.orbita .gauge.low svg { animation: helmet-flash 1s steps(2, jump-none) infinite; }
+.orbita .helmet.calm .gauge.low svg { animation: none; }
+@keyframes helmet-flash { from { opacity: 1; } to { opacity: 0.5; } }
+
+/* Radar scope: a round screen sunk into the chin. */
+.orbita .helmet-chin .scope { position: relative; width: 19.5vh; height: 19.5vh; border-radius: 50%;
+  background: radial-gradient(circle, #0c2226 0%, #071417 70%, #04090b 100%);
+  box-shadow: 0 0 0 2px #2a3644, 0 0 0 0.9vh #0b0f15, 0 0 0 calc(0.9vh + 1px) rgb(127 227 224 / 28%), inset 0 0 2.4vh rgb(0 0 0 / 80%); }
+.orbita .helmet-chin .scope canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
+.orbita .helmet-chin .scope small { position: absolute; right: -3.4vh; top: 1vh; color: #7d8a97; font-size: 0.72em; }
+
+/* LUMA. */
+.orbita .luma-slot .body { fill: rgb(255 196 111 / 16%); stroke: #ffc46f; stroke-width: 2.5; }
+.orbita .luma-slot .band { fill: rgb(255 196 111 / 45%); }
+.orbita .luma-slot .eyes { fill: #fff3dc; }
+.orbita .luma-slot .eyes.shut { fill: none; stroke: #fff3dc; stroke-width: 3; stroke-linecap: round; }
+.orbita .luma-slot .rest { fill: #ffc46f; }
+.orbita .luma-slot em { color: #ffd39a; }
+.orbita .luma-slot.warm .body { fill: rgb(255 196 111 / 42%); filter: drop-shadow(0 0 6px rgb(255 196 111 / 70%)); }
+.orbita .luma-slot.alert .body { stroke: #ff9a6b; }
+.orbita .luma-slot.alert em { color: #ff9a6b; }
+.orbita .luma-slot.empty .socket { fill: rgb(0 0 0 / 35%); stroke: rgb(125 138 151 / 55%); stroke-width: 2; stroke-dasharray: 5 6; }
+.orbita .luma-slot.empty span, .orbita .luma-slot.empty em { color: #5d6874; }
+
+/* Third-person panels the helmet replaces, and room for the chin under the centred boxes. */
+.orbita:has(.helmet) :is(.telemetry, .energy-panel, .gravity-note, .compass, .luma-card) { display: none; }
+.orbita:has(.helmet) .mission { top: 17vh; left: 6.5vw; border-color: rgb(127 227 224 / 22%); background: rgb(8 12 17 / 52%); }
+.orbita:has(.helmet) .center-bottom { bottom: 25.5vh; }
+.orbita:has(.helmet) .dialogue { bottom: 26vh; }
+.orbita:has(.helmet) .zone-title { left: 8vw; bottom: 44vh; font-size: clamp(24px, 3.6vw, 46px); }

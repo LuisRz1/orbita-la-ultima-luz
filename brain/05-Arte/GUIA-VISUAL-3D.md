@@ -45,6 +45,7 @@ Aspecto del juego 3D: 80 % de las referencias de mundo pequeño y cel-shading, 2
 | Posproceso | [post.ts](../../src/engine/post.ts) | Media y alta: resplandor sobre todo lo que brilla, viñeta y corrimiento de color al hacer dash. Alta: rayos hacia el Sol (marcados en Marte, estela tenue en el vacío) y profundidad de campo en la toma de llegada. Baja: sin posproceso. Ajuste «efectos de imagen». |
 | Efectos breves | [fx.ts](../../src/engine/fx.ts) | Rastro de LUMA (cristales instanciados que se encienden a su paso), halo cálido de su brillo en el frío, anillos de escáner (R), de aterrizaje y del módulo al posarse. |
 | Cámaras | [cinematic.ts](../../src/engine/cinematic.ts), game.ts | Toma de llegada con barras y título; dash que abre el campo de visión; sacudida corta en aterrizajes duros; vista de casco con visor y lectura proyectada; modo foto. Con «reducir movimiento» no hay toma, ni sacudida, ni cambio de campo de visión. |
+| Visor de casco | [src/ui/visor/](../../src/ui/visor/helmet.tsx) | Todo dibujado por código, sin imágenes. Marco oscuro con junta, pespuntes y tornillos; cristal con tinte frío, banda solar, reflejo y arañazos finos; vaho que late con la batería baja. Proyección en cian `#7fe3e0` con avisos en ámbar `#ffaf68`; cada trazo lleva un contratrazo oscuro para leerse sobre regolito claro. Grupo inferior: medidor de arco, barras de enlace, radar con barrido, cara de LUMA (ranura vacía y punteada cuando ya no está) y reloj. |
 
 ## Aspecto realista (15 de noviembre)
 

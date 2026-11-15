@@ -9,7 +9,9 @@ tags: [orbita, continuidad]
 
 ## Punto de continuación
 
-**Aspecto realista, marco (rama `worktree-agent-acd79555d987a627a`, sin fusionar):** selector realista/ilustrado, Sol con mapa de sombras, materiales físicos sin tinta, paleta de albedos con fuentes y posproceso AgX + GTAO + bloom bajo. Evidencia en la [bitácora](../08-Bitacora/2026-11-15.md#aspecto-realista-marco). Sin verificar: fps en GPU real. **Siguiente paso:** que el propietario lo pruebe en su equipo; después cielo físico, texturas procedurales y materiales de personajes.
+**Aspecto realista (integrado en `main`):** selector realista/ilustrado, Sol con mapa de sombras, materiales físicos sin tinta, paleta de albedos con fuentes y posproceso AgX + GTAO + bloom bajo. Evidencia en la [bitácora](../08-Bitacora/2026-11-15.md#aspecto-realista-marco). Sin verificar: fps en GPU real. **Siguiente paso:** probarlo en el portátil del propietario; después cielo físico, texturas procedurales y materiales de personajes.
+
+**Visor de casco (integrado en `main`):** la vista de casco tiene marco, proyección en el cristal y grupo inferior de instrumentos; detalle, evidencia y lo que quedó fuera en la [bitácora](../08-Bitacora/2026-11-15.md#visor-de-casco). **Siguiente paso:** probarlo con V y ajustar legibilidad.
 
 **Inicio cinematográfico del 15 (en `main`):** prólogo narrado de 45 palabras con voz y subtítulos al empezar una expedición, menú con cinemática de fondo, pantalla de carga propia, gráficos al máximo por defecto, paso guiado fijo en el módulo con atajo Q (traje recomendado) y V para cambiar de vista en vivo. Evidencia en la [bitácora](../08-Bitacora/2026-11-15.md#inicio-cinematográfico-tras-la-prueba-del-propietario). **Siguiente paso:** que el propietario escuche la narradora y vuelva a probar el arranque.
 

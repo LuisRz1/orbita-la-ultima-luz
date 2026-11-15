@@ -15,6 +15,7 @@ import { accessories, actionCost, assessSuit, instrumentFor, instruments, propos
 import { unlocks, type GameEvent } from '../core/achievements.ts';
 import { prefs } from '../ui/prefs.ts';
 import { commands, hud, type DialogueLine, type Notice } from '../ui/store.ts';
+import { writeVisor } from '../ui/visor/feed.ts';
 import { sound as audio, type Mood } from './audio.ts';
 import { exposeDebug } from './debug.ts';
 import { Input, type Actions } from './input.ts';
@@ -1106,6 +1107,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       target.set(px - Math.sin(yaw) * Math.cos(pitch), camera.position.y - Math.sin(pitch), pz - Math.cos(yaw) * Math.cos(pitch));
       camera.lookAt(target);
       camPos.copy(camera.position);
+      // Per-frame numbers for the helmet HUD (ui/visor): read-only, nothing comes back.
+      writeVisor(body, yaw, pitch, camera.fov, lift, level, sortie, progress, lumaHere() ? lumaPos : null);
     } else if (phase === 'menu') {
       // Title screen: a cinematic reel of the destination (wide orbit, low pass, push-in on a landmark, crane), or a
       // slow push toward the lander while the prologue is narrated.

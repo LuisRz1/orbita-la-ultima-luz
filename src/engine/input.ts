@@ -5,7 +5,7 @@ export type Actions = 'up' | 'down' | 'left' | 'right' | 'jump' | 'dash' | 'inte
 const bindings: Record<string, Actions> = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   Space: 'jump', ShiftLeft: 'dash', ShiftRight: 'dash', KeyE: 'interact', KeyR: 'scan', Tab: 'log', Slash: 'console', Escape: 'pause',
-  KeyF: 'luma', KeyV: 'view', KeyP: 'photo',
+  KeyF: 'luma', KeyV: 'view', KeyC: 'view', KeyP: 'photo',
 };
 
 export class Input {

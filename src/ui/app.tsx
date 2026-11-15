@@ -5,8 +5,9 @@ import { sound, type Sfx } from '../engine/audio.ts';
 import { debugEnabled } from '../engine/debug.ts';
 import { webglAvailable } from '../engine/renderer.ts';
 import { resetTuning, setTuning, tuning } from '../engine/tuning.ts';
-import { AchievementToast, CinematicCard, Compass, DialogueBox, Fade, LumaCard, PhotoHint, ViewChip, Visor, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
+import { AchievementToast, CinematicCard, Compass, DialogueBox, Fade, LumaCard, PhotoHint, ViewChip, MissionPanel, Prompt, Telemetry, ZoneTitle } from './hud.tsx';
 import { useT } from './i18n.ts';
+import { HelmetHud } from './visor/helmet.tsx';
 import { MainMenu, PauseMenu } from './screens/menu.tsx';
 import { Prologue } from './screens/prologue.tsx';
 import { LoadingScreen } from './screens/loading.tsx';
@@ -81,7 +82,7 @@ function Screens() {
   else if (phase === 'eva' && cinematic) body = <CinematicCard />;
   else if (phase === 'eva' && photo) body = <PhotoHint />;
   else if (phase === 'eva') body = <>
-    <Visor /><MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt /><ViewChip />
+    <HelmetHud /><MissionPanel /><Compass /><Telemetry /><LumaCard /><ZoneTitle /><Prompt /><ViewChip />
     {paused && <PauseMenu />}
   </>;
   // On the title screen the reel's dips to black sit under the menu, so the text never blinks.

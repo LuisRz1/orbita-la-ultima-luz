@@ -90,24 +90,7 @@ export function Telemetry() {
   </>;
 }
 
-/** Helmet view: the visor's rim, a faint reflection and a readout projected on the glass (battery and link). */
-export function Visor() {
-  const { t } = useT();
-  const { view, energy, capacity, signal, draining } = useStore(hud);
-  if (view !== 'first') return null;
-  const pct = capacity ? energy / capacity : 0;
-  const low = energy - reserve < 15;
-  return <div className="visor" data-visor aria-hidden="true">
-    <i className="visor-glass" /><i className="visor-glint" />
-    <div className={'visor-readout' + (low ? ' low' : '')}>
-      <span>{t({ es: 'batería', en: 'battery' })} <b>{Math.round(energy)}</b> u.{draining ? ' · ' + t(draining) : ''}</span>
-      <svg viewBox="0 0 120 12"><rect x="0" y="3" width="120" height="6" className="track" /><rect x="0" y="3" width={120 * pct} height="6" className="fill" /><rect x={120 * reserve / Math.max(1, capacity)} y="0" width="1.5" height="12" className="mark" /></svg>
-      <span>{t({ es: 'enlace', en: 'link' })} <b>{Math.round(signal * 100)}%</b></span>
-    </div>
-  </div>;
-}
-
-/** Always-visible key chip: V switches between the shoulder camera and the helmet view, live. */
+/** Always-visible key chip: V (or C) switches between the shoulder camera and the helmet view, live. */
 export function ViewChip() {
   const { t } = useT();
   const view = useStore(hud, s => s.view);

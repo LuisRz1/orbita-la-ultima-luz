@@ -209,7 +209,7 @@ const sources = [
 ];
 
 const keys: [string, StringKey][] = [
-  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'], ['V', 'keyView'], ['P', 'keyPhoto'], ['Q', 'keyQuick'],
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'], ['V / C', 'keyView'], ['P', 'keyPhoto'], ['Q', 'keyQuick'],
   ['🖱', 'keyLook'], ['Esc', 'keyPause'],
 ];
 
