@@ -339,3 +339,6 @@
 .mission .atlas { color: #9dffc8; }
 .orbita .speaker.aurora { background: #f2a7c3; }
 .mission .pages { color: #f2a7c3; }
+.journal-list .atlas { color: #9dffc8; }
+.journal-list .pages { color: #f2a7c3; }
+.journal-list small a { color: inherit; }

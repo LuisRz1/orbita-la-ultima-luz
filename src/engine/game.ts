@@ -591,6 +591,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         : rock ? { verb: say('Catalogar', 'Catalogue'), title: rock.title, cost: scanCost, blocked: [],
           missing: sortie.design.instruments.includes('camera') ? null : instruments.camera.name }
         : post ? { verb: say('Reparar', 'Repair'), title: level.beacons!.title, cost: beaconCost(sortie.design), blocked: [], missing: null } : null,
+      collection: {
+        atlas: (level.specimens ?? []).map(sp => { const got = progress.atlas.includes(sp.id); return { id: sp.id, title: got ? sp.title : say('Roca sin catalogar', 'Uncatalogued rock'), fact: got ? sp.fact : null, basis: sp.basis, source: got ? sp.source : null }; }),
+        pages: (level.ruins ?? []).map(r => ({ id: r.id, title: r.page.title, text: progress.ruins.includes(r.id) ? r.page.text : null })),
+      },
       pages: { found: progress.ruins.length, total: level.ruins?.length ?? 0 },
       beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },
       atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },

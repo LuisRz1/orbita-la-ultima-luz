@@ -176,6 +176,13 @@ test('an atlas rock is catalogued with the camera for one unit and stays dim onc
   const after = (await call(page, 'state') as { energy: number }).energy;
   expect(before - after).toBeGreaterThanOrEqual(1);
   await expect(page.locator('[data-prompt]')).toHaveCount(0);
+  // The card stays readable from the main menu, with its source.
+  await call(page, 'pause', false);
+  await page.keyboard.press('Escape');
+  await page.locator('[data-pause="menu"]').click();
+  await page.locator('[data-menu="journal"]').click();
+  await expect(page.locator('[data-entry="rock-anorthosite"]')).toContainText('15415');
+  await expect(page.locator('[data-entry="rock-basalt"]')).toContainText('Roca sin catalogar');
   expect(errors).toEqual([]);
 });
 

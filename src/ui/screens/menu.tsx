@@ -8,11 +8,11 @@ import { useT } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
-type Sub = 'settings' | 'achievements' | 'credits' | null;
+type Sub = 'settings' | 'achievements' | 'journal' | 'credits' | null;
 
 export function MainMenu() {
   const { t } = useT();
-  const { hasProgress, facts, destinations } = useStore(hud);
+  const { hasProgress, facts, destinations, collection } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
   return <div className="screen menu-screen">
@@ -28,6 +28,7 @@ export function MainMenu() {
           : <button key={d.id} disabled data-travel-locked={d.id}>{t(d.name)} · {t('routeLocked')}</button>)}
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-sfx="ui-open" data-menu="achievements" onClick={() => setSub('achievements')}>{t('achievements')}</button>
+        {collection.atlas.length + collection.pages.length > 0 && <button data-sfx="ui-open" data-menu="journal" onClick={() => setSub('journal')}>{t('journal')}</button>}
         <button data-sfx="ui-open" data-menu="credits" onClick={() => setSub('credits')}>{t('credits')}</button>
       </nav>
     </section>
@@ -66,9 +67,10 @@ export function PauseMenu() {
 function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void }) {
   const { t } = useT();
   return <div className="screen sub-screen">
-    <section className="panel sub" role="dialog" aria-label={t(sub === 'settings' ? 'settings' : sub === 'achievements' ? 'achievements' : 'credits')}>
+    <section className="panel sub" role="dialog" aria-label={t(sub === 'settings' ? 'settings' : sub === 'achievements' ? 'achievements' : sub === 'journal' ? 'journal' : 'credits')}>
       {sub === 'settings' && <Settings />}
       {sub === 'achievements' && <Achievements />}
+      {sub === 'journal' && <Journal />}
       {sub === 'credits' && <Credits />}
       <button className="back" data-sfx="ui-close" data-back onClick={onBack}>← {t('back')}</button>
     </section>
@@ -113,6 +115,30 @@ function Achievements() {
         <div><b>{t(achievements[id].title)}</b><small>{held.includes(id) ? t(achievements[id].desc) : t('lockedHint') + ' · ' + t(achievements[id].desc)}</small></div>
       </li>)}
     </ul>
+  </>;
+}
+
+/** Rock atlas and Aurora journal of the current destination. Unfound entries stay as placeholders. */
+function Journal() {
+  const { t } = useT();
+  const { atlas, pages } = useStore(hud, s => s.collection);
+  return <>
+    <span className="panel-title">{t('atlas').toUpperCase()} · {atlas.filter(a => a.fact).length}/{atlas.length}</span>
+    <ul className="achievement-list journal-list">
+      {atlas.map(a => <li key={a.id} className={a.fact ? 'got' : ''} data-entry={a.id}>
+        <span aria-hidden="true" className="atlas">{a.fact ? '▲' : '△'}</span>
+        <div><b>{t(a.title)}</b>{a.fact && <small>{t(a.fact)} · <em>{t(a.basis === 'observation' ? 'observation' : 'simplification')}</em> · <a href={a.source!.url} target="_blank" rel="noreferrer">{a.source!.name} ↗</a></small>}</div>
+      </li>)}
+    </ul>
+    {pages.length > 0 && <>
+      <span className="panel-title">{t('pages').toUpperCase()} · {pages.filter(p => p.text).length}/{pages.length}</span>
+      <ul className="achievement-list journal-list">
+        {pages.map(p => <li key={p.id} className={p.text ? 'got' : ''} data-entry={p.id}>
+          <span aria-hidden="true" className="pages">{p.text ? '■' : '□'}</span>
+          <div><b>{t(p.title)}</b>{p.text ? <small>{t(p.text)}</small> : <small>{t('lockedHint')}</small>}</div>
+        </li>)}
+      </ul>
+    </>}
   </>;
 }
 
