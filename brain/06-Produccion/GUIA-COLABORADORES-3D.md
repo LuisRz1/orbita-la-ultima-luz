@@ -20,7 +20,8 @@ mise exec node@24.22.1 -- corepack pnpm@12.4.1 dev
 
 | URL | Qué abre |
 | --- | --- |
-| `/` | Juego 3D (menú → diseño del traje → salida a la Luna) |
+| `/` | Portada 3D con campaña y expedición lunar de referencia |
+| `/?campana` | Campaña de Aurora desde la Tierra y reanudación por tramo |
 | `/?debug` | Más panel de render, ajuste de movimiento en vivo y `window.__orbita` |
 | `/?level=<id>` | Un nivel del [registro](../../src/levels/registry.ts) |
 | `/?quality=low\|medium\|high` | Fuerza la calidad gráfica |
@@ -56,6 +57,8 @@ tests/core, tests/engine, tests/e2e
 
 Regla de capas: `core` no importa three ni React; `engine` no importa React; `ui` habla con el motor solo por `ui/store.ts` (estado que publica el motor y `commands` que la interfaz invoca).
 
+La [integración de campaña](CAMPANA-3D.md) fija entradas, salidas, anclajes, traducciones y clips de voz. El estándar de mundo abierto acotado, cámara, controles y pantalla completa es obligatorio. Para cambiar terrenos, usa los módulos de destino y conserva el contrato de misión.
+
 ## 3. Crear un nivel nuevo (por ejemplo Marte)
 
 1. Copia `src/levels/moon/` a `src/levels/mars/`.
@@ -64,7 +67,7 @@ Regla de capas: `core` no importa three ni React; `engine` no importa React; `ui
 4. `dialogue.ts`: líneas ES/EN que no revelen destinos ni pruebas posteriores ([historia](../02-Diseno/HISTORIA-PRINCIPAL.md)).
 5. Regístralo en `src/levels/registry.ts` y ábrelo con `/?level=mars`.
 6. Añade una prueba como `tests/core/level.test.ts`: `checkLevel` debe devolver `[]` (todo lo obligatorio alcanzable a pie, dentro del enlace).
-7. Paleta del bioma: define sus tokens como `biome` en `style.ts` (la Luna es «Nácar»; Marte «Terracota y menta» y Bennu «Carbón y oro rosa» están propuestos en [Luna Nácar](../02-Diseno/LUNA-NACAR.md)). Por ahora el bioma es global: hacerlo por nivel es una tarea abierta.
+7. Usa `biome` del nivel para elegir las paletas del motor. Nácar conserva su paleta, Marte usa terracota y Bennu gris carbón con guías ámbar. Integra el nivel al registro de campaña y comprueba el informe y la siguiente etapa.
 
 ## 4. Trabajar con agentes
 

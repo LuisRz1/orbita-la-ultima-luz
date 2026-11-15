@@ -4,7 +4,7 @@ Juego de exploración espacial en 3D para navegador (three.js): diseñas el traj
 
 Una cápsula de la expedición desaparecida Aurora regresa con LUMA y registros dañados. Tu hermana viajaba en esa expedición. Debes reconstruir su ruta, encontrar a los supervivientes y traerlos a la Tierra.
 
-**Estado:** la Luna («Nácar») es jugable en 3D con diseño de traje, energía, informe, logros, diálogos, audio procedural, ES/EN. El juego 2D anterior sigue en `/?legacy`. **¿Vas a colaborar? Empieza por la [guía para colaboradores 3D](brain/06-Produccion/GUIA-COLABORADORES-3D.md).**
+**La campaña 3D ya se juega en la rama de integración local.** Conecta 24 misiones principales, la expedición lunar Nácar y el epílogo, con texto en español e inglés. La referencia 2D se abre en `/?legacy`. Consulta la [guía de integración](brain/06-Produccion/CAMPANA-3D.md) para colaborar.
 
 Este espacio local empezó con la documentación y un historial Git propio. Reutiliza la planificación de octubre, cuyo origen está registrado en la [bitácora del 14 de noviembre](brain/08-Bitacora/2026-11-14.md).
 
@@ -19,7 +19,9 @@ pnpm dev
 
 Abre la URL local de Vite. Para integradores: `pnpm test`, `pnpm build` y `pnpm test:e2e` (la prueba en Windows reutiliza Chrome instalado).
 
-En `feat/world-orbit`, elige **Órbita** para jugar **Primera luz** desde el diseño de la misión hasta el nodo lunar. Puedes abrir directamente Vite con `?world=orbit`. Consulta [cómo probar C1 e integrarlo con Luna](brain/08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md).
+Elige **Jugar campaña de Aurora** o abre `/?campana` para entrar por el complejo de lanzamiento. Usa `WASD`, clic para girar la cámara con el ratón o arrastre derecho, rueda para zoom y `C` para centrar. `E` interactúa, `R` escanea, `L` habla con LUMA cuando está disponible, `Tab` abre el diario y `F` activa pantalla completa.
+
+Abre `/?campana&primera-luz` para jugar las seis misiones del primer capítulo en un guardado independiente.
 
 ## Empieza aquí
 
@@ -41,9 +43,9 @@ En `feat/world-orbit`, elige **Órbita** para jugar **Primera luz** desde el dis
 
 Preparar una misión → viajar → explorar → tomar decisiones → regresar → entender los resultados → desbloquear nuevas expediciones.
 
-La campaña recorrerá órbita terrestre, Luna, Marte y un asteroide con **cuatro capítulos y 24 misiones principales**. Cada misión revela una pista, abre una ruta o permite rescatar a Aurora. Las fichas especifican acciones, pruebas de cierre y desbloqueos. El astronauta se verá completo en vista isométrica. Habrá muestras, observaciones, registros históricos, mejoras y conversaciones reactivas.
+La campaña recorre la Tierra, órbita terrestre, Luna, Marte, Bennu y el regreso a la Tierra con **cuatro capítulos y 24 misiones principales**. Cada misión revela una pista, abre una ruta o permite rescatar a Aurora. El astronauta se ve de cuerpo completo en tercera persona. Hay muestras, observaciones, ecos opcionales y conversaciones escritas ligadas al lugar o la acción.
 
-Controlarás maniobras, aproximaciones y acoplamientos en 2.5D. Los cruceros largos tendrán planificación y tiempo acelerado. Cada capítulo muestra qué objetivos hacen falta para avanzar.
+El pilotaje local conserva una simulación en dos ejes con cámara 3D. Los cruceros largos tienen planificación y tiempo acelerado. Cada capítulo muestra qué objetivos hacen falta para avanzar.
 
 LUMA es una criatura viva con traductor ficticio. Su color evoluciona con los capítulos inspirado en una estrella similar al Sol. La documentación del cierre está marcada con spoilers.
 
@@ -51,7 +53,7 @@ La ambientación será un futuro cercano hipotético. Los datos científicos ten
 
 ## Tecnología acordada
 
-Phaser 4.2.1, TypeScript, Vite, React, Zustand, Zod e IndexedDB con Dexie. Tiled para mapas y LibreSprite para sprites. Vercel para la publicación y un servicio opcional de conversación online. El juego completo deberá poder jugarse sin pagar IA.
+Three.js, TypeScript, Vite, React, Zustand, Zod e IndexedDB con Dexie. El modo de referencia usa Phaser 4.2.1. La voz de LUMA se integra mediante clips que entrega el propietario. El recorrido funciona con el texto escrito.
 
 Las versiones del kit están fijadas en el lockfile. [Entorno](brain/06-Produccion/ENTORNO.md) distingue las herramientas usadas de las previstas.
 

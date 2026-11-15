@@ -4,16 +4,27 @@ import {
   AdditiveBlending, BufferAttribute, BufferGeometry, CircleGeometry, Color, CylinderGeometry, DirectionalLight,
   DodecahedronGeometry, DynamicDrawUsage, Float32BufferAttribute, Fog, Group, HemisphereLight, InstancedMesh, Matrix4,
   BackSide, Euler, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PlaneGeometry, Points, PointsMaterial, Quaternion, ShaderMaterial,
-  RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material,
+  Line, LineBasicMaterial, LineSegments, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material,
 } from 'three';
-import type { LevelV2 } from '../core/contract/level-v2.ts';
+import type { LevelV2, Prop } from '../core/contract/level-v2.ts';
 import { heightAt, normalAt, type Heightfield } from '../core/heightfield.ts';
 import { buildAstronaut, buildLuma, buildProp, colors, type Astronaut, type Luma } from './models.ts';
+import { buildStationHabitat } from './station-habitat.ts';
 import { biome, earthTexture, footprintTexture, glowTexture, ink, outlineMaterial, terrainMaterial, toon } from './style.ts';
 
 export const palette = {
   sky: biome.skyTop, lit: biome.lit, mid: biome.mid, shadow: biome.shadow, deep: biome.deep, ink,
   accent: biome.cyan, warn: biome.amber,
+};
+const biomes:Record<NonNullable<LevelV2['biome']>,typeof biome>={
+  earth:{...biome,lit:'#a6b39a',mid:'#68877e',shadow:'#445d65',deep:'#183539',ink:'#243c3f',
+    skyTop:'#375879',skyHorizon:'#9eb5ad',fog:'#93a6a5',milkyWay:'#426e88',rockLit:'#818778'},
+  station:{...biome,lit:'#596d7b',mid:'#3f5667',shadow:'#25374c',deep:'#172232',ink:'#142032',
+    skyTop:'#080f20',skyHorizon:'#12253c',fog:'#152139',milkyWay:'#45668e',rockLit:'#556879'},
+  mars:{...biome,lit:'#e9a176',mid:'#a65e4d',shadow:'#713a41',deep:'#402733',ink:'#4e2b29',
+    skyTop:'#66536e',skyHorizon:'#d89b7b',fog:'#b57c69',milkyWay:'#a96f60',rockLit:'#ce8565'},
+  bennu:{...biome,lit:'#807a7a',mid:'#57575e',shadow:'#333341',deep:'#161928',ink:'#161524',
+    skyTop:'#080b17',skyHorizon:'#171526',fog:'#1d1927',milkyWay:'#454066',rockLit:'#a0928c'},
 };
 
 export type PointView = { id: string; beam: Mesh; ring: Mesh };
@@ -25,6 +36,8 @@ export type WorldView = {
   points: Map<string, PointView>; echoes: Map<string, Mesh>; dust: Dust; footprints: Footprints; ambience: Ambience;
   /** Lamps that blink in sequence (ramp markers). */
   blinkers: Mesh[];
+  hardware: Map<Prop,Group>;
+  tether: Line|null;
   sun: [number, number, number];
   dispose(): void;
 };
@@ -50,21 +63,28 @@ function sunVisibility(hf: Heightfield, x: number, z: number, sun: [number, numb
 
 type Circle = { x: number; z: number; r: number };
 
-function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[]) {
+function terrainMesh(level:LevelV2,hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[], skin:typeof biome) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
   geometry.rotateX(-Math.PI / 2);
   const pos = geometry.attributes.position as BufferAttribute;
   const colorsOut = new Float32Array(pos.count * 3);
-  const lit = new Color(palette.lit), mid = new Color(palette.mid), line = new Color(palette.ink), c = new Color();
-  const shadow = new Color(palette.shadow), deep = new Color(palette.deep), dark = new Color();
+  const lit = new Color(skin.lit), mid = new Color(skin.mid), line = new Color(skin.ink), c = new Color();
+  const shadow = new Color(skin.shadow), deep = new Color(skin.deep), dark = new Color();
   const h = (x: number, z: number) => heightAt(hf, x, z);
+  const panelShadows=level.props.flatMap(p=>{
+    const s=p.solid;
+    if(p.kind!=='solar-rack'||s.kind!=='box')return [];
+    const drop=(s.top-h(s.x,s.z))/Math.max(.15,sun[1]);
+    return [{x:s.x-drop*sun[0],z:s.z-drop*sun[2],hx:s.hx,hz:s.hz}];
+  });
   for (let k = 0; k < pos.count; k++) {
     const x = pos.getX(k), z = pos.getZ(k);
     pos.setY(k, hf.data[k]);
     const n = normalAt(hf, x, z);
     // Light relative to flat ground, so low suns still read: flat ≈ 0.75, sun-facing slopes brighter.
     const facing = Math.max(0, n[0] * sun[0] + n[1] * sun[1] + n[2] * sun[2]) / Math.max(sun[1], 0.2);
-    const direct = Math.min(1, facing / 1.35) * sunVisibility(hf, x, z, sun);
+    const covered=panelShadows.some(p=>Math.abs(x-p.x)<p.hx&&Math.abs(z-p.z)<p.hz);
+    const direct = covered?.08:Math.min(1, facing / 1.35) * sunVisibility(hf, x, z, sun);
     // Painted bands with a narrow blend between them, like brush edges.
     const toLit = Math.min(1, Math.max(0, (direct - 0.56) / 0.08)), toMid = Math.min(1, Math.max(0, (direct - 0.14) / 0.06));
     // Inside cold zones the unlit band sinks to the deeper violet.
@@ -82,11 +102,23 @@ function terrainMesh(hf: Heightfield, sun: [number, number, number], octaves: nu
     colorsOut[k * 3] = c.r; colorsOut[k * 3 + 1] = c.g; colorsOut[k * 3 + 2] = c.b;
   }
   geometry.setAttribute('color', new Float32BufferAttribute(colorsOut, 3));
+  if(level.biome==='station'&&level.id==='orbit'){
+    const index=geometry.index!,deck:number[]=[];
+    for(let i=0;i<index.count;i+=3){
+      const a=index.getX(i),b=index.getX(i+1),c=index.getX(i+2);
+      const x=(pos.getX(a)+pos.getX(b)+pos.getX(c))/3,z=(pos.getZ(a)+pos.getZ(b)+pos.getZ(c))/3;
+      const hull=level.tether?level.tether.anchors.some(p=>Math.hypot(p.x-x,p.z-z)<level.tether!.length+2.5):
+        Math.hypot(x,z)<level.comms.radius+level.comms.falloff+2.5;
+      if(hull)deck.push(a,b,c);
+    }
+    geometry.setIndex(deck);
+  }
   geometry.computeVertexNormals();
-  return new Mesh(geometry, terrainMaterial(octaves));
+  const surface=level.biome==='earth'||level.biome==='station'?level.biome:'regolith';
+  return new Mesh(geometry, terrainMaterial(octaves,surface));
 }
 
-function starfield(count: number) {
+function starfield(count: number,skin:typeof biome) {
   const positions = new Float32Array(count * 3);
   let seed = 7;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -96,14 +128,14 @@ function starfield(count: number) {
   }
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
-  return new Points(geometry, new PointsMaterial({ color: biome.stars, size: 1.4, sizeAttenuation: false, fog: false }));
+  return new Points(geometry, new PointsMaterial({ color: skin.stars, size: 1.4, sizeAttenuation: false, fog: false }));
 }
 
 /** Small decorative rocks: one instanced draw call, no collision, kept away from points of interest. */
-function scatterRocks(level: LevelV2, hf: Heightfield, density: number) {
+function scatterRocks(level: LevelV2, hf: Heightfield, density: number,skin:typeof biome) {
   const count = Math.round(320 * density);
   const geo = new DodecahedronGeometry(1, 0);
-  const rocks = new InstancedMesh(geo, toon(biome.rockLit), count);
+  const rocks = new InstancedMesh(geo, toon(skin.rockLit), count);
   const outline = new InstancedMesh(geo, outlineMaterial(0.08), count);
   let seed = 99;
   const rand = () => (seed = (seed * 48271) % 2147483647) / 2147483647;
@@ -158,10 +190,10 @@ function footprintPool(): { mesh: InstancedMesh; footprints: Footprints } {
 }
 
 /** Faint Milky Way band painted on a sky dome behind the stars. */
-function skyBand() {
+function skyBand(skin:typeof biome) {
   const mat = new ShaderMaterial({
     side: BackSide, depthWrite: false, fog: false,
-    uniforms: { uTop: { value: new Color(biome.skyTop) }, uHorizon: { value: new Color(biome.skyHorizon) }, uBand: { value: new Color(biome.milkyWay) } },
+    uniforms: { uTop: { value: new Color(skin.skyTop) }, uHorizon: { value: new Color(skin.skyHorizon) }, uBand: { value: new Color(skin.milkyWay) } },
     vertexShader: 'varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `varying vec3 vDir;
       uniform vec3 uTop; uniform vec3 uHorizon; uniform vec3 uBand;
@@ -305,33 +337,72 @@ function dustPool(): { points: Points; dust: Dust } {
   };
 }
 
-export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, octaves = 4): WorldView {
+export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, octaves = 4, chapter=2): WorldView {
   const scene = new Scene();
-  scene.background = new Color(palette.sky);
+  const skin=level.biome?biomes[level.biome]:biome;
+  scene.background = new Color(skin.skyTop);
   // Fog is a style choice (the Moon has no air): it softens the far rim into the indigo horizon.
-  scene.fog = new Fog(biome.fog, 60, 230);
+  scene.fog = new Fog(skin.fog, 70, 250);
   const sun = sunDirection(level.sun.azimuth, level.sun.elevation);
 
   const light = new DirectionalLight('#fff4e0', 2.4);
   light.position.set(sun[0] * 50, sun[1] * 50, sun[2] * 50);
   scene.add(light, new HemisphereLight('#9fb0cc', '#2a2a33', 1.1));
   const cold = level.zones.filter(z => z.drain).map(z => ({ x: z.center.x, z: z.center.z, r: z.radius }));
-  scene.add(terrainMesh(hf, sun, octaves, cold), starfield(1800), scatterRocks(level, hf, scatter));
+  scene.add(terrainMesh(level,hf,sun,octaves,cold,skin),skyBand(skin));
+  if (level.pressurizedBay) scene.add(buildStationHabitat(level.pressurizedBay));
+  if(level.biome!=='station')scene.add(scatterRocks(level,hf,scatter,skin));
+  if(level.biome!=='earth'&&level.biome!=='mars')scene.add(starfield(1800,skin));
 
   const glow = new Sprite(new SpriteMaterial({ map: glowTexture('#fff1cf'), blending: AdditiveBlending, depthWrite: false, fog: false }));
   glow.position.set(sun[0] * 400, sun[1] * 400, sun[2] * 400);
   glow.scale.setScalar(110);
-  const earth = new Mesh(new SphereGeometry(16, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
-  earth.position.set(-140, 150, -330);
-  earth.rotation.set(0.3, 1.2, 0.1);
-  scene.add(glow, earth, skyBand());
+  scene.add(glow);
+  const orbit = level.biome === 'station' && level.id === 'orbit';
+  if (level.id === 'moon' || orbit) {
+    const earth = new Mesh(new SphereGeometry(orbit ? 52 : 16, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
+    if (orbit) earth.position.set(-49, 25, -240);
+    else earth.position.set(-140, 104, -330);
+    earth.rotation.set(.3,1.2,.1);
+    scene.add(earth);
+  }
 
   const blinkers: Mesh[] = [];
+  const hardware=new Map<Prop,Group>();
   for (const p of level.props) {
     const g = buildProp(p, heightAt(hf, p.solid.x, p.solid.z));
     g.traverse(o => { if (o.userData.blink) { blinkers.push(o as Mesh); } });
     scene.add(g);
+    hardware.set(p,g);
   }
+  const outlinePoints:Vector3[]=[];
+  const boundary=level.comms.radius+1;
+  for(let i=0;i<72;i++){
+    if(i%3===2)continue;
+    for(const end of [i,i+1]){
+      const a=end*Math.PI/36, x=level.comms.center.x+Math.sin(a)*boundary,z=level.comms.center.z+Math.cos(a)*boundary;
+      outlinePoints.push(new Vector3(x,heightAt(hf,x,z)+.15,z));
+    }
+  }
+  if(level.mission.startsWith('campaign-'))scene.add(new LineSegments(new BufferGeometry().setFromPoints(outlinePoints),
+    new LineBasicMaterial({color:'#ffb06d',transparent:true,opacity:.75})));
+  if(level.tether){
+    const lines:Vector3[]=[];
+    level.tether.anchors.forEach((a,i)=>level.tether!.anchors.slice(i+1).forEach(b=>{
+      const d=Math.hypot(a.x-b.x,a.z-b.z);
+      if(d>2*level.tether!.length-2)return;
+      // Lay the guide line on the surface so it stays visible on both sides of berms.
+      for(let j=0;j<12;j++)for(const k of [j,j+1]){
+        const x=a.x+(b.x-a.x)*k/12,z=a.z+(b.z-a.z)*k/12;
+        lines.push(new Vector3(x,heightAt(hf,x,z)+.18,z));
+      }
+    }));
+    scene.add(new LineSegments(new BufferGeometry().setFromPoints(lines),
+      new LineBasicMaterial({color:level.tether.accent??'#ba9d6a',transparent:true,opacity:.72})));
+  }
+  const tether=level.tether?new Line(new BufferGeometry().setFromPoints([new Vector3(),new Vector3()]),
+    new LineBasicMaterial({color:level.tether.accent??'#ffca86'})):null;
+  if(tether){tether.frustumCulled=false;scene.add(tether);}
 
   const mast = level.props.find(p => p.kind === 'mast')?.solid;
   const beacon = new Mesh(new SphereGeometry(0.4, 12, 8), new MeshBasicMaterial({ color: palette.warn, fog: false }));
@@ -339,8 +410,9 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(beacon);
 
   const points = new Map<string, PointView>();
-  const beamGeo = new CylinderGeometry(0.18, 0.18, 60, 6, 1, true);
-  beamGeo.translate(0, 30, 0);
+  const beamHeight = level.pressurizedBay ? level.pressurizedBay.ceiling - .6 : 60;
+  const beamGeo = new CylinderGeometry(0.18, 0.18, beamHeight, 6, 1, true);
+  beamGeo.translate(0, beamHeight / 2, 0);
   for (const p of level.points) {
     const y = heightAt(hf, p.position.x, p.position.z);
     const beam = new Mesh(beamGeo, new MeshBasicMaterial({ color: palette.accent, transparent: true, opacity: 0.22, blending: AdditiveBlending, depthWrite: false, fog: false }));
@@ -365,7 +437,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
 
   const astronaut = buildAstronaut();
   const player = astronaut.group;
-  const lumaModel = buildLuma();
+  const lumaModel = buildLuma(chapter);
   const luma = lumaModel.group;
   const shadow = new Mesh(new CircleGeometry(0.5, 20), new MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.45, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2;
@@ -375,14 +447,19 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, dust, footprints, ambience, blinkers, sun,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, dust, footprints, ambience, blinkers, sun, hardware, tether,
     dispose() {
       const seen = new Set<unknown>();
       scene.traverse(o => {
         const m = o as Mesh;
         if (m.geometry && !seen.has(m.geometry)) { seen.add(m.geometry); m.geometry.dispose(); }
         const mat = m.material as Material | Material[] | undefined;
-        for (const x of Array.isArray(mat) ? mat : mat ? [mat] : []) if (!seen.has(x)) { seen.add(x); x.dispose(); }
+        for (const x of Array.isArray(mat) ? mat : mat ? [mat] : []) if (!seen.has(x)) {
+          seen.add(x);
+          const map=(x as MeshBasicMaterial).map;
+          if(map&&!seen.has(map)){seen.add(map);map.dispose();}
+          x.dispose();
+        }
       });
     },
   };

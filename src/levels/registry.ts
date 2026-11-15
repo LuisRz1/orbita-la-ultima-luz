@@ -10,6 +10,13 @@ export const levels: Record<string, () => Promise<LevelModule>> = {
     const [{ moonLevel }, { moonDialogue }] = await Promise.all([import('./moon/level.ts'), import('./moon/dialogue.ts')]);
     return { level: moonLevel, dialogue: moonDialogue };
   },
+  ground: async () => ({level:(await import('./orbit/level.ts')).groundLevel,dialogue:{}}),
+  station: async () => {const m=await import('./orbit/level.ts');return {level:m.stationLevel,dialogue:m.stationDialogue};},
+  eva: async () => ({level:(await import('./orbit/level.ts')).evaLevel('sheltered'),dialogue:{}}),
+  mars: async () => {const m=await import('./mars/level.ts');return {level:m.marsLevel('beacon'),dialogue:m.marsDialogue};},
+  bennu: async () => {const m=await import('./bennu/level.ts');return {level:m.bennuLevel,dialogue:m.bennuDialogue};},
+  service: async () => {const m=await import('./bennu/level.ts');return {level:m.serviceLevel,dialogue:m.serviceDialogue};},
+  earth: async () => {const m=await import('./orbit/level.ts');return {level:m.earthLevel,dialogue:m.earthDialogue};},
 };
 
 export const defaultLevel = 'moon';

@@ -6,13 +6,13 @@ import type { SuitDesign } from '../core/suit.ts';
 import type { Tier } from '../engine/quality.ts';
 
 export type Objective = { id: string; title: Localized; required: boolean; done: boolean; action: string; power: number };
-export type Prompt = { verb: Localized; title: Localized; blocked: Localized[]; cost: number; missing: Localized | null };
+export type Prompt = { verb: Localized; title: Localized; hint:Localized; blocked: Localized[]; cost: number; missing: Localized | null };
 export type Notice = { text: Localized; at: number; tone: 'luma' | 'system' | 'warn' };
 export type CompassMark = { id: string; label: Localized | null; bearing: number; dist: number; kind: 'goal' | 'home' };
 export type Phase = 'loading' | 'menu' | 'ship' | 'eva' | 'report';
 export type StationId = 'battery' | 'thruster' | 'antenna' | 'instruments' | 'locker' | 'airlock';
 export type ShipState = { draft: SuitDesign; done: StationId[]; next: StationId | null; open: StationId | null; near: StationId | null; guided: boolean };
-export type DialogueLine = { speaker: 'LUMA' | 'CONTROL'; text: Localized };
+export type DialogueLine = { speaker: 'LUMA' | 'CONTROL' | 'AURORA'; text: Localized };
 
 /** State the engine publishes for the DOM interface. Continuous values are refreshed ten times per second. */
 export type HudState = {
@@ -20,7 +20,7 @@ export type HudState = {
   phase: Phase;
   tier: Tier;
   frameMs: number; renderScale: number; drawCalls: number; triangles: number;
-  levelTitle: Localized | null; briefing: Localized | null;
+  levelTitle: Localized | null; levelSubtitle:Localized|null; briefing: Localized | null;
   zone: Localized | null; zoneAt: number;
   objectives: Objective[];
   echoes: { found: number; total: number };
@@ -31,6 +31,7 @@ export type HudState = {
   locked: boolean;
   player: { x: number; y: number; z: number; speed: number; grounded: boolean };
   realGravity: number;
+  tethered: boolean;
   /** Mission elapsed time of the current sortie. */
   elapsed: number;
   /** Engine clock, for timing transient UI such as zone titles and notices. */
@@ -44,6 +45,7 @@ export type HudState = {
   /** Camera heading and marks for the compass, as angles in radians (0 = south, π/2 = east). */
   compass: { heading: number; marks: CompassMark[] };
   dialogue: DialogueLine | null;
+  canTalk: boolean;
   toast: { id: string; at: number } | null;
   achievements: string[];
   hasProgress: boolean;
@@ -52,10 +54,10 @@ export type HudState = {
 
 export const hud = createStore<HudState>(() => ({
   ready: false, phase: 'loading', tier: 'medium', frameMs: 0, renderScale: 1, drawCalls: 0, triangles: 0,
-  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, prompt: null, notice: null,
+  levelTitle: null, levelSubtitle:null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
-  design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
-  paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null,
+  design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,tethered:false,
+  paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null,canTalk:false, toast: null, achievements: [], hasProgress: false, ship: null,
 }));
 
 /** Commands the interface sends to the engine. The running game replaces these no-ops. */
@@ -71,6 +73,7 @@ export const commands = {
   resume: () => {},
   abandon: () => {},
   advance: () => {},
+  talk: () => {},
   pick: (_draft: SuitDesign) => {},
   confirmStation: () => {},
   closeStation: () => {},

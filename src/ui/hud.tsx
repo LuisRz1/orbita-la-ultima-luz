@@ -13,12 +13,12 @@ const clock = (s: number) => {
 
 export function MissionPanel() {
   const { t } = useT();
-  const { levelTitle, objectives, echoes, elapsed, compass } = useStore(hud);
+  const { levelTitle, levelSubtitle, objectives, echoes, elapsed, compass } = useStore(hud);
   if (!levelTitle) return null;
   const required = objectives.filter(o => o.required);
   const goal = compass.marks.find(m => m.kind === 'goal');
   return <section className="panel mission" aria-label={t('eva')}>
-    <span className="panel-title">{t('eva')} · {clock(elapsed)}</span>
+    <span className="panel-title">{levelSubtitle?t(levelSubtitle):t('eva')} · {clock(elapsed)}</span>
     <h1>{t(levelTitle)}</h1>
     <div className="next" data-next>
       <span>{t('nextGoal')}</span>
@@ -57,7 +57,7 @@ export function Compass() {
 
 export function Telemetry() {
   const { t } = useT();
-  const { signal, player, realGravity, energy, capacity, draining } = useStore(hud);
+  const { signal, player, realGravity, energy, capacity, draining, tethered } = useStore(hud);
   const bars = Math.round(signal * 10);
   const pct = capacity ? energy / capacity * 100 : 0;
   const low = energy - reserve < 15;
@@ -82,7 +82,8 @@ export function Telemetry() {
       </div>
       <div className="row"><span>{t('reserve')}</span><b>{reserve} u.</b></div>
     </section>
-    <p className="gravity-note">g {realGravity.toFixed(2)} m/s² · {t('gravityNote')}</p>
+    <p className="gravity-note">{tethered?t({es:'ANCLAJE ACTIVO',en:'TETHER ACTIVE'})+' · ':''}
+      g {realGravity>0&&realGravity<.01?realGravity.toExponential(1):realGravity.toFixed(2)} m/s² · {t('gravityNote')}</p>
   </>;
 }
 
@@ -95,7 +96,7 @@ export function ZoneTitle() {
 
 export function Prompt() {
   const { t } = useT();
-  const { prompt, notice, now, locked, dialogue, elapsed } = useStore(hud);
+  const { prompt, notice, now, locked, dialogue, elapsed,tethered,canTalk } = useStore(hud);
   const showNotice = notice && now - notice.at < 6 && !dialogue;
   return <div className="center-bottom">
     {showNotice && <p className={'notice ' + notice.tone} key={notice.at}>
@@ -105,8 +106,18 @@ export function Prompt() {
       <kbd>E</kbd> {t(prompt.verb)} · <b>{t(prompt.title)}</b>{prompt.cost > 0 && <em> · {prompt.cost} u.</em>}
       {prompt.blocked.length > 0 && <small>{t('requires')}: {prompt.blocked.map(b => t(b)).join(', ')}</small>}
       {prompt.missing && <small>{t('suitLacks')} {t(prompt.missing).toLowerCase()}</small>}
+      {!prompt.blocked.length&&!prompt.missing&&t(prompt.hint)!==t(prompt.title)&&<small>{t(prompt.hint)}</small>}
     </p>}
-    {!dialogue && (elapsed < 25 || !locked) && <p className="hint">{t('hint')}</p>}
+    {!dialogue&&(elapsed<25||!locked)&&<p className="hint">{t(tethered?{
+      es:'WASD mover por la línea · Ratón cámara · C centrar · E usar · R escanear',
+      en:'WASD move on tether · Mouse camera · C centre · E use · R scan',
+    }:{
+      es:'WASD mover · Clic para mirar o arrastra con botón derecho · C centrar · Espacio salto · Shift impulso · E usar',
+      en:'WASD move · Click to look or right-drag · C centre · Space jump · Shift dash · E use',
+    })}</p>}
+    {canTalk&&<button type="button" className="luma-talk" onClick={()=>commands.talk()}><kbd>L</kbd> {t({
+      es:'Hablar con LUMA',en:'Talk to LUMA',
+    })}</button>}
   </div>;
 }
 

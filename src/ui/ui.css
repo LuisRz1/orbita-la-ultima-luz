@@ -25,6 +25,21 @@
 .orbita .game-host { position: absolute; inset: 0; }
 .orbita .game-canvas { display: block; width: 100%; height: 100%; }
 .orbita .loading { position: absolute; inset: auto 0 45% 0; text-align: center; color: var(--dim); letter-spacing: 0.3em; }
+.orbita .viewport-fullscreen {
+  position:absolute;left:14px;bottom:14px;z-index:12;
+  min-width:53px;min-height:33px;border:1px solid var(--frame);background:#0c131d;
+  color:var(--text);font:inherit;cursor:pointer;
+}
+.orbita .viewport-fullscreen:hover,.orbita .viewport-fullscreen:focus-visible {border-color:var(--accent);color:var(--accent);}
+.orbita .viewport-fullscreen span {font-size:17px;vertical-align:middle;}
+.orbita .ship-history {right:14px;bottom:18px;max-height:45vh;max-width:min(370px,90vw);overflow:auto;}
+.orbita .ship-history summary {cursor:pointer;}
+.orbita .ship-history .history {padding-left:25px;}
+.orbita .luma-talk {
+  pointer-events:auto;padding:5px 9px;background:#101922;border:1px solid var(--line);color:var(--accent);font:inherit;
+}
+.orbita .luma-talk:hover,.orbita .luma-talk:focus-visible {border-color:var(--accent);}
+.orbita .fullscreen-error {position:absolute;bottom:10px;left:76px;z-index:12;background:#0c131d;color:var(--warn);padding:5px;}
 
 .orbita .panel {
   position: absolute;
@@ -243,8 +258,9 @@
 .orbita .dialogue {
   position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); width: min(680px, 92vw);
   padding: 22px 26px 18px; border: 2px solid #10151e; background: #ece8de; color: #10151e;
-  box-shadow: 6px 6px 0 rgb(0 0 0 / 35%); animation: notice-in 0.2s ease-out;
+  box-shadow: 6px 6px 0 rgb(0 0 0 / 35%); animation: dialogue-in 0.2s ease-out;
 }
+@keyframes dialogue-in { from { opacity: 0; transform: translate(-50%, 4px); } to { opacity: 1; transform: translateX(-50%); } }
 .orbita .dialogue p { margin: 0 0 6px; font-size: 15px; line-height: 1.6; }
 .orbita .speaker { position: absolute; top: -16px; left: 18px; padding: 4px 14px; border: 2px solid #10151e; background: var(--warn); color: #10151e; font-weight: 700; letter-spacing: 0.2em; }
 .orbita .speaker.control { background: var(--accent); }

@@ -130,7 +130,7 @@ export function toonMapped(map: Texture, color: ColorRepresentation = '#ffffff')
  * no visible tiling) and rock strata on steep faces, fading with distance.
  * `octaves` trades detail for cost on low-end GPUs.
  */
-export function terrainMaterial(octaves: number) {
+export function terrainMaterial(octaves: number,surface:'earth'|'station'|'regolith'='regolith') {
   const m = new MeshBasicMaterial({ vertexColors: true, toneMapped: false });
   m.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader
@@ -175,17 +175,41 @@ float pits(vec2 p) {
   float grain = vnoise(xz * 3.1) - 0.5;
   float albedo = 0.9 + (broad - 0.5) * 0.22 + grain * 0.08 * near;
   // Small pits: a darker bowl with a lit rim, only close to the camera.
-  float c = pits(xz * 0.32 + broad * 1.5);
-  albedo *= 1.0 - near * (smoothstep(1.0, 0.45, c) * 0.18 - smoothstep(1.25, 1.0, c) * smoothstep(0.85, 1.0, c) * 0.12);
+  ${surface==='regolith'?`
+    float c = pits(xz * 0.32 + broad * 1.5);
+    albedo *= 1.0 - near * (smoothstep(1.0, 0.45, c) * 0.18 - smoothstep(1.25, 1.0, c) * smoothstep(0.85, 1.0, c) * 0.12);
+  ` : ''}
   // Steep faces show layered rock.
   float steep = smoothstep(0.35, 0.6, 1.0 - vN.y);
   float strata = 0.93 + 0.07 * sin(vWorld.y * 3.2 + broad * 6.0 + vnoise(xz * 0.4) * 3.0);
   float mid = 1.0 - smoothstep(60.0, 150.0, vDist);
   albedo *= mix(1.0, strata * 0.92, steep * (0.35 + 0.65 * mid));
   diffuseColor.rgb *= albedo;
+  ${surface==='earth'?`
+    float yard = 1.0 - smoothstep(11.5,12.0,abs(xz.x-4.0));
+    yard *= 1.0-smoothstep(7.3,8.0,abs(xz.y-45.0));
+    float path = 1.0-smoothstep(2.0,2.2,abs(xz.x-5.0));
+    path *= step(28.0,xz.y)*step(xz.y,61.0);
+    float runway = (1.0-smoothstep(6.9,7.1,abs(xz.x-33.0)))*step(-70.0,xz.y)*step(xz.y,18.0);
+    float service = (1.0-smoothstep(2.8,3.0,abs(xz.y-19.0)))*step(-59.0,xz.x)*step(xz.x,49.0);
+    float lane = max(max(path,runway),max(service,yard));
+    diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.13,0.17,0.19) * (1.0+grain*0.16),lane);
+    float guide = path*(1.0-smoothstep(0.08,0.13,abs(xz.x-5.0)))*step(mod(xz.y,3.2),2.45);
+    float centerline = runway*(1.0-smoothstep(0.07,0.13,abs(xz.x-33.0)))*step(mod(xz.y,5.0),2.4);
+    float border = runway*(1.0-smoothstep(0.06,0.11,abs(abs(xz.x-33.0)-6.55)));
+    diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.78,0.58,0.26),guide);
+    diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.58,0.72,0.71),max(centerline,border));
+  `:surface==='station'?`
+    vec2 panel = abs(fract(xz / vec2(4.5,3.4)+vec2(0.5))-0.5);
+    float seam = smoothstep(0.468,0.491,max(panel.x,panel.y));
+    diffuseColor.rgb *= (1.0-seam*0.38)*(0.82+0.22*h2(floor(xz/vec2(4.5,3.4))));
+    float aisle = min(abs(xz.x-4.0),abs(xz.y-28.0));
+    float stripes = 1.0-smoothstep(0.08,0.14,abs(aisle-2.5));
+    diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.37,0.53,0.56),stripes*.78);
+  `:''}
 }`);
   };
-  m.customProgramCacheKey = () => 'terrain' + octaves;
+  m.customProgramCacheKey = () => 'terrain' + octaves + surface;
   return m;
 }
 

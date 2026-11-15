@@ -10,7 +10,9 @@ tags: [orbita, producto]
 | Tema | Decisión |
 | --- | --- |
 | Formato | Juego directo en navegador. |
-| Estética | 3D en tercera persona con cel-shading, contornos y luz horneada; interfaz densa de tipo terminal. Sustituye al pixel art 2.5D isométrico desde el 14 de noviembre ([ADR 006](../03-Arquitectura/ADR/ADR-006.md)). |
+| Estética | Tercera persona en el motor three.js, cuerpo completo, cel-shading y HUD terminal a pantalla completa ([ADR 006](../03-Arquitectura/ADR/ADR-006.md)). |
+| Exploración | Mundo abierto por regiones amplias con límites visibles, sectores conectados y rutas alternativas. `WASD` y ratón en los cuatro capítulos. |
+| Idioma y voz | Texto, diálogos y subtítulos ES/EN. El propietario genera la voz de LUMA con su modelo local e incorpora los clips por idioma. |
 | Ciencia | Futuro cercano plausible con Sistema Solar real. |
 | Duración | Objetivo de campaña completa de 12–20 horas. |
 | Fecha del evento | 14–15 de noviembre de 2026. |

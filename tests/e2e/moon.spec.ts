@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { prepareShip } from './helpers/ship.ts';
 
 type Api = Record<string, (...args: unknown[]) => unknown>;
 const call = (page: Page, fn: string, ...args: unknown[]) =>
@@ -13,7 +14,7 @@ async function open(page: Page, design: unknown = 'science') {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('/?debug&quality=low');
+  await page.goto('/?level=moon&debug&quality=low');
   await page.waitForFunction(() => typeof window.__orbita?.teleport === 'function', null, { timeout: 30_000 });
   await call(page, 'pause', true);
   await call(page, 'start', design);
@@ -94,9 +95,9 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('/?debug&quality=low');
+  await page.goto('/?level=moon&debug&quality=low');
   await page.locator('[data-menu="new"]').click({ timeout: 30_000 });
-  await expect(page.getByRole('dialog', { name: 'Diseño de traje' })).toBeVisible();
+  await expect(page.locator('.ship-screen')).toBeVisible();
   await call(page, 'pause', true);
   const level = await call(page, 'level') as { points: { id: string; x: number; z: number }[] };
   const visit = async (id: string) => {
@@ -109,10 +110,7 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   };
 
   // First attempt: light proposal without the drill.
-  await page.locator('[data-proposal="light"]').click();
-  await page.locator('[data-instrument="drill"]').uncheck();
-  await expect(page.locator('.checks li.bad')).toContainText('Caché de Aurora');
-  await page.locator('[data-start]').click();
+  await prepareShip(page,{first:true,drill:false});
   await settle(page);
   for (const id of ['sample', 'relay', 'archive']) await visit(id);
   expect((await call(page, 'state') as { completed: string[] }).completed).toEqual(['sample', 'relay']);
@@ -129,8 +127,7 @@ test('design, fail, read the report, redesign and complete: the full mission loo
 
   // Second attempt: redesign with the science proposal and complete the mission.
   await page.locator('[data-redesign]').click();
-  await page.locator('[data-proposal="science"]').click();
-  await page.locator('[data-start]').click();
+  await prepareShip(page,{first:false,drill:true});
   await settle(page);
   for (const id of ['sample', 'archive', 'relay', 'terminal']) await visit(id);
   await call(page, 'step', 120);
@@ -141,6 +138,7 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   // Attempts survive a reload.
   await page.reload();
   await page.locator('[data-menu="continue"]').click({ timeout: 30_000 });
+  await page.locator('.ship-history summary').click();
   await expect(page.locator('.history')).toContainText('completa', { timeout: 30_000 });
   await expect(page.locator('.history')).toContainText('repliegue');
   expect(errors).toEqual([]);

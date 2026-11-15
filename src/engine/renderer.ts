@@ -15,13 +15,6 @@ export type Viewport = {
   dispose(): void;
 };
 
-export function webglAvailable() {
-  try {
-    const canvas = document.createElement('canvas');
-    return !!(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
-  } catch { return false; }
-}
-
 /** Creates the renderer inside `host` and keeps its buffer within the tier's pixel budget. */
 export function createViewport(host: HTMLElement, tier: Tier): Viewport {
   const spec = tiers[tier];
@@ -40,6 +33,7 @@ export function createViewport(host: HTMLElement, tier: Tier): Viewport {
     dispose() {
       observer.disconnect();
       renderer.dispose();
+      renderer.forceContextLoss();
       renderer.domElement.remove();
     },
   };

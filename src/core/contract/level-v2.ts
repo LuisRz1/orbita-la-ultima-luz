@@ -10,13 +10,22 @@ export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: numbe
 /** `drain`: extra energy per second while inside (cold, dust). */
 export type Zone = { id: string; title: Localized; center: Vec2; radius: number; drain?: number };
 export type Collectible = { id: string; position: Vec2; y?: number };
-export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step';
-export type Prop = { kind: PropKind; solid: Solid };
+export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'crew' | 'gate'
+  | 'recovery-capsule' | 'animal-berth' | 'solar-rack';
+export type Prop = { kind: PropKind; solid: Solid; hideAfter?: string };
+export type PressurizedBay = { min: Vec2; max: Vec2; ceiling: number };
 
 export type LevelV2 = {
   kitVersion: 2; id: 'orbit' | 'moon' | 'mars' | 'bennu'; mission: string;
   title: Localized; subtitle: Localized; briefing: Localized; arrival: Localized; outcome: Localized;
   terrain: { size: number; res: number; height(x: number, z: number): number };
+  biome?: 'earth' | 'station' | 'mars' | 'bennu';
+  /** Inner faces of a walkable station bay, in world metres. */
+  pressurizedBay?: PressurizedBay;
+  /** Where a companion waits before meeting and bonding with the player. */
+  companionBerth?: {hatch:Vec2;rest:Vec2;secured:Vec2};
+  /** Line lengths in local metres. These are secured traversal sites, including the tangent patch on Bennu. */
+  tether?: { anchors: Vec2[]; length: number; accent?: string };
   /** Real surface gravity, shown to the player next to the stylised value. */
   realGravity: number;
   sun: { azimuth: number; elevation: number };
@@ -25,6 +34,18 @@ export type LevelV2 = {
   comms: { center: Vec2; radius: number; falloff: number };
   zones: Zone[]; points: LevelPoint[]; props: Prop[]; collectibles: Collectible[]; exit: string;
 };
+
+export function bulkheadColliders({ min, max, ceiling }: PressurizedBay): Solid[] {
+  const midX = (min.x + max.x) / 2, midZ = (min.z + max.z) / 2;
+  const halfX = (max.x - min.x) / 2, halfZ = (max.z - min.z) / 2;
+  const thickness = .55;
+  return [
+    { kind: 'box', x: min.x - thickness, z: midZ, hx: thickness, hz: halfZ + thickness, top: ceiling },
+    { kind: 'box', x: max.x + thickness, z: midZ, hx: thickness, hz: halfZ + thickness, top: ceiling },
+    { kind: 'box', x: midX, z: min.z - thickness, hx: halfX + thickness, hz: thickness, top: ceiling },
+    { kind: 'box', x: midX, z: max.z + thickness, hx: halfX + thickness, hz: thickness, top: ceiling },
+  ];
+}
 
 /**
  * Checks a level against its heightfield. Every required point must be reachable on foot from the spawn
@@ -46,7 +67,10 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
   const exit = level.points.find(p => p.id === level.exit);
   if (!exit || exit.action !== 'upload' || !exit.required) problems.push('exit must be a required upload point');
 
-  const reach = walkable(hf, level.spawn, maxSlope);
+  const { tether, pressurizedBay: bay } = level;
+  const reach = walkable(hf, level.spawn, maxSlope, (x, z) =>
+    (!bay || x > bay.min.x && x < bay.max.x && z > bay.min.z && z < bay.max.z) &&
+    (!tether || tether.anchors.some(a => Math.hypot(a.x - x, a.z - z) <= tether.length)));
   const step = hf.size / (hf.res - 1);
   const cell = (v: Vec2) => Math.round((v.z + hf.size / 2) / step) * hf.res + Math.round((v.x + hf.size / 2) / step);
   for (const p of level.points) if (p.required && !reach[cell(p.position)]) problems.push('required point not reachable on foot: ' + p.id);
@@ -54,14 +78,17 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
 }
 
 /** Flood fill over cells a walker can cross without exceeding `maxSlope`. */
-export function walkable(hf: Heightfield, from: Vec2, maxSlope: number) {
+export function walkable(hf: Heightfield, from: Vec2, maxSlope: number, allowed:(x:number,z:number)=>boolean=()=>true) {
   const { res, size } = hf, step = size / (res - 1);
   const seen = new Uint8Array(res * res);
   const ok = new Uint8Array(res * res);
-  for (let j = 0; j < res; j++) for (let i = 0; i < res; i++)
-    ok[j * res + i] = slopeAt(hf, -size / 2 + i * step, -size / 2 + j * step) <= maxSlope ? 1 : 0;
+  for (let j = 0; j < res; j++) for (let i = 0; i < res; i++){
+    const x=-size/2+i*step,z=-size/2+j*step;
+    ok[j*res+i]=allowed(x,z)&&slopeAt(hf,x,z)<=maxSlope?1:0;
+  }
   const rise = Math.tan(maxSlope * Math.PI / 180) * step + 0.05;
   const start = Math.round((from.z + size / 2) / step) * res + Math.round((from.x + size / 2) / step);
+  if(!ok[start])return seen;
   const queue = [start]; seen[start] = 1;
   for (let k = 0; k < queue.length; k++) {
     const c = queue[k], i = c % res, j = (c - i) / res;

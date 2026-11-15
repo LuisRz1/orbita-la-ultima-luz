@@ -10,7 +10,7 @@ import { commands, hud } from '../store.ts';
 
 type Sub = 'settings' | 'achievements' | 'credits' | null;
 
-export function MainMenu() {
+export function MainMenu({onCampaign,onExit}:{onCampaign?:()=>void;onExit?:()=>void}) {
   const { t } = useT();
   const { hasProgress, realGravity } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
@@ -21,6 +21,9 @@ export function MainMenu() {
       <p className="game-subtitle">{t('subtitle')}</p>
       <p className="premise">{t('premise')}</p>
       <nav className="menu-list" aria-label="menu">
+        {onCampaign&&<button className="first" data-menu="campaign" data-sfx="ui-confirm" onClick={onCampaign}>
+          {t({es:'Jugar campaña de Aurora',en:'Play the Aurora campaign'})}</button>}
+        {onExit&&<button className="first" onClick={onExit}>{t({es:'Volver a la portada',en:'Return to title'})}</button>}
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => commands.newGame()}>{t('newExpedition')}</button>
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
@@ -43,7 +46,7 @@ export function MainMenu() {
   </div>;
 }
 
-export function PauseMenu() {
+export function PauseMenu({onExit}:{onExit?:()=>void}) {
   const { t } = useT();
   const [sub, setSub] = useState<Sub>(null);
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
@@ -54,7 +57,7 @@ export function PauseMenu() {
         <button className="first" data-pause="resume" onClick={() => commands.resume()}>{t('resume')}</button>
         <button onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-pause="abandon" onClick={() => commands.abandon()}>{t('abandon')}</button>
-        <button data-pause="menu" onClick={() => commands.toMenu()}>{t('mainMenu')}</button>
+        <button data-pause="menu" onClick={onExit??(()=>commands.toMenu())}>{t('mainMenu')}</button>
       </nav>
     </section>
   </div>;
@@ -64,7 +67,10 @@ function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void })
   const { t } = useT();
   return <div className="screen sub-screen">
     <section className="panel sub" role="dialog" aria-label={t(sub === 'settings' ? 'settings' : sub === 'achievements' ? 'achievements' : 'credits')}>
-      {sub === 'settings' && <Settings />}
+      {sub === 'settings' && <>
+        <span className="panel-title">{t('settings').toUpperCase()}</span>
+        <GameSettings />
+      </>}
       {sub === 'achievements' && <Achievements />}
       {sub === 'credits' && <Credits />}
       <button className="back" data-sfx="ui-close" data-back onClick={onBack}>← {t('back')}</button>
@@ -72,14 +78,25 @@ function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void })
   </div>;
 }
 
-function Settings() {
+const qualityLabels = {
+  auto: { es: 'Auto', en: 'Auto' },
+  low: { es: 'Baja', en: 'Low' },
+  medium: { es: 'Media', en: 'Medium' },
+  high: { es: 'Alta', en: 'High' },
+} as const;
+
+export function GameSettings({ beforePlay = false }: { beforePlay?: boolean }) {
   const { t } = useT();
   const p = useStore(prefs);
   const [initialQuality] = useState(p.quality);
   return <>
-    <span className="panel-title">{t('settings').toUpperCase()}</span>
     <div className="setting"><span>{t('language')}</span>
-      <div className="choice">{(['es', 'en'] as const).map(l => <button key={l} data-lang={l} className={p.lang === l ? 'on' : ''} onClick={() => prefs.setState({ lang: l })}>{l.toUpperCase()}</button>)}</div>
+      <div className="choice" role="group" aria-label={t('language')}>
+        {(['es', 'en'] as const).map(l => <button key={l} type="button" data-lang={l} aria-pressed={p.lang === l}
+          className={p.lang === l ? 'on' : ''} onClick={() => prefs.setState({ lang: l })}>
+          {l === 'es' ? 'Español' : 'English'}
+        </button>)}
+      </div>
     </div>
     <label className="setting"><span>{t('sensitivity')} · {p.sensitivity.toFixed(2)}</span>
       <input type="range" min={0.3} max={3} step={0.05} value={p.sensitivity} onChange={e => prefs.setState({ sensitivity: Number(e.target.value) })} />
@@ -88,14 +105,24 @@ function Settings() {
       <span>{t(k === 'master' ? 'volumeMaster' : k === 'music' ? 'volumeMusic' : 'volumeSfx')} · {Math.round(p[k] * 100)}%</span>
       <input type="range" min={0} max={1} step={0.05} value={p[k]} data-volume={k} onChange={e => prefs.setState({ [k]: Number(e.target.value) })} />
     </label>)}
-    <p className="setting-hint">{t('audioNote')}</p>
+    {!beforePlay && <p className="setting-hint">{t('audioNote')}</p>}
     <div className="setting"><span>{t('reduceMotion')}</span>
-      <div className="choice">{[true, false].map(v => <button key={String(v)} className={p.reduceMotion === v ? 'on' : ''} onClick={() => prefs.setState({ reduceMotion: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
+      <div className="choice" role="group" aria-label={t('reduceMotion')}>
+        {[true, false].map(value => <button key={String(value)} type="button" aria-pressed={p.reduceMotion === value}
+          className={p.reduceMotion === value ? 'on' : ''} onClick={() => prefs.setState({ reduceMotion: value })}>
+          {t(value ? 'on' : 'off')}
+        </button>)}
+      </div>
     </div>
     <div className="setting"><span>{t('quality')}</span>
-      <div className="choice">{(['auto', ...tierIds] as const).map(q => <button key={q} className={p.quality === q ? 'on' : ''} onClick={() => prefs.setState({ quality: q })}>{q === 'auto' ? t('auto') : q}</button>)}</div>
+      <div className="choice" role="group" aria-label={t('quality')}>
+        {(['auto', ...tierIds] as const).map(quality => <button key={quality} type="button" aria-pressed={p.quality === quality}
+          data-quality={quality} className={p.quality === quality ? 'on' : ''} onClick={() => prefs.setState({ quality })}>
+          {t(qualityLabels[quality])}
+        </button>)}
+      </div>
     </div>
-    {p.quality !== initialQuality && <p className="setting-note">{t('applyReload')} <button onClick={() => window.location.reload()}>{t('reloadNow')}</button></p>}
+    {!beforePlay && p.quality !== initialQuality && <p className="setting-note">{t('applyReload')} <button onClick={() => window.location.reload()}>{t('reloadNow')}</button></p>}
   </>;
 }
 

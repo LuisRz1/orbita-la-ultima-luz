@@ -44,3 +44,13 @@ Recargar en un hito, repetir una entrega y exportar/importar conserva el estado 
 Reanudar un crucero no vuelve a consumir suministros de un tramo ya resuelto. El marco de coordenadas se conserva al cambiar de modo. Cargar tras un cierre narrativo no revierte resultados ni repite escenas. La exploración posterior funciona con herramientas del jugador.
 
 Recargar con una pieza de AUR-E03 o AUR-E05 pendiente no revela sus conclusiones. Restaurar antes y después de embarcar conserva el mismo conjunto de supervivientes y sus reservas. La recepción de datos o muestras no marca por error a una persona como rescatada.
+
+## Ejecución 3D
+
+`orbita-campaign-3d` almacena la ranura `aurora` en IndexedDB. [El contrato de campaña](../../src/core/campaign.ts) valida cada evento en orden al cargar. De ahí se reconstruyen misiones, combustible, carga aprobada, evidencias, despedida y recepción. El manifiesto registra a cada persona por ID. La transacción rechaza un evento fuera de orden y conserva el avance de otra pestaña que hubiese guardado primero.
+
+Se guarda al confirmar una maniobra, archivar una salida, aprobar un plan o registrar un informe. Volver a abrir a mitad de una salida recupera el último informe archivado y conserva ecos, intentos y equipo en `orbita-3d`. El crucero se revierte al comienzo del tramo si se recarga antes de confirmarlo. Los guardados de la referencia lunar y de Phaser conservan sus bases.
+
+La fase `farewell` se archiva antes del vuelo de regreso. Las expediciones posteriores usan perfiles separados y los textos de Control. Exportar e importar una partida sigue pendiente.
+
+`/?campana&primera-luz` utiliza la ranura `primera-luz` y perfiles de salida con prefijo `first-light:`. Se detiene después del informe del nodo lunar. Los datos de `aurora` mantienen el progreso de toda la campaña. Los resultados del plan aceptan el indicador opcional `compared`; las partidas previas que carecen de ese dato siguen siendo compatibles. En C1 se comprueba el orden de las acciones de estación y EVA al archivar y al restaurar.

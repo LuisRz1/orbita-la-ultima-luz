@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Language,Localized } from '../../core/contract/grid-v1.ts';
 import {
   antennas, assessDesign, assessTransfer, batteries, defaultDesign, instrumentIds, instruments, launchers,
@@ -21,9 +21,9 @@ const groups=[
   {key:'orbit',label:{es:'Órbita de encuentro',en:'Rendezvous orbit'},options:orbits},
 ] as const;
 
-type PlannerProps = {state:OrbitState;lang:Language;onRead:()=>void;onCompare:()=>void;onLaunch:()=>void;onChange:(design:Design)=>void};
+type PlannerProps = {state:OrbitState;lang:Language;onRead:()=>void;onCompare:()=>void;onLaunch:()=>void;onChange:(design:Design)=>void;briefing?:ReactNode};
 
-export function PlanConsole({state,lang,onRead,onCompare,onLaunch,onChange}:PlannerProps) {
+export function PlanConsole({state,lang,onRead,onCompare,onLaunch,onChange,briefing}:PlannerProps) {
   const d=state.design;
   const stats=assessDesign(d);
   const loc=(es:string,en:string)=>lang==='es'?es:en;
@@ -31,6 +31,7 @@ export function PlanConsole({state,lang,onRead,onCompare,onLaunch,onChange}:Plan
     <div className="panel-head"><span><span className="dot"/> {loc('C1-M01 / PLANIFICACIÓN','C1-M01 / PLANNING')}</span><span>{loc('TIERRA','EARTH')}</span></div>
     <div className="journal orb-plan">
       <div className="orb-intro">
+        {briefing??<>
         <span className="mini">{loc('AVISO DE RECUPERACIÓN','RECOVERY NOTICE')}</span>
         <h2>{loc('Aurora vuelve a dar una pista','A new lead on Aurora')}</h2>
         <p>{loc(
@@ -39,6 +40,7 @@ export function PlanConsole({state,lang,onRead,onCompare,onLaunch,onChange}:Plan
         <p>{loc(
           'Expediente de comunicaciones: tu hermana formaba parte de la tripulación. La cápsula es una pista; su supervivencia aún no está confirmada.',
           'Communications file: your sister was part of the crew. The capsule is a lead; her survival is still unconfirmed.')}</p>
+        </>}
         {!state.briefingRead&&<button className="primary" onClick={onRead}>{loc('Registrar objetivo de búsqueda','Record the search objective')} ↗</button>}
       </div>
       {state.briefingRead&&<>

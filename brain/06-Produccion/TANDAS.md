@@ -23,8 +23,8 @@ Diseñas la salida en una terminal → eso define tu traje y lo que puedes hacer
 | 3 | Interfaz y LUMA | HUD terminal, menú, diálogos, LUMA, logros, ES/EN | Recorrido completo en ambos idiomas | Cerrada |
 | 4 | Look | Luz horneada, toon, contornos, cielo, props | 30 fps o más en Iris Xe a 720p | Cerrada; falta medir fps en Iris Xe |
 | 5 | Audio | ZzFX y efectos generados | Volumen en ajustes | Cerrada; audio procedural verificado con earshot |
-| 6 | Capítulo 1 en 3D | Estación y vuelo; se retira Phaser | Capítulo 1 hasta la llegada a la Luna | Pendiente |
-| 7 | Marte y Bennu | Mismo molde; Bennu con gravedad radial | Nivel nuevo solo con datos y horneado | Pendiente |
+| 6 | Capítulo 1 en 3D | Complejo, estación, cubierta EVA, planificación, vuelo y entrega a la Luna | Campaña de Primera luz hasta el nodo lunar | Implementado en la rama local. Phaser disponible como referencia |
+| 7 | Campaña y retorno | Luna, Marte, Bennu y recepción de Aurora. Bennu usa un parche local con líneas de vida | 24 principales, manifiesto, siete pruebas y epílogo | Implementado en la rama local. Quedan modelos finales y medición |
 | 8 | Entrega | Despliegue (Vercel, a cargo del equipo), README, fuentes, vídeo | URL abierta en otro equipo | Pendiente |
 
 Mínimo entregable: tandas 0 a 3, la luz horneada del terreno y la tanda 8. El 2D en `/?legacy` es la red de seguridad. Orden de recorte: tanda 7, audio generado, vuelo en 3D, cámara del menú, contornos.
@@ -46,6 +46,6 @@ mise exec node@24.22.1 -- corepack pnpm@12.4.1 install --frozen-lockfile
 mise exec node@24.22.1 -- corepack pnpm@12.4.1 dev
 ```
 
-- `/` abre el juego 3D; `/?debug` añade el panel de render y `window.__orbita`; `/?quality=low|medium|high` fuerza la calidad.
+- `/` abre el juego 3D. `/?campana` entra directamente en la campaña. `/?debug` añade el panel de render y `window.__orbita`; `/?quality=low|medium|high` fuerza la calidad.
 - `/?legacy` abre el kit 2D; `/?legacy&world=orbit` abre Primera luz.
 - Pruebas de navegador con un Chromium instalado: `ORBITA_BROWSER=/usr/bin/brave pnpm test:e2e`.

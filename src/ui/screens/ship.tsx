@@ -93,7 +93,7 @@ function StationPanel({ id, draft, objectives }: { id: StationId; draft: SuitDes
 
 export function ShipScreen() {
   const { t } = useT();
-  const { ship, objectives, notice, now } = useStore(hud);
+  const { ship, objectives, notice, now, attempts } = useStore(hud);
   if (!ship) return null;
   const showNotice = notice && now - notice.at < 7;
   return <div className="screen ship-screen">
@@ -104,5 +104,11 @@ export function ShipScreen() {
       {ship.near && <p className="prompt" data-prompt><kbd>E</kbd> {t('use')} · <b>{t(stationName[ship.near])}</b></p>}
       <p className="hint">{t('shipHint')}</p>
     </div>}
+    {!ship.open&&attempts.length>0&&<details className="panel ship-history">
+      <summary>{t({es:'Historial de salidas',en:'Sortie history'})} · {attempts.length}</summary>
+      <ol className="history">{[...attempts].reverse().map((attempt,i)=><li key={i}>
+        <b>{t(attempt.outcome)}</b> · {t(batteries[attempt.design.battery].name)} · {attempt.used.toFixed(1)} u. · {attempt.time} s
+      </li>)}</ol>
+    </details>}
   </div>;
 }

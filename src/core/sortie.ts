@@ -78,7 +78,7 @@ export type Report = {
 };
 
 /** Explains the sortie in terms of the design: every missed objective gets the decision that caused it. */
-export function buildReport(level: LevelV2, s: Sortie): Report {
+export function buildReport(level: LevelV2, s: Sortie,companion=true): Report {
   const outcome = s.outcome ?? 'recalled';
   const done = new Set(s.session.completed);
   const missed = level.points.filter(p => p.required && !done.has(p.id)).map(p => {
@@ -106,6 +106,8 @@ export function buildReport(level: LevelV2, s: Sortie): Report {
   if (outcome === 'recalled') insights.push(s.emergency
     ? t('La reserva se agotó antes de llegar al módulo: LUMA tuvo que arrastrarte de vuelta.', 'The reserve ran out before you reached the lander: LUMA had to drag you back.')
     : t('Volviste al módulo con la reserva de retorno: repliegue seguro.', 'You walked back to the lander on the return reserve: a safe recall.'));
+  if(outcome==='recalled'&&s.emergency&&!companion)insights[insights.length-1]=
+    t('Control activó el repliegue de emergencia cuando se agotó la reserva.','Mission Control activated emergency recall when the reserve ran out.');
   if (s.session.recalls > 0) insights.push(t(`${antennas[s.design.antenna].name.es} (${s.stats.commsRadius} m): perdiste el enlace ${s.session.recalls} vez/veces.`, `${antennas[s.design.antenna].name.en} (${s.stats.commsRadius} m): link lost ${s.session.recalls} time(s).`));
   const required = level.points.filter(p => p.required);
   return {

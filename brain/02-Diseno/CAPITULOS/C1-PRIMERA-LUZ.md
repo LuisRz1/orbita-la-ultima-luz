@@ -1,7 +1,7 @@
 ---
 id: capitulo-1
 type: capitulo
-status: recorrido-jugable-en-rama
+status: recorrido-3d-integrado
 updated: 2026-11-14
 tags: [orbita, campana, capitulo-1]
 ---
@@ -9,7 +9,7 @@ tags: [orbita, campana, capitulo-1]
 
 **Destino:** Tierra y órbita. **Duración principal estimada:** 1,5–2 horas. **LUMA:** blanco cálido y dorado.
 
-La [rama de C1](https://github.com/LuisRz1/orbita-la-ultima-luz/tree/feat/world-orbit) tiene las seis misiones jugables en versión compacta; la duración anterior sigue como objetivo de campaña. Ver [guía de integración y pruebas](../../08-Bitacora/HANDOFF-C1-PRIMERA-LUZ.md). Se mantienen las tres regiones y los assets del kit.
+Las seis principales se juegan en la campaña 3D. Abre `/?campana` para seguir la partida, o `/?campana&primera-luz` para jugar solo el capítulo con un guardado separado. La duración sigue como objetivo de producción. La [rama de C1](https://github.com/LuisRz1/orbita-la-ultima-luz/tree/feat/world-orbit) conserva la referencia anterior.
 
 ## Objetivo y regiones
 
@@ -17,7 +17,7 @@ Validar la cápsula de Aurora, conocer a LUMA y encontrar dónde recuperar los r
 
 C1-R01: complejo de preparación/lanzamiento. C1-R02: hábitat de estación. C1-R03: corredor orbital y exterior de estación. El interior de nave se reutiliza entre destinos.
 
-En esta implementación, el complejo se muestra con el mapa y el planificador; el hábitat y la EVA usan el movimiento isométrico del kit; el corredor usa pilotaje local. El interior de nave se representa durante el crucero como un panel de ruta y un mensaje escrito de LUMA, sin construir otro mapa.
+El complejo, el hábitat y la cubierta exterior se recorren en tercera persona. Las maniobras usan el visor 3D con simulación local en dos ejes. El crucero reutiliza el interior de la nave como vista de la cabina y permite asomarse al compartimento de LUMA.
 
 ## Misiones obligatorias
 
@@ -31,6 +31,14 @@ En esta implementación, el complejo se muestra con el mapa y el planificador; e
 | C1-M06 · Una ruta hacia la Luna | Planifica traslado al archivo, ejecuta salida, acelera crucero y pilota aproximación al nodo lunar. | Llegada y nave segura, AUR-E01 y AUR-E02 validadas e informe de búsqueda cerrado. | Capítulo 2: recuperar el tramo perdido en superficie. |
 
 Orden: M01 → M02 → M03 → M04 → M05 → M06. Fallar una maniobra admite reintento y asistencia.
+
+## Cómo se cuenta dentro del nivel
+
+1. El aviso preliminar de Control lleva a la terminal. Allí se comparan el acta `EST-27` y el expediente de comunicaciones de la hermana. El jugador registra su objetivo de búsqueda y elige una combinación de nave e instrumentos.
+2. La radio pasa de Control terrestre al canal de la estación. El acople y la transferencia de suministros abren el lector de recepción. Encontrar el parche y cotejar `AUR-RC-04` deja AUR-E01 recogida.
+3. LUMA se asoma por la escotilla. Se le prepara la manta, se verifica su cápsula de transporte y se calibra el traductor con un saludo de dos pulsos. El acta de traslado y la identificación de la cápsula validan AUR-E01. El parche tiene un recuerdo adicional en el diario.
+4. Se comparan la baranda sombreada con luz de trabajo cian y la baranda corta al Sol con visera. El tramo alterna luz y sombra de los paneles. Retirar el registrador deja AUR-E02 recogida. Su autenticación ocurre al regresar a la esclusa y revela `LUN-ARC-07`.
+5. LUMA descansa protegido durante el crucero. Al acoplar, el informe entrega el código al nodo, registra las dos pruebas, los datos y reservas, y plantea escoger un lugar para alunizar.
 
 ## Condición para pasar
 
@@ -46,4 +54,4 @@ LUMA muestra curiosidad y reconoce un objeto de Aurora asociado a la hermana. Se
 
 ## Validación
 
-El jugador explica una elección de carga, frena respecto a un objetivo, completa EVA y puede decir qué prueba aporta la cápsula y qué falta por saber. El recorrido funciona con diálogos escritos. Recoger el registrador sin validarlo no abre automáticamente la ruta siguiente.
+El jugador explica una elección de carga, frena respecto a un objetivo, completa EVA y puede decir qué prueba aporta la cápsula y qué falta por saber. El diario distingue recogida y validación. Los cuatro encargos y 15 hallazgos se pueden registrar en una partida aparte de la ruta principal. Los diálogos están en español e inglés y usan clips opcionales del propietario.

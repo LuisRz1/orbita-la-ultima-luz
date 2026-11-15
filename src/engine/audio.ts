@@ -339,9 +339,12 @@ export class GameAudio {
   }
 
   /** Plays a recorded line (LUMA's translated voice). Lines load on first use; music dips while it speaks. */
+  private voiceRequest=0;
   voice(url: string) {
     const ctx = this.ctx;
     if (!ctx) return;
+    this.stopVoice();
+    const ticket=this.voiceRequest;
     let buffer = this.voices.get(url);
     if (!buffer) {
       buffer = fetch(url).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
@@ -349,8 +352,7 @@ export class GameAudio {
       this.voices.set(url, buffer);
     }
     void buffer.then(buf => {
-      if (!buf || this.ctx !== ctx) return;
-      this.stopVoice();
+      if (!buf || this.ctx !== ctx || ticket!==this.voiceRequest) return;
       const source = ctx.createBufferSource();
       source.buffer = buf;
       source.connect(this.voiceGain);
@@ -362,6 +364,7 @@ export class GameAudio {
   }
 
   stopVoice() {
+    this.voiceRequest++;
     if (!this.speaking || !this.ctx) return;
     try { this.speaking.stop(); } catch { /* already stopped */ }
     this.speaking = null;

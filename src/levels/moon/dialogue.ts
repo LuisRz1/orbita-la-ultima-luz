@@ -2,7 +2,7 @@
 // Rules from the main story: no line may name later destinations or evidence; the demo recovers only part of the trail.
 import type { Localized } from '../../core/contract/grid-v1.ts';
 
-export type Speaker = 'LUMA' | 'CONTROL';
+export type Speaker = 'LUMA' | 'CONTROL' | 'AURORA';
 export type Line = { speaker: Speaker; text: Localized };
 const l = (speaker: Speaker, es: string, en: string): Line => ({ speaker, text: { es, en } });
 

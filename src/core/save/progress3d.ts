@@ -39,6 +39,6 @@ let tail = Promise.resolve();
 /** Writes are serialised so a fast redesign cannot overwrite a newer save with an older one. */
 export function writeProgress(p: Progress) {
   const data = progressSchema.parse(p);
-  tail = tail.then(() => open().progress.put({ id: data.level, data })).then(() => undefined);
+  tail = tail.catch(()=>{}).then(() => open().progress.put({ id: data.level, data })).then(() => undefined);
   return tail;
 }
