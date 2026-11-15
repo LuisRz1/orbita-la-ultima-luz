@@ -46,7 +46,7 @@ const terracota: Biome = {
  * space above and Earth filling the sky below the decks. No air, no rocks, no prints on metal.
  */
 const quirofano: Biome = {
-  lit: '#eef2f8', mid: '#b9c6dc', shadow: '#6f83a8', deep: '#3a4766', ink: '#141b2e',
+  lit: '#d3dbe8', mid: '#a4b2c9', shadow: '#6f83a8', deep: '#3a4766', ink: '#141b2e',
   skyTop: '#02040b', skyHorizon: '#0b1636', fog: '#02040b', stars: '#eef3ff', milkyWay: '#4a5a8a',
   rockLit: '#c9d3e6', rockDark: '#7d8fb3', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
   cyan: '#7fe3e0', amber: '#ffaf68',

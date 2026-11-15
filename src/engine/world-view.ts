@@ -6,6 +6,7 @@ import {
   BackSide, Euler, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PlaneGeometry, Points, PointsMaterial, Quaternion, ShaderMaterial,
   RepeatWrapping, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material,
 } from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { LevelV2 } from '../core/contract/level-v2.ts';
 import { heightAt, normalAt, type Heightfield } from '../core/heightfield.ts';
 import { buildAstronaut, buildLuma, buildProp, colors, type Astronaut, type Luma } from './models.ts';
@@ -290,6 +291,40 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
   return { group, ambience };
 }
 
+/**
+ * Props never move, so every mesh sharing a material is baked into one geometry: hundreds of small parts (and their
+ * ink outlines) become a few dozen draw calls. Meshes flagged `blink` stay separate so their visibility can toggle.
+ */
+function mergeStatic(root: Group, keep: Mesh[]) {
+  root.updateMatrixWorld(true);
+  const buckets = new Map<string, { material: Material; geometries: BufferGeometry[] }>();
+  const out = new Group();
+  root.traverse(o => {
+    const mesh = o as Mesh;
+    if (!mesh.isMesh) return;
+    if (mesh.userData.blink) {
+      const copy = mesh.clone(false);
+      mesh.matrixWorld.decompose(copy.position, copy.quaternion, copy.scale);
+      out.add(copy); keep.push(copy);
+      return;
+    }
+    const material = mesh.material as Material;
+    let g = mesh.geometry.clone().applyMatrix4(mesh.matrixWorld);
+    if (g.index) g = g.toNonIndexed();
+    const attrs = Object.keys(g.attributes).sort().join(',');
+    const key = material.uuid + '|' + attrs;
+    let b = buckets.get(key);
+    if (!b) buckets.set(key, (b = { material, geometries: [] }));
+    b.geometries.push(g);
+  });
+  for (const { material, geometries } of buckets.values()) {
+    const merged = mergeGeometries(geometries);
+    geometries.forEach(g => g.dispose());
+    if (merged) out.add(new Mesh(merged, material));
+  }
+  return out;
+}
+
 /** Pooled dust puffs for landings and dashes. */
 function dustPool(gravity: number, air: number): { points: Points; dust: Dust } {
   const max = 96;
@@ -383,11 +418,9 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   }
 
   const blinkers: Mesh[] = [];
-  for (const p of level.props) {
-    const g = buildProp(p, heightAt(hf, p.solid.x, p.solid.z));
-    g.traverse(o => { if (o.userData.blink) { blinkers.push(o as Mesh); } });
-    scene.add(g);
-  }
+  const propsRoot = new Group();
+  for (const p of level.props) propsRoot.add(buildProp(p, heightAt(hf, p.solid.x, p.solid.z)));
+  scene.add(mergeStatic(propsRoot, blinkers));
 
   const mast = level.props.find(p => p.kind === 'mast')?.solid;
   const beacon = new Mesh(new SphereGeometry(0.4, 12, 8), new MeshBasicMaterial({ color: palette.warn, fog: false }));
