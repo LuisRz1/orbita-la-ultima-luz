@@ -811,7 +811,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     station: (id: StationId) => { const st = interior.stations.find(q => q.id === id)!; teleport(st.x, st.z); useStation(id); },
     advance: () => advance(),
     audio: () => ({ state: audio.ctx?.state ?? 'locked', mood: currentMood() }),
-    setEnergy: (value: number) => { if (value < sortie.energy) spend(sortie, 'move', sortie.energy - value); else sortie.energy = value; },
+    setEnergy: (value: number) => { if (value < sortie.energy) spend(sortie, 'move', sortie.energy - value); else sortie.energy = Math.min(value, sortie.stats.capacity); },
     level: () => ({ points: level.points.map(p => ({ id: p.id, ...p.position, required: p.required })),
       collectibles: level.collectibles.map(c => ({ id: c.id, ...c.position, y: c.y })), spawn: level.spawn, comms: level.comms }),
   });

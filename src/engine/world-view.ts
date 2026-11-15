@@ -1,7 +1,7 @@
 // Builds the three.js objects for a level. Terrain light (sun, cast shadows, cavities) is baked once into vertex
 // colours with three painted bands; characters and props use toon shading with ink outlines. No shadow maps.
 import {
-  AdditiveBlending, BufferAttribute, BufferGeometry, CircleGeometry, Color, CylinderGeometry, DirectionalLight,
+  AdditiveBlending, NormalBlending, BufferAttribute, BufferGeometry, CircleGeometry, Color, CylinderGeometry, DirectionalLight,
   DodecahedronGeometry, DynamicDrawUsage, Float32BufferAttribute, Fog, Group, HemisphereLight, InstancedMesh, Matrix4,
   BackSide, Euler, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PlaneGeometry, Points, PointsMaterial, Quaternion, ShaderMaterial,
   RepeatWrapping, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material,
@@ -262,7 +262,7 @@ function ambienceSystem(echoes: Map<string, Mesh>, density: number, cold: Circle
     attr.setUsage(DynamicDrawUsage);
     geo.setAttribute('position', attr);
     const pts = new Points(geo, new PointsMaterial({ color, size, transparent: true, opacity, depthWrite: false,
-      blending: additive ? AdditiveBlending : undefined }));
+      blending: additive ? AdditiveBlending : NormalBlending }));
     pts.frustumCulled = false;
     group.add(pts);
     return { pos, attr, count };
