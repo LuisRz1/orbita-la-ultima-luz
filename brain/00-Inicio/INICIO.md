@@ -11,6 +11,8 @@ Este vault reúne las decisiones y el punto de continuación del proyecto. Puede
 
 **Lee primero:** [Estado actual](ESTADO-ACTUAL.md), [decisiones](DECISIONES.md), [roadmap](../06-Produccion/ROADMAP.md) y [AGENTS](../../AGENTS.md).
 
+[Campaña 3D](../06-Produccion/CAMPANA-3D.md) reúne las entradas, cierres, controles, límites y traducciones de cada destino.
+
 ## Mapa
 
 | Área | Notas |

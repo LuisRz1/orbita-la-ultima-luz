@@ -6,15 +6,16 @@ import {
   AdditiveBlending, NormalBlending, BufferAttribute, BufferGeometry, CircleGeometry, Color, CylinderGeometry,
   DodecahedronGeometry, DynamicDrawUsage, Float32BufferAttribute, Fog, FogExp2, Group, InstancedMesh, Matrix4,
   BackSide, Euler, Mesh, MeshBasicMaterial, MeshLambertMaterial, OctahedronGeometry, PlaneGeometry, Points, PointsMaterial, Quaternion, ShaderMaterial,
-  RepeatWrapping, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material, type Object3D, type WebGLRenderer,
+  Line, LineBasicMaterial, LineSegments, RepeatWrapping, RingGeometry, Scene, SphereGeometry, Sprite, SpriteMaterial, Vector3, type Material, type Object3D, type WebGLRenderer,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import type { LevelV2 } from '../core/contract/level-v2.ts';
+import type { LevelV2, Prop } from '../core/contract/level-v2.ts';
 import { heightAt, type Heightfield } from '../core/heightfield.ts';
 import { buildGround } from './ground.ts';
 import { createLighting, type Lighting } from './lighting.ts';
 import { look } from './look.ts';
 import { buildAstronaut, buildCrewFigure, buildLuma, buildProp, colors, type Astronaut, type Luma } from './models.ts';
+import { buildStationHabitat } from './station-habitat.ts';
 import { tiers, type Tier } from './quality.ts';
 import { G, noiseTexture } from './shared.ts';
 import { biome, earthTexture, footprintTexture, glowColor, glowTexture, inked, marsMoonTexture, outlineMaterial, toon } from './style.ts';
@@ -33,6 +34,7 @@ export type Dust = { burst(x: number, y: number, z: number, count: number, sprea
 export type WorldView = {
   scene: Scene; player: Group; astronaut: Astronaut; luma: Group; lumaModel: Luma; shadow: Mesh; beacon: Mesh;
   points: Map<string, PointView>; echoes: Map<string, Mesh>;
+  hardware: Map<Prop, Group>; anchorLine: Line | null;
   /** Atlas rocks (mint). `setScanned` dims one once it is in the atlas. */
   specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void;
   /** Side-mission beacons: a post with a lamp that lights up once repaired. */
@@ -388,6 +390,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   const lighting = createLighting(scene, sun, { tier, renderer });
   const ground = buildGround(level, hf, sun, { tier, scatter, lighting, renderer });
   scene.add(ground.group);
+  if (level.pressurizedBay) scene.add(buildStationHabitat(level.pressurizedBay));
   const cold = level.zones.filter(z => z.drain || z.surge).map(z => ({ x: z.center.x, z: z.center.z, r: z.radius, hazard: z.hazard }));
   if (biome.starCount) scene.add(starfield(biome.starCount));
 
@@ -401,7 +404,12 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   if (painted) { painted.visible = false; scene.add(painted); }
   if (real) band.visible = false;
   scene.add(glow, band);
-  if (biome.sky === 'deep') {
+  if (level.pressurizedBay || level.anchorCourse && level.id === 'orbit') {
+    const earth = new Mesh(new SphereGeometry(52, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));
+    earth.position.set(-49, 25, -240);
+    earth.rotation.set(.3, 1.2, .1);
+    scene.add(earth);
+  } else if (biome.sky === 'deep') {
     // Deep space (Bennu): Earth is only a faint blue point, far from the Sun.
     const dot = new Sprite(new SpriteMaterial({ map: glowTexture('#9fc4ff'), blending: AdditiveBlending, depthWrite: false, fog: false }));
     dot.position.set(-160, 120, -330);
@@ -423,7 +431,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
     const limb = new Mesh(new SphereGeometry(342, 64, 40), new MeshBasicMaterial({ color: '#5fa8ff', transparent: true, opacity: 0.22, side: BackSide, fog: false, depthWrite: false }));
     limb.position.copy(earth.position);
     scene.add(earth, limb);
-  } else {
+  } else if (biome.sky === 'mars-moons') {
     // Mars as seen from its surface: a smaller Sun with a blue halo (dust scatters blue light forward around it),
     // and Phobos and Deimos, small and dark. Their sizes are exaggerated so they read on screen.
     const core = new Sprite(new SpriteMaterial({ map: glowTexture('#fff8ea'), blending: AdditiveBlending, depthWrite: false, fog: false }));
@@ -440,9 +448,34 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
 
   const blinkers: Mesh[] = [];
   const propsRoot = new Group();
-  for (const p of level.props) propsRoot.add(buildProp(p, heightAt(hf, p.solid.x, p.solid.z)));
+  const hardware = new Map<Prop, Group>();
+  for (const p of level.props) {
+    const model = buildProp(p, heightAt(hf, p.solid.x, p.solid.z));
+    if (p.kind === 'gate' || p.hideAfter || p.kind === 'solar-rack') {
+      hardware.set(p, model);
+      scene.add(model);
+    } else propsRoot.add(model);
+  }
   const props = mergeStatic(propsRoot, blinkers);
   scene.add(props);
+
+  let anchorLine: Line | null = null;
+  const course = level.anchorCourse;
+  if (course) {
+    const lines: Vector3[] = [];
+    course.anchors.forEach((a, i) => course.anchors.slice(i + 1).forEach(b => {
+      if (Math.hypot(a.x - b.x, a.z - b.z) > 2 * course.length - 2) return;
+      for (let j = 0; j < 12; j++) for (const k of [j, j + 1]) {
+        const x = a.x + (b.x - a.x) * k / 12, z = a.z + (b.z - a.z) * k / 12;
+        lines.push(new Vector3(x, heightAt(hf, x, z) + .18, z));
+      }
+    }));
+    const tint = course.accent ?? '#ffca86';
+    scene.add(new LineSegments(new BufferGeometry().setFromPoints(lines), new LineBasicMaterial({ color: tint, transparent: true, opacity: .72 })));
+    anchorLine = new Line(new BufferGeometry().setFromPoints([new Vector3(), new Vector3()]), new LineBasicMaterial({ color: tint }));
+    anchorLine.frustumCulled = false;
+    scene.add(anchorLine);
+  }
 
   const mast = level.props.find(p => p.kind === 'mast')?.solid;
   const beacon = new Mesh(new SphereGeometry(0.4, 12, 8), new MeshBasicMaterial({ color: glowColor(palette.warn, 3), fog: false }));
@@ -450,8 +483,9 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   scene.add(beacon);
 
   const points = new Map<string, PointView>();
-  const beamGeo = new CylinderGeometry(0.18, 0.18, 60, 6, 1, true);
-  beamGeo.translate(0, 30, 0);
+  const beamHeight = level.pressurizedBay ? level.pressurizedBay.ceiling - .6 : 60;
+  const beamGeo = new CylinderGeometry(0.18, 0.18, beamHeight, 6, 1, true);
+  beamGeo.translate(0, beamHeight / 2, 0);
   for (const p of level.points) {
     const y = heightAt(hf, p.position.x, p.position.z);
     const beam = new Mesh(beamGeo, new MeshBasicMaterial({ color: palette.accent, transparent: true, opacity: 0.22, blending: AdditiveBlending, depthWrite: false, fog: false }));
@@ -556,7 +590,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   }
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon, crew, geophones, setGeophone,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, hardware, anchorLine, specimens, setScanned, beacons, setBeacon, crew, geophones, setGeophone,
     setSky(on: boolean) { if (!painted) return; painted.visible = on; band.visible = !on; },
     tickSky(t: number) { if (painted?.visible) (painted.material as ShaderMaterial).uniforms.uTime.value = t; },
     dust, footprints, ambience, blinkers, sun, lighting,

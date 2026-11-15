@@ -51,6 +51,6 @@ export function writeProgress(p: Progress): Promise<void> {
   const parsed = progressSchema.safeParse(p);
   if (!parsed.success) return Promise.reject(parsed.error);
   const data = parsed.data;
-  tail = tail.then(() => open().progress.put({ id: data.level, data })).then(() => undefined);
+  tail = tail.catch(() => {}).then(() => open().progress.put({ id: data.level, data })).then(() => undefined);
   return tail;
 }

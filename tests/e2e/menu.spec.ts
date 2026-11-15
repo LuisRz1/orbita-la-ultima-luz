@@ -53,7 +53,7 @@ test('title menu, English, story dialogue, pause and an achievement', async ({ p
 test('the title shows the design loop and the route; ?demo opens every destination without touching the saves', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto('/?quality=low');
+  await page.goto('/?menu&quality=low');
   await expect(page.locator('[data-loop] li')).toHaveCount(4, { timeout: 30_000 });
   await expect(page.locator('[data-travel-locked="bennu"]')).toBeVisible();
   await page.locator('[data-menu="controls"]').click();
@@ -89,8 +89,8 @@ test.describe('first language', () => {
   test.use({ locale: 'en-US' });
   test('an English browser starts in English and ?lang=es in a shared link wins', async ({ page }) => {
     await page.goto('/?quality=low');
-    await expect(page.locator('[data-menu="new"]')).toHaveText('New expedition', { timeout: 30_000 });
+    await expect(page.getByRole('heading', {name:'Set up your game'})).toBeVisible();
     await page.goto('/?quality=low&lang=es');
-    await expect(page.locator('[data-menu="new"]')).toHaveText('Nueva expedición', { timeout: 30_000 });
+    await expect(page.getByRole('heading', {name:'Configura tu partida'})).toBeVisible();
   });
 });

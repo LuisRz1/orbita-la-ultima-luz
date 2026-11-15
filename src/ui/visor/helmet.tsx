@@ -95,7 +95,7 @@ function LumaSlot({ luma }: { luma: LumaHud | null }) {
   const state = luma.state === 'carried' ? 'carried' : luma.alert ? 'alert' : luma.warm ? 'warm' : luma.state;
   const label = state === 'carried' ? t({ es: 'en tus brazos', en: 'in your arms' }) : state === 'alert' ? t({ es: 'alerta', en: 'alert' })
     : state === 'warm' ? t({ es: 'te calienta', en: 'warming you' }) : state === 'busy' ? t({ es: 'corriendo', en: 'running' })
-    : state === 'cooldown' ? t({ es: 'descansa', en: 'resting' }) + ' ' + Math.ceil(luma.wait) + ' s' : t({ es: 'lista · F', en: 'ready · F' });
+    : state === 'cooldown' ? t({ es: 'descansa', en: 'resting' }) + ' ' + Math.ceil(luma.wait) + ' s' : t({ es: 'lista · G', en: 'ready · G' });
   const rest = luma.state === 'cooldown' && luma.cooldown ? 1 - luma.wait / luma.cooldown : 1;
   return <div className={'luma-slot ' + state} data-helmet-luma={state}>
     <svg viewBox="0 0 100 100">
@@ -112,15 +112,16 @@ function LumaSlot({ luma }: { luma: LumaHud | null }) {
 function Helmet() {
   const { t } = useT();
   const calm = useStore(prefs, p => p.reduceMotion);
+  const effects = useStore(prefs, p => p.effects);
   const luma = useStore(hud, s => s.luma);
   const low = useStore(hud, s => s.capacity > 0 && s.energy - reserve < 15);
   const glass = useRef<HTMLCanvasElement>(null), scope = useRef<HTMLCanvasElement>(null);
   useEffect(() => startHelmet(glass.current!, scope.current!), []);
   return <div className={'helmet' + (calm ? ' calm' : '') + (low ? ' low' : '')} data-visor data-helmet aria-hidden="true">
-    <i className="helmet-tint" /><i className="helmet-glint" /><i className="helmet-fog" />
+    <i className="helmet-tint" />{effects&&<><i className="helmet-glint" /><i className="helmet-fog" /></>}
     <canvas className="helmet-hud" ref={glass} data-helmet-hud />
     <Frame />
-    {!calm && <i className="helmet-sweep" />}
+    {effects && !calm && <i className="helmet-sweep" />}
     <div className="helmet-chin" data-helmet-chin>
       <div className="side left"><BatteryGauge /><LinkGauge /></div>
       <div className="scope" data-helmet-radar><canvas ref={scope} /><small>{radarRange} m</small></div>

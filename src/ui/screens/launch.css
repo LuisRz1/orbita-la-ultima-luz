@@ -1,0 +1,95 @@
+.orbita .launch-screen {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  display: grid;
+  place-items: safe center;
+  padding: clamp(16px, 4vw, 72px) 6vw 60px;
+  background:
+    radial-gradient(circle, #b3d7ea77 1px, transparent 1.5px) 13px 22px / 91px 103px,
+    radial-gradient(circle, #b1d6dc44 1px, transparent 1.4px) 29px 66px / 147px 123px,
+    radial-gradient(ellipse at 26% 59%, #182d47, #080d18 70%);
+}
+.orbita .launch-frame {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(370px, 440px);
+  gap: clamp(32px, 8vw, 128px);
+  width: min(100%, 1080px);
+  align-items: center;
+}
+.orbita .launch-intro { position: relative; isolation: isolate; min-width: 0; padding: 48px 0; }
+.orbita .launch-intro h1 { margin: 0; font-size: clamp(48px, 7.5vw, 108px); line-height: 1.04; letter-spacing: -.07em; }
+.orbita .launch-intro header p { margin: 6px 0 24px; color: var(--accent); font-size: clamp(16px, 2vw, 22px); letter-spacing: .15em; }
+.orbita .launch-intro > p { max-width: 375px; font-size: 15px; }
+.orbita .launch-orbit {
+  position: absolute;
+  z-index: -1;
+  inset: -23% -22% -22% -16%;
+  pointer-events: none;
+  opacity: .78;
+}
+.orbita .launch-orbit::before {
+  position: absolute;
+  inset: 4% 2%;
+  content: '';
+  border: 1px solid #7ca2bd;
+  border-radius: 50%;
+  transform: rotate(-24deg) scaleY(.62);
+}
+.orbita .launch-orbit i {
+  position: absolute;
+  width: 78%;
+  aspect-ratio: 1;
+  left: -6%;
+  top: 5%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 30% 19%, #82c8be, #315777 36%, #142b47 61%, #091320 82%);
+  box-shadow: inset 2px 10px 25px #acd9db, 0 -5px 28px #788fca72;
+}
+.orbita .launch-controls { display: flex; gap: 12px; flex-wrap: wrap; margin: 26px 0 0; }
+.orbita .launch-controls > div { padding: 7px 10px; border: 1px solid var(--line); background: #0b1524d9; }
+.orbita .launch-controls dt { color: var(--accent); }
+.orbita .launch-controls dd { margin: 3px 0 0; }
+.orbita .launch-settings {
+  position: relative;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid #557581;
+  background: #101a27f5;
+  box-shadow: 8px 8px #060911b8;
+}
+.orbita .launch-settings h2 { margin: 0 0 18px; font-size: clamp(21px, 2.4vw, 30px); line-height: 1.15; }
+.orbita .launch-settings .setting { margin: 10px 0; }
+.orbita .launch-settings .setting > span { color: #c0ced8; letter-spacing: 0; }
+.orbita .launch-settings .setting input { width: 100%; margin: 0; }
+.orbita .launch-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+.orbita .launch-actions button {
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--text);
+  background: #172839;
+  border: 1px solid var(--frame);
+  font: inherit;
+  cursor: pointer;
+}
+.orbita .launch-actions .launch-play {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: #0b1a27;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.orbita .launch-actions button:hover { border-color: #e5fbff; }
+.orbita .launch-screen button:focus-visible,
+.orbita .launch-screen input:focus-visible { outline: 2px solid #e5fbff; outline-offset: 3px; }
+@media (max-width: 760px) {
+  .orbita .launch-frame { grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 540px; }
+  .orbita .launch-intro { order: 1; padding: 22px 0; }
+  .orbita .launch-orbit { inset: 0; overflow: hidden; }
+}

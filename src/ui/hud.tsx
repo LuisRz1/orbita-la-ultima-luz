@@ -90,7 +90,7 @@ export function Telemetry() {
   </>;
 }
 
-/** Always-visible key chip: V (or C) switches between the shoulder camera and the helmet view, live. */
+/** Always-visible key chip: V switches between the shoulder camera and the helmet view, live. */
 export function ViewChip() {
   const { t } = useT();
   const view = useStore(hud, s => s.view);
@@ -142,7 +142,7 @@ export function LumaCard() {
   return <section className={'panel luma-card ' + luma.state + (luma.alert ? ' alert' : '')} data-luma={luma.state} aria-label="LUMA">
     <span className="panel-title">LUMA · <em>{status}</em></span>
     {luma.state !== 'carried' && <>
-      <div className="row"><span><kbd>F</kbd> {luma.canFetch ? t({ es: 'Alcanzar eco', en: 'Fetch echo' }) : t({ es: 'Rastrear', en: 'Track' })}</span>
+      <div className="row"><span><kbd>G</kbd> {luma.canFetch ? t({ es: 'Alcanzar eco', en: 'Fetch echo' }) : t({ es: 'Rastrear', en: 'Track' })}</span>
         <b>{luma.canFetch ? '↑' : luma.state === 'ready' ? '●' : '○'}</b></div>
       <div className="bar luma-bar"><i style={{ width: pct + '%' }} /></div>
       <div className="row"><span>{t({ es: 'Alcanzar (por salida)', en: 'Fetch (per sortie)' })}</span><b>{luma.fetches}</b></div>
@@ -160,7 +160,7 @@ export function ZoneTitle() {
 
 export function Prompt() {
   const { t } = useT();
-  const { prompt, notice, now, locked, dialogue, elapsed } = useStore(hud);
+  const { prompt, notice, now, locked, dialogue, elapsed, canTalk, tethered } = useStore(hud);
   const showNotice = notice && now - notice.at < 6 && !dialogue;
   return <div className="center-bottom">
     {showNotice && <p className={'notice ' + notice.tone} key={notice.at}>
@@ -170,8 +170,13 @@ export function Prompt() {
       <kbd>E</kbd> {t(prompt.verb)} · <b>{t(prompt.title)}</b>{prompt.cost > 0 && <em> · {prompt.cost} u.</em>}
       {prompt.blocked.length > 0 && <small>{t('requires')}: {prompt.blocked.map(b => t(b)).join(', ')}</small>}
       {prompt.missing && <small>{t('suitLacks')} {t(prompt.missing).toLowerCase()}</small>}
+      {prompt.hint && !prompt.blocked.length && !prompt.missing && t(prompt.hint) !== t(prompt.title) && <small>{t(prompt.hint)}</small>}
     </p>}
-    {!dialogue && (elapsed < 25 || !locked) && <p className="hint">{t('hint')}</p>}
+    {!dialogue && (elapsed < 25 || !locked) && <p className="hint">{t(tethered
+      ? { es:'WASD seguir la línea · E usar · R escanear · V visor · C centrar', en:'WASD follow the tether · E use · R scan · V visor · C centre' }
+      : 'hint')}</p>}
+    {canTalk && <button type="button" className="luma-talk" onClick={()=>commands.talk()}><kbd>L</kbd>{t(
+      { es:'Hablar con LUMA', en:'Talk to LUMA' })}</button>}
   </div>;
 }
 

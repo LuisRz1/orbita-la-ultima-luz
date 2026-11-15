@@ -1,12 +1,13 @@
 // Character and prop models built from primitives with toon materials and ink outlines.
 // Everything is generated in code: no external models, licences or downloads.
 import {
-  BoxGeometry, CapsuleGeometry, CircleGeometry, CylinderGeometry, DodecahedronGeometry, Group, Mesh, MeshBasicMaterial,
+  BoxGeometry, CapsuleGeometry, CircleGeometry, CylinderGeometry, DodecahedronGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial,
   OctahedronGeometry, SphereGeometry, TorusGeometry, Vector3, type BufferGeometry, type Material,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Prop } from '../core/contract/level-v2.ts';
 import type { SuitDesign } from '../core/suit.ts';
+import type { POI } from '../core/contract/grid-v1.ts';
 import { biome, foilTexture, glyphTexture, hullTexture, inked, outlineMaterial, stripeTexture, toon, toonMapped, visorTexture } from './style.ts';
 
 /** Suit colour blocking for the Nácar biome. */
@@ -27,15 +28,17 @@ export function part(geo: BufferGeometry, mat: Material, outline = 0.03) {
   return mesh;
 }
 
+type Motion = {speed:number;grounded:boolean;vertical:number;turn:number;boosting:boolean;tethered:boolean};
 export type Astronaut = {
   group: Group;
-  animate(dt: number, speed: number, grounded: boolean, vy: number): void;
+  animate(dt:number,motion:Motion):void;
+  act(action:POI['action']):void;
+  resetMotion():void;
+  setPatch(color: string | null): void;
   /** Shows the chosen equipment on the suit: antenna length, thruster nozzles, instruments. */
   setLoadout(d: SuitDesign): void;
   /** Battery gauge on the backpack: fraction of capacity and whether only the reserve is left. */
   setBattery(fraction: number, reserveOnly: boolean): void;
-  /** Cosmetic patch on the right shoulder, or none. */
-  setPatch(color: string | null): void;
 };
 
 /** "Rounded explorer" suit: bubble helmet, broad shoulders and boots, coral commander stripes. Height ≈ 1.80 m. */
@@ -44,29 +47,38 @@ export function buildAstronaut(): Astronaut {
   const shell = toon(suitColors.shell), lilac = toon(suitColors.bellows), dark = toon(suitColors.frame), coral = toon(suitColors.coral);
   const boots = toon(suitColors.boot), sole = toon(suitColors.frame), pack = toon(suitColors.pack), pelvis = toon(suitColors.pelvis);
   const rig = new Group();
+  rig.name='astronaut rig';
   group.add(rig);
+  const torsoPivot=new Group(),upperBody=new Group();
+  torsoPivot.name='torso';
+  torsoPivot.position.y=.94;
+  upperBody.position.y=-.94;
+  torsoPivot.add(upperBody);rig.add(torsoPivot);
 
   // Legs: hip pivot → upper leg → knee pivot (bellows) → lower leg → boot.
   const legs = [-1, 1].map(side => {
     const hip = new Group();
+    hip.name=side<0?'left hip':'right hip';
     hip.position.set(side * 0.12, 0.84, 0);
     const upper = part(new CapsuleGeometry(0.11, 0.2, 4, 12), shell, 0.022);
     upper.position.y = -0.17;
     const knee = new Group();
+    knee.name=side<0?'left knee':'right knee';
     knee.position.y = -0.34;
     const bellows = part(new TorusGeometry(0.1, 0.025, 6, 16), lilac, 0.012);
     bellows.rotation.x = Math.PI / 2;
     const lower = part(new CapsuleGeometry(0.095, 0.2, 4, 12), shell, 0.022);
     lower.position.y = -0.17;
+    const ankle=new Group();
+    ankle.position.set(0,-.43,-.04);
     const boot = part(new RoundedBoxGeometry(0.22, 0.14, 0.34, 3, 0.05), boots, 0.02);
-    boot.position.set(0, -0.43, -0.04);
     const soleMesh = new Mesh(new RoundedBoxGeometry(0.23, 0.04, 0.35, 2, 0.015), sole);
-    soleMesh.position.set(0, -0.49, -0.04);
-    knee.add(bellows, lower, boot, soleMesh);
+    soleMesh.position.y=-.06;
+    ankle.add(boot,soleMesh);knee.add(bellows,lower,ankle);
     hip.add(upper, knee);
     if (side < 0) { const stripe = part(new CylinderGeometry(0.115, 0.115, 0.06, 14), coral, 0.01); stripe.position.y = -0.12; hip.add(stripe); }
     rig.add(hip);
-    return { hip, knee };
+    return { hip, knee, ankle };
   });
   // Arms: shoulder pivot → upper arm → elbow bellows → forearm → glove with coral cuff.
   const arms = [-1, 1].map(side => {
@@ -75,18 +87,22 @@ export function buildAstronaut(): Astronaut {
     shoulder.rotation.z = side * 0.14;
     const upper = part(new CapsuleGeometry(0.085, 0.15, 4, 12), shell, 0.02);
     upper.position.y = -0.16;
+    const forearm=new Group();
+    forearm.name=side<0?'left elbow':'right elbow';
+    forearm.position.y=-.29;
     const elbow = part(new TorusGeometry(0.085, 0.022, 6, 14), lilac, 0.01);
-    elbow.rotation.x = Math.PI / 2; elbow.position.y = -0.29;
+    elbow.rotation.x = Math.PI / 2;
     const fore = part(new CapsuleGeometry(0.08, 0.13, 4, 12), shell, 0.02);
-    fore.position.y = -0.42;
+    fore.position.y = -0.13;
     const cuff = part(new CylinderGeometry(0.09, 0.09, 0.05, 14), coral, 0.01);
-    cuff.position.y = -0.52;
+    cuff.position.y = -0.23;
     const glove = part(new SphereGeometry(0.09, 14, 10), lilac, 0.02);
-    glove.position.y = -0.6; glove.scale.set(1, 1.1, 0.9);
-    shoulder.add(upper, elbow, fore, cuff, glove);
+    glove.position.y = -0.31; glove.scale.set(1, 1.1, 0.9);
+    forearm.add(elbow,fore,cuff,glove);
+    shoulder.add(upper,forearm);
     if (side < 0) { const stripe = part(new CylinderGeometry(0.09, 0.09, 0.05, 14), coral, 0.01); stripe.position.y = -0.1; shoulder.add(stripe); }
-    rig.add(shoulder);
-    return shoulder;
+    upperBody.add(shoulder);
+    return {shoulder,forearm};
   });
 
   const hips = part(new RoundedBoxGeometry(0.42, 0.18, 0.3, 3, 0.07), pelvis, 0.02);
@@ -129,6 +145,11 @@ export function buildAstronaut(): Astronaut {
     new MeshBasicMaterial({ map: visorTexture() }));
   visor.position.set(0, 1.58, -0.012);
   if (inked()) visor.add(new Mesh(visor.geometry, outlineMaterial(0.012)));
+  const helmetPivot=new Group();
+  helmetPivot.position.y=1.44;
+  helmet.position.y-=helmetPivot.position.y;
+  visor.position.y-=helmetPivot.position.y;
+  helmetPivot.add(helmet,visor);
 
   // Equipment slots, filled by setLoadout.
   const antenna = new Group();
@@ -147,15 +168,20 @@ export function buildAstronaut(): Astronaut {
   const patch = new Mesh(new CylinderGeometry(0.07, 0.07, 0.02, 16), toon('#ffffff'));
   patch.position.set(0.43, 1.36, 0); patch.rotation.z = Math.PI / 2; patch.visible = false;
   if (inked()) patch.add(new Mesh(patch.geometry, outlineMaterial(0.01)));
-  rig.add(patch);
-  rig.add(hips, torso, ...shoulders, chest, ...knobs, chestLight, backpack, frame, gaugeFrame, ...cells, neck, helmet, visor, antenna, nozzles, camera);
+  upperBody.add(patch);
+  rig.add(hips);
+  upperBody.add(torso, ...shoulders, chest, ...knobs, chestLight, backpack, frame, gaugeFrame, ...cells, neck, helmetPivot, antenna, nozzles, camera);
 
   const clear = (g: Group) => { for (const c of [...g.children]) g.remove(c); };
-  let phase = 0, bob = 0, popT = 1;
+  let phase=0,breath=0,pace=0,popT=1,gesture=0,landing=0,drop=0;
+  let onGround=true,action:POI['action']='service';
   const popping: Group[] = [];
+  const approach=(value:number,goal:number,weight:number)=>value+(goal-value)*weight;
   return {
     group,
     setPatch(color) { patch.visible = !!color; if (color) patch.material = toon(color); },
+    act(next){action=next;gesture=1;},
+    resetMotion(){phase=0;pace=0;gesture=0;landing=0;drop=0;onGround=true;},
     setLoadout(d) {
       clear(antenna); clear(nozzles); clear(camera); clear(drill); clear(kit);
       const len = { short: 0.25, medium: 0.45, long: 0.7 }[d.antenna];
@@ -188,30 +214,47 @@ export function buildAstronaut(): Astronaut {
         (cell.material as MeshBasicMaterial).color.set(on ? color : '#2b2540');
       });
     },
-    animate(dt, speed, grounded, vy) {
-      const pace = Math.min(1, speed / 6);
-      if (grounded) {
-        phase += dt * (3 + speed * 1.4);
-        const swing = Math.sin(phase) * 0.7 * pace;
-        legs[0].hip.rotation.x = swing; legs[1].hip.rotation.x = -swing;
-        legs[0].knee.rotation.x = Math.max(0, -Math.sin(phase)) * 0.6 * pace;
-        legs[1].knee.rotation.x = Math.max(0, Math.sin(phase)) * 0.6 * pace;
-        arms[0].rotation.x = -swing * 0.8; arms[1].rotation.x = swing * 0.8;
-        bob = Math.abs(Math.cos(phase)) * 0.05 * pace;
-      } else {
-        // Airborne pose: knees up while rising, legs reaching down while falling.
-        const tuck = vy > 0 ? -0.55 : -0.15, k = Math.min(1, dt * 10);
-        legs[0].hip.rotation.x += (tuck - legs[0].hip.rotation.x) * k;
-        legs[1].hip.rotation.x += (tuck * 0.4 - legs[1].hip.rotation.x) * k;
-        legs[0].knee.rotation.x += ((vy > 0 ? 0.9 : 0.3) - legs[0].knee.rotation.x) * k;
-        legs[1].knee.rotation.x += ((vy > 0 ? 0.5 : 0.2) - legs[1].knee.rotation.x) * k;
-        arms[0].rotation.x += (-1.1 - arms[0].rotation.x) * Math.min(1, dt * 8);
-        arms[1].rotation.x += (-0.8 - arms[1].rotation.x) * Math.min(1, dt * 8);
-        bob = 0;
-      }
-      rig.position.y = bob;
-      rig.rotation.x = grounded ? -0.06 * pace : -0.1;
-      antenna.rotation.x += ((grounded ? pace * 0.3 : -vy * 0.05) - antenna.rotation.x) * Math.min(1, dt * 6);
+    animate(dt,{speed,grounded,vertical,turn,boosting,tethered}) {
+      const k=1-Math.exp(-dt*13);
+      pace=approach(pace,Math.min(1,speed/5.4),k);
+      breath+=dt*2.3;
+      if(grounded)phase+=dt*(3.2+speed*1.25);
+      if(!grounded)drop=Math.max(drop,-vertical);
+      else if(!onGround){landing=Math.max(.45,Math.min(1,drop/6));drop=0;}
+      onGround=grounded;
+      const absorb=landing;
+      landing*=Math.exp(-dt*9);
+      const reach=Math.sin(gesture*Math.PI)*Math.max(.18,1-pace);
+      gesture=Math.max(0,gesture-dt*1.4);
+      const counter=Math.sin(phase)*pace;
+      const footwork=pace*(tethered?.60:1);
+      const thrust=Number(boosting),ascent=Math.max(0,Math.min(1,vertical/4));
+      legs.forEach(({hip,knee,ankle},i)=>{
+        const cycle=phase+i*Math.PI, swing=Math.sin(cycle), recovery=Math.max(0,Math.cos(cycle));
+        const stride=swing*.76*footwork+recovery*.17*footwork;
+        const air=(i===0?.28:-.12)+ascent*(i===0?.49:.21)-thrust*(i===0?.25:.58);
+        hip.rotation.x=approach(hip.rotation.x,(grounded?stride:air)+absorb*.32,k);
+        hip.rotation.z=approach(hip.rotation.z,(i===0?1:-1)*(.024+.075*thrust+.046*absorb),k);
+        knee.rotation.x=approach(knee.rotation.x,grounded?-.87*recovery*footwork-.53*absorb:-.27-.66*ascent-.27*thrust,k);
+        ankle.rotation.x=approach(ankle.rotation.x,grounded?-stride*.42+.39*recovery*footwork+.2*absorb:.21,k);
+      });
+      arms.forEach(({shoulder,forearm},i)=>{
+        const side=i===0?-1:1, stroke=side*counter;
+        const lead=i===1?reach:reach*(action==='salvage'?.80:.19);
+        const armSwing=grounded?stroke*.54+absorb*.3:.57+ascent*.42+i*.13;
+        shoulder.rotation.x=approach(shoulder.rotation.x,armSwing-.91*thrust+lead*(action==='scan'?1.15:1.45),k);
+        shoulder.rotation.z=approach(shoulder.rotation.z,side*(.13+.11*pace+(grounded?0:.23)-lead*.10),k);
+        forearm.rotation.x=approach(forearm.rotation.x,.14+Math.max(0,stroke)*.59+ascent*.24+lead*(action==='scan'?1.09:.61),k);
+      });
+      const sway=Math.cos(phase)*footwork;
+      rig.position.y=approach(rig.position.y,grounded?Math.cos(phase*2)*.043*footwork-.024*footwork-.12*absorb:0,k);
+      rig.position.x=approach(rig.position.x,sway*.023,k);
+      torsoPivot.rotation.x=approach(torsoPivot.rotation.x,-pace*.14-thrust*.32-absorb*.24-reach*.12+Math.sin(breath)*.018,k);
+      torsoPivot.rotation.z=approach(torsoPivot.rotation.z,-turn*.16+sway*.06,k);
+      torsoPivot.rotation.y=approach(torsoPivot.rotation.y,counter*.21-turn*.22+reach*.12,k);
+      helmetPivot.rotation.y=approach(helmetPivot.rotation.y,turn*.32-counter*.09,k);
+      helmetPivot.rotation.x=approach(helmetPivot.rotation.x,.04*Math.cos(phase*2)*footwork-.14*ascent+.19*reach,k);
+      antenna.rotation.x=approach(antenna.rotation.x,pace*.3+thrust*.28-vertical*.04,k*.54);
       // New equipment pops in: scale 0 → 1.15 → 1 over 0.25 s.
       if (popT < 1) {
         popT = Math.min(1, popT + dt / 0.25);
@@ -223,7 +266,7 @@ export function buildAstronaut(): Astronaut {
 }
 
 /** `alert` (0–1) flattens the ears and crouches the body: LUMA senses a hazard ahead. */
-export type Luma = { group: Group; animate(t: number, still: boolean, alert?: number): void };
+export type Luma = { group: Group; animate(t: number, still: boolean, alert?: number, vitality?: number): void };
 
 /** LUMA: compact, cubic alien creature with a warm core and a translator band. */
 export function buildLuma(): Luma {
@@ -246,18 +289,27 @@ export function buildLuma(): Luma {
     const tip = new Mesh(new RoundedBoxGeometry(0.062, 0.05, 0.062, 2, 0.02), toon('#ff9ec7')); tip.position.y = 0.06; e.add(tip);
     return e;
   });
+  const paws = [-1, 1].flatMap(x => [-1, 1].map(z => {
+    const paw = part(new RoundedBoxGeometry(.09, .11, .1, 2, .025), fur, .012);
+    paw.position.set(x * .114, -.176, z * .106);
+    return paw;
+  }));
   const motes = new Group();
   for (let i = 0; i < 4; i++) { const m = new Mesh(new OctahedronGeometry(0.018), new MeshBasicMaterial({ color: lumaCore })); motes.add(m); }
-  group.add(body, band, core, motes, ...eyes, ...shine, ...cheeks, ...ears);
+  group.add(body, band, core, motes, ...eyes, ...shine, ...cheeks, ...ears, ...paws);
   return {
     group,
-    animate(t, still, alert = 0) {
-      body.scale.y = 1 + Math.sin(t * 3) * 0.03 - alert * 0.12;
+    animate(t, still, alert = 0, vitality = 1) {
+      body.scale.y = 1 + Math.sin(t * 3) * 0.03 * vitality - alert * 0.12;
       body.scale.x = body.scale.z = 1 + alert * 0.06;
-      core.scale.setScalar(1 + Math.sin(t * (4.5 + alert * 9)) * (0.18 + alert * 0.12));
+      core.scale.setScalar(.4 + .6 * vitality + Math.sin(t * (4.5 + alert * 9)) * (.18 + alert * .12) * vitality);
+      motes.visible = vitality > .25;
       ears.forEach((e, i) => {
         e.rotation.x = Math.sin(t * 2 + i) * (still ? 0.25 : 0.08) * (1 - alert) + alert * 0.9;
         e.rotation.z = -(i ? 1 : -1) * (0.35 + alert * 0.75);
+      });
+      paws.forEach((paw, i) => {
+        paw.rotation.x = still ? 0 : Math.sin(t * 8 + (i === 0 || i === 3 ? 0 : Math.PI)) * .28 * vitality;
       });
       // Blink every few seconds.
       const blink = (t % 3.7) < 0.12;
@@ -281,7 +333,47 @@ export function buildProp(prop: Prop, base: number): Group {
   const hull = toon(colors.hull), dark = toon(colors.dark), rock = toon(biome.rockLit), rockDark = toon(biome.rockDark);
   const add = (m: Mesh, x: number, y: number, z: number) => { m.position.set(x, y, z); g.add(m); return m; };
 
-  if (kind === 'lander' && solid.kind === 'box') {
+  if(kind==='crew'){
+    const person=buildAstronaut().group;
+    person.rotation.y=Math.atan2(solid.x,solid.z)+Math.PI;
+    g.add(person);
+  } else if(kind==='gate'&&solid.kind==='box'){
+    add(part(new BoxGeometry(solid.hx*2,h,solid.hz*2),hull),0,h/2,0);
+    const hazard=toon(colors.accent);
+    for(let x=-solid.hx+1;x<solid.hx;x+=1.5) add(new Mesh(new BoxGeometry(.32,h*.93,.035),hazard),x,h/2,solid.hz+.03);
+  } else if(kind==='recovery-capsule'&&solid.kind==='box'){
+    const shell=add(part(new CapsuleGeometry(h*.36,solid.hx*1.08,4,14),toonMapped(hullTexture('AURORA / RC-04'))),
+      0,h*.43,0);
+    shell.rotation.z=Math.PI/2; shell.scale.x=solid.hz/(h*.65);
+    const seal=add(part(new TorusGeometry(h*.34,h*.061,8,18),dark,.014),-solid.hx*.86,h*.46,0);
+    seal.rotation.y=Math.PI/2;
+    const hatch=add(new Mesh(new CircleGeometry(h*.325,18),new MeshBasicMaterial({color:'#223746'})),
+      -solid.hx*.90,h*.46,0);
+    hatch.rotation.y=-Math.PI/2;
+    add(new Mesh(new BoxGeometry(.17,.08,.32),new MeshBasicMaterial({color:'#ffd29b'})),-solid.hx*.84,h*.84,0);
+  } else if(kind==='animal-berth'&&solid.kind==='box'){
+    const baseH=Math.min(.22,h*.66);
+    add(part(new RoundedBoxGeometry(solid.hx*2,baseH,solid.hz*2,3,.05),dark,.014),0,baseH/2,0);
+    add(part(new RoundedBoxGeometry(solid.hx*1.84,.11,solid.hz*1.82,2,.035),toon('#c18b5e'),.015),0,baseH+.045,0);
+    if(h>.5){
+      add(new Mesh(new RoundedBoxGeometry(solid.hx*2,h-baseH,solid.hz*2,3,.16),
+        new MeshBasicMaterial({color:'#7cb6ba',transparent:true,opacity:.18,depthWrite:false})),0,(h+baseH)/2,0);
+      for(const x of [-solid.hx*.86,solid.hx*.86]){
+        add(new Mesh(new BoxGeometry(.055,.07,solid.hz*1.8),new MeshBasicMaterial({color:'#ecc083'})),x,baseH+.07,0);
+      }
+    }
+  } else if(kind==='solar-rack'&&solid.kind==='box'){
+    const panelW=solid.hx*2,panelD=solid.hz*2;
+    add(part(new BoxGeometry(.34,h,.46),dark,.018),0,h/2,0);
+    add(part(new BoxGeometry(panelW,.14,panelD),hull,.028),0,h,0);
+    const solar=new InstancedMesh(new BoxGeometry(panelW/8-.085,.026,panelD/4-.065),toon('#294f72','#0d192c'),32);
+    const transform=new Matrix4();
+    for(let row=0;row<4;row++)for(let col=0;col<8;col++){
+      const x=-panelW/2+(col+.5)*panelW/8,z=-panelD/2+(row+.5)*panelD/4;
+      solar.setMatrixAt(row*8+col,transform.makeTranslation(x,h+.09,z));
+    }
+    g.add(solar);
+  } else if (kind === 'lander' && solid.kind === 'box') {
     add(part(new CylinderGeometry(solid.hx * 0.95, solid.hx, 2.2, 8), toonMapped(foilTexture())), 0, 1.1, 0);
     add(part(new BoxGeometry(solid.hx * 1.3, h - 2.2, solid.hz * 1.3), toonMapped(hullTexture('AURORA-2'))), 0, 2.2 + (h - 2.2) / 2, 0);
     add(part(new BoxGeometry(0.5, 0.7, 0.08), dark, 0.015), 0, 2.75, -solid.hz * 0.66);

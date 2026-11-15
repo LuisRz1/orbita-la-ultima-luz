@@ -10,7 +10,7 @@ import type { Tier } from '../engine/quality.ts';
 import type { LevelFacts } from '../levels/facts.ts';
 
 export type Objective = { id: string; title: Localized; required: boolean; done: boolean; action: string; power: number };
-export type Prompt = { verb: Localized; title: Localized; blocked: Localized[]; cost: number; missing: Localized | null };
+export type Prompt = { verb: Localized; title: Localized; hint?: Localized; blocked: Localized[]; cost: number; missing: Localized | null };
 export type Notice = { text: Localized; at: number; tone: 'luma' | 'system' | 'warn' };
 export type CompassMark = { id: string; label: Localized | null; bearing: number; dist: number; kind: 'goal' | 'home' };
 export type Phase = 'loading' | 'menu' | 'ship' | 'eva' | 'report';
@@ -24,7 +24,7 @@ export type HudState = {
   phase: Phase;
   tier: Tier;
   frameMs: number; renderScale: number; drawCalls: number; triangles: number;
-  levelTitle: Localized | null; briefing: Localized | null;
+  levelTitle: Localized | null; levelSubtitle: Localized | null; briefing: Localized | null;
   zone: Localized | null; zoneAt: number;
   objectives: Objective[];
   echoes: { found: number; total: number };
@@ -47,6 +47,7 @@ export type HudState = {
   signal: number;
   fade: number;
   locked: boolean;
+  tethered: boolean; canTalk: boolean;
   player: { x: number; y: number; z: number; speed: number; grounded: boolean };
   realGravity: number;
   /** Mission elapsed time of the current sortie. */
@@ -94,8 +95,9 @@ export type Destination = { id: string; name: Localized; current: boolean; unloc
 
 export const hud = createStore<HudState>(() => ({
   ready: false, phase: 'loading', tier: 'medium', frameMs: 0, renderScale: 1, drawCalls: 0, triangles: 0,
-  levelTitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, pages: { found: 0, total: 0 }, accessories: [], patches: [], finale: null, collection: { atlas: [], pages: [] }, prompt: null, notice: null,
+  levelTitle: null, levelSubtitle: null, briefing: null, zone: null, zoneAt: 0, objectives: [], echoes: { found: 0, total: 0 }, atlas: { found: 0, total: 0 }, beacons: { lit: 0, total: 0 }, pages: { found: 0, total: 0 }, accessories: [], patches: [], finale: null, collection: { atlas: [], pages: [] }, prompt: null, notice: null,
   signal: 1, fade: 0, locked: false, player: { x: 0, y: 0, z: 0, speed: 0, grounded: true }, realGravity: 0, elapsed: 0, now: 0,
+  tethered: false, canTalk: false,
   design: null, energy: 0, capacity: 0, draining: null, report: null, attempts: [], saveError: false,
   paused: false, compass: { heading: Math.PI, marks: [] }, dialogue: null, toast: null, achievements: [], hasProgress: false, ship: null, luma: null, view: 'third', photo: false, cinematic: null,
   levelId: 'moon', facts: null, outcome: null, destinations: [], next: null, prologue: false,
@@ -116,6 +118,7 @@ export const commands = {
   resume: () => {},
   abandon: () => {},
   advance: () => {},
+  talk: () => {},
   pick: (_draft: SuitDesign) => {},
   confirmStation: () => {},
   /** Guided tour shortcut: wear the recommended suit and go straight out through the airlock. */

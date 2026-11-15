@@ -1,26 +1,20 @@
 // Keyboard and mouse. Keys are read by `code`, so the layout (QWERTY, AZERTY, Spanish) does not matter.
 
-export type Actions = 'up' | 'down' | 'left' | 'right' | 'jump' | 'dash' | 'interact' | 'scan' | 'log' | 'console' | 'pause' | 'luma' | 'view' | 'photo';
+export type Actions = 'up' | 'down' | 'left' | 'right' | 'jump' | 'dash' | 'interact' | 'scan' | 'log' | 'console' | 'pause' | 'center' | 'talk' | 'luma' | 'view' | 'photo';
 
 const bindings: Record<string, Actions> = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
-  Space: 'jump', ShiftLeft: 'dash', ShiftRight: 'dash', KeyE: 'interact', KeyR: 'scan', Tab: 'log', Slash: 'console', Escape: 'pause',
-  KeyF: 'luma', KeyV: 'view', KeyC: 'view', KeyP: 'photo',
+  Space: 'jump', ShiftLeft: 'dash', ShiftRight: 'dash', KeyE: 'interact', KeyR: 'scan', Tab: 'log', Slash: 'console', Escape: 'pause',KeyC:'center',KeyL:'talk', KeyG:'luma', KeyV:'view', KeyP:'photo',
 };
 
 export class Input {
   look = { yaw: 0, pitch: 0.32 };
   sensitivity = 0.0025;
-  /** Time of the last mouse look, used to decide when the camera may re-centre on its own. */
-  lastLook = -Infinity;
-  /** Whether a click on the canvas may capture the mouse (only on the surface; the lander camera is fixed). */
   allowLock = true;
+  pitchMin = -.15;
+  zoomMax = 11;
   /** Camera distance in metres, changed with the mouse wheel. */
   zoom = 6.4;
-  /** Lowest pitch the mouse may reach; the helmet view and the photo mode let the player look up further. */
-  pitchMin = -0.15;
-  /** Farthest wheel zoom (the photo mode pulls back further). */
-  zoomMax = 11;
   private held = new Set<Actions>();
   private pressed = new Set<Actions>();
   private readonly target: HTMLElement;
@@ -31,29 +25,40 @@ export class Input {
     const signal = this.controller.signal;
     window.addEventListener('keydown', e => {
       const a = bindings[e.code];
-      if (!a || this.typing(e)) return;
-      if (a === 'log' || a === 'jump') e.preventDefault();
+      if (!a||e.ctrlKey||e.altKey||e.metaKey||e.defaultPrevented||this.typing(e))return;
+      if (a === 'jump') e.preventDefault();
       if (!e.repeat) this.pressed.add(a);
       this.held.add(a);
     }, { signal });
     window.addEventListener('keyup', e => { const a = bindings[e.code]; if (a) this.held.delete(a); }, { signal });
-    window.addEventListener('blur', () => this.held.clear(), { signal });
-    target.addEventListener('click', () => { if (this.allowLock && document.pointerLockElement !== target) target.requestPointerLock?.(); }, { signal });
+    let cameraDrag:number|null=null;
+    const clear=()=>{this.held.clear();this.pressed.clear();cameraDrag=null;};
+    window.addEventListener('blur',clear,{signal});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();},{signal});
+    document.addEventListener('pointerlockchange',()=>{if(!this.locked)clear();},{signal});
+    target.addEventListener('click',()=>{
+      if(this.allowLock&&!this.locked)void Promise.resolve(target.requestPointerLock?.()).catch(()=>{});
+    },{signal});
+    target.addEventListener('pointerdown',e=>{
+      if(e.button===2&&!this.locked){cameraDrag=e.pointerId;target.setPointerCapture(e.pointerId);e.preventDefault();}
+    },{signal});
+    target.addEventListener('lostpointercapture',()=>{cameraDrag=null;},{signal});
+    target.addEventListener('contextmenu',e=>e.preventDefault(),{signal});
     target.addEventListener('wheel', e => {
       e.preventDefault();
       this.zoom = Math.min(this.zoomMax, Math.max(3.2, this.zoom + Math.sign(e.deltaY) * 0.6));
     }, { signal, passive: false });
-    window.addEventListener('mousemove', e => {
-      if (document.pointerLockElement !== target) return;
-      this.lastLook = performance.now();
+    const turn=(e:MouseEvent)=>{
       this.look.yaw -= e.movementX * this.sensitivity;
       this.look.pitch = Math.min(1.2, Math.max(this.pitchMin, this.look.pitch + e.movementY * this.sensitivity));
-    }, { signal });
+    };
+    target.addEventListener('pointermove',e=>{if(cameraDrag===e.pointerId)turn(e);},{signal});
+    window.addEventListener('mousemove',e=>{if(this.locked)turn(e);},{signal});
   }
 
   private typing(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
-    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    return !!el&&(!!el.closest?.('dialog[open],input,textarea,select')||el.isContentEditable);
   }
 
   isHeld(a: Actions) { return this.held.has(a); }

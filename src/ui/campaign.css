@@ -1,0 +1,131 @@
+.orbita .campaign-game,.orbita .campaign-sky {position:absolute;inset:0;overflow:hidden;}
+.orbita .campaign-sky {
+  background:
+    radial-gradient(ellipse at 26% 11%,#29415945,transparent 63%),
+    radial-gradient(circle,#8bbbc58a .5px,transparent 1.1px) 7px 13px / 83px 97px,
+    radial-gradient(circle,#bfd2de5d .5px,transparent 1px) 38px 7px / 133px 107px,
+    #070c16;
+}
+.orbita .campaign-orbital-art {position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.orbita .campaign-orbital-art i {
+  display:block;position:absolute;width:min(65vw,830px);aspect-ratio:1;
+  left:-8vw;top:31%;border-radius:50%;transform:rotate(-26deg);
+  background:radial-gradient(ellipse at 36% 16%,#70b1ab 0,#3c607a 27%,#223850 49%,#09101d 67%);
+  box-shadow:inset 0 5px 9px #aee3e1bd,inset 0 22px 29px #6a97a972,0 -15px 70px #456c8f3b;
+}
+.orbita .campaign-orbital-art b,.orbita .campaign-orbital-art span {
+  position:absolute;display:block;width:63vw;height:17vw;left:-11vw;top:59%;
+  border:1px solid #94a7c33b;border-radius:50%;transform:rotate(-24deg);
+}
+.orbita .campaign-orbital-art span {width:65vw;height:19vw;left:-12vw;top:58%;opacity:.44;}
+.orbita .campaign-terminal {position:absolute;inset:54px 0 64px;display:grid;align-items:center;justify-items:end;padding:0 6vw;}
+.orbita .campaign-panel {
+  position:relative;width:min(100%,660px);max-height:100%;overflow:auto;padding:clamp(15px,3vw,24px);
+  background:#101821ed;border-color:#567783;scrollbar-color:#627782 #121a25;
+}
+.orbita .campaign-panel h1 {font-size:clamp(23px,3.5vw,40px);line-height:1.11;margin:0 0 14px;color:#ebf2ef;}
+.orbita .campaign-panel h2 {font-size:17px;}
+.orbita .campaign-panel a,.orbita .campaign-design a {color:var(--accent);}
+.orbita .campaign-toolbar {
+  position:absolute;z-index:8;bottom:14px;left:78px;
+  display:flex;gap:7px;align-items:center;max-width:calc(100% - 91px);
+}
+.orbita .campaign-toolbar span,.orbita .campaign-fuel {
+  color:#d5e5e7;background:#0d161fe8;padding:6px 9px;border:1px solid var(--line);font-size:11px;
+}
+.orbita .campaign-game .center-bottom {bottom:54px;}
+.orbita .campaign-fuel {position:absolute;bottom:15px;right:16px;margin:0;pointer-events:none;}
+.orbita .campaign-game button,.orbita .campaign-journal button {font:inherit;}
+.orbita .campaign-panel button,.orbita .campaign-toolbar button,.orbita .campaign-journal button {
+  border:1px solid var(--frame);color:var(--text);background:#162431;padding:6px 10px;
+}
+.orbita .campaign-panel button:hover,.orbita .campaign-toolbar button:hover,.orbita .campaign-journal button:hover {border-color:var(--accent);}
+.orbita .campaign-game button:disabled {opacity:.48;cursor:default;}
+.orbita .campaign-panel .primary,.orbita .flight-controls .primary {
+  background:var(--accent);color:#0c1922;border:1px solid var(--accent);font-weight:bold;padding:9px 12px;
+}
+.orbita .campaign-choices {display:grid;gap:7px;margin:16px 0;}
+.orbita .campaign-choices button {display:grid;gap:4px;text-align:left;padding:10px 12px;}
+.orbita .campaign-choices button[aria-pressed=true] {border-color:var(--accent);background:#213b43;}
+.orbita .campaign-choices small {color:#c6d5dc;}
+.orbita .campaign-choices .ok,.orbita .campaign-flight .ok {color:var(--accent);}
+.orbita .campaign-choices .warn,.orbita .campaign-flight .warn {color:var(--warn);}
+.orbita .campaign-design>fieldset {border:0;padding:0;margin:0;min-width:0;}
+.orbita .campaign-design .panel-head {display:flex;justify-content:space-between;color:var(--accent);font-size:11px;padding:8px 0;}
+.orbita .campaign-design .mini,.orbita .campaign-kicker {color:var(--accent);font-size:11px;letter-spacing:.11em;}
+.orbita .campaign-design .loadouts {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.orbita .campaign-design .loadouts button,.orbita .campaign-design .plan {display:grid;gap:4px;text-align:left;}
+.orbita .campaign-design .reserve,.orbita .campaign-design .abort {font-size:11px;color:#bac9d4;}
+.orbita .campaign-design .orb-plan {padding:0;}
+.orbita .campaign-documents {list-style:none;display:grid;gap:6px;padding:0;}
+.orbita .campaign-documents li {display:grid;padding:7px 9px;background:#0e1823;border-left:2px solid #669a9a;}
+.orbita .campaign-documents b {color:var(--accent);}
+.orbita .campaign-documents span {color:#bdcbd6;}
+.orbita .campaign-documents [data-evidence-status=collected] {border-color:#c9a373;}
+.orbita .campaign-documents [data-evidence-status=collected] b {color:#efc698;}
+.orbita .campaign-chapters [aria-current=step] {color:var(--accent);}
+.orbita .first-light-dossier {margin:12px 0;}
+.orbita .first-light-briefings {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.orbita .first-light-briefings article {padding:11px;background:#13212d;border:1px solid #3e5c6a;}
+.orbita .first-light-briefings h2 {font-size:17px;margin:3px 0 6px;}
+.orbita .first-light-briefings p {margin:0;}
+.orbita .first-light-order {border-left:2px solid var(--accent);padding:4px 10px;margin:12px 0;}
+.orbita .first-light-archive details {margin:8px 0;}
+.orbita .first-light-archive summary {cursor:pointer;color:#bdcbd6;}
+.orbita .first-light-cabin-chat {margin:14px 0;display:grid;gap:8px;justify-items:start;}
+.orbita .first-light-cabin-line {padding:8px 10px;color:#f0dcc3;background:#1b2633;border-left:2px solid var(--warn);margin:0;}
+.orbita .first-light-cabin-line b {color:var(--warn);margin-right:7px;}
+.orbita .first-light-results {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;}
+.orbita .first-light-results div {padding:8px;background:#162534;}
+.orbita .first-light-results dt {color:#c0cfd4;}
+.orbita .first-light-results dd {margin:0;font-size:18px;color:var(--accent);}
+.orbita .campaign-stats {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:5px 0;}
+.orbita .campaign-stats div {background:#182536;padding:8px;color:#c2cfdc;}
+.orbita .campaign-stats b {display:block;color:var(--accent);font-size:18px;}
+.orbita .campaign-progress {width:100%;height:5px;accent-color:var(--accent);}
+.orbita .cruise-route {display:flex;align-items:center;gap:10px;margin:24px 0;}
+.orbita .cruise-route>i {width:38px;aspect-ratio:1;flex:none;border-radius:50%;background:radial-gradient(at 34% 28%,#9dd6ce,#244258 70%);}
+.orbita .cruise-route>i:last-child {width:23px;background:radial-gradient(at 34% 28%,#e2cec2,#60556e 75%);}
+.orbita .cruise-route>div {height:3px;background:#45617a;flex:1;}
+.orbita .cruise-route b {display:block;height:100%;background:var(--accent);}
+.orbita .campaign-flight {position:absolute;inset:0;pointer-events:none;}
+.orbita .campaign-flight button {pointer-events:auto;}
+.orbita .flight-heading {top:14px;left:14px;width:min(322px,80vw);}
+.orbita .flight-heading h1 {font-size:20px;margin:0;}
+.orbita .flight-heading p {margin:3px 0 0;color:#b8cad9;}
+.orbita .flight-telemetry {top:14px;right:14px;}
+.orbita .flight-telemetry dl {margin:0;display:grid;grid-template-columns:auto max-content;gap:4px 16px;}
+.orbita .flight-telemetry dd {margin:0;text-align:right;}
+.orbita .flight-controls {bottom:58px;left:50%;transform:translateX(-50%);width:min(610px,94vw);}
+.orbita .flight-controls p {margin:5px 0;}
+.orbita .flight-controls .actions {display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0;}
+.orbita .campaign-journal {
+  width:min(730px,94vw);max-height:89vh;overflow:auto;color:var(--text);
+  background:#101821;border:2px solid var(--frame);padding:clamp(12px,3vw,23px);
+}
+.orbita .campaign-journal::backdrop {background:#080d18b5;}
+.orbita .campaign-journal header {display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.orbita .campaign-journal h2 {margin:0;font-size:20px;}
+.orbita .campaign-chapters {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.orbita .campaign-chapters h3 {margin:0;color:var(--accent);}
+.orbita .campaign-chapters section {background:#142130;padding:9px;}
+.orbita .campaign-chapters ol {padding:0;list-style:none;margin:5px 0 0;}
+.orbita .campaign-chapters li {padding:2px;color:#a9bdcb;}
+.orbita .campaign-chapters li[data-status=complete] {color:#c3e5de;}
+.orbita .dialogue .speaker.aurora {color:#775431;}
+@media(max-width:760px){
+  .orbita .campaign-terminal {justify-items:center;padding:0 10px;inset:14px 0 64px;}
+  .orbita .flight-heading {max-width:calc(56% - 21px);top:8px;left:8px;}
+  .orbita .flight-heading h1 {font-size:15px;}
+  .orbita .flight-telemetry {top:8px;right:8px;font-size:10px;padding:7px;}
+  .orbita .flight-telemetry dl {gap:3px 5px;}
+  .orbita .campaign-fuel {display:none;}
+  .orbita .campaign-chapters {grid-template-columns:1fr;}
+  .orbita .campaign-toolbar span {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .orbita .first-light-briefings {grid-template-columns:1fr;}
+}
+@media(max-height:620px){
+  .orbita .campaign-terminal {inset:10px 0 56px;}
+  .orbita .campaign-panel {padding:11px;}
+  .orbita .campaign-panel h1 {font-size:23px;}
+}

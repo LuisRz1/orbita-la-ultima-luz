@@ -2,6 +2,10 @@
 
 > **NASA Space Apps Challenge 2026 · Space Mission Design Game.** A browser game in 3D where every sortie is a small mission: design the spacesuit under a mass budget, go out and spend a limited battery, read a report that links each decision to its outcome, and redesign. **[English](#for-the-judges) · [Español](#para-el-jurado)**
 
+**Para jugar.** La portada abre los ajustes. Elige idioma, sonido, cámara y gráficos, y pulsa **Jugar Primera luz**. Al cerrar C1 puedes llevar el informe a la campaña desde la elección de alunizaje.
+
+**To play.** Setup opens first. Choose language, sound, camera and graphics, then choose **Play First Light**. After filing the Chapter 1 report you can continue the campaign from lunar landing site selection.
+
 ## For the judges
 
 **What it is.** Your sister vanished with the Aurora expedition. With **LUMA**, an alien creature that speaks through a translator, you follow her trail from a station in Earth orbit to the Moon, Mars and the asteroid Bennu, and bring the survivors home. Each destination is a mission you plan and then fly as an EVA (spacewalk) in third person.
@@ -25,11 +29,11 @@
 4. Click **Try this proposal**, leave again and complete the mission. The new report shows *versus the previous attempt*: what changed in the suit and how the result changed.
 5. Menu → **Science: model and reality**.
 
-**Controls.** Mouse to look (click to capture) · WASD move · Space jump (twice in the air with a thruster) · Shift dash · E use · Esc pause. Settings: language, volumes, sensitivity, reduced motion, graphics quality and an optional painted sky. Built for integrated graphics: three quality tiers and a dynamic render scale (a frame-rate measurement on Intel Iris Xe is still pending).
+**Controls.** WASD or arrows to move, mouse to look, Space to jump, Shift to dash, E to interact, V to switch to the helmet, C to centre the camera, F for fullscreen, and Esc to pause. G prompts LUMA to track a nearby objective when available.
 
 **Run it.** Node 24 and pnpm 12.4.1: `pnpm install --frozen-lockfile`, then `pnpm dev` and open the local URL. Checks: `pnpm test` (rules), `pnpm build`, `pnpm test:e2e` (browser walkthroughs; `ORBITA_BROWSER` points to a Chromium build, `ORBITA_PORT` changes the preview port).
 
-**Honest limits.** Battery, antenna ranges and costs are gameplay values, not hardware data; the 3D flights between destinations (launch, cruise, docking) are not built yet, so travel is told between chapters; balance has not been tested with many players. A 2D prototype of chapter 1 with spacecraft, launcher and orbit design and piloted rendezvous is kept at `?legacy&world=orbit`.
+**Scope.** Battery, ranges and flight telemetry use educational scenario values. The campaign includes piloted local maneuvers and accelerated cruise, and its length and difficulty still need longer playtests. The 2D prototype is available at /?legacy&world=orbit.
 
 ## Para el jurado
 
@@ -54,9 +58,9 @@
 4. Pulsa **Probar esta propuesta**, sal otra vez y completa la misión. El nuevo informe muestra *frente al intento anterior*: qué cambió en el traje y cómo cambió el resultado.
 5. Menú → **Ciencia: modelo y realidad**.
 
-**Controles.** Ratón para mirar (clic para capturarlo) · WASD mover · Espacio saltar (dos veces en el aire con propulsor) · Shift dash · E usar · Esc pausa. Ajustes: idioma, volúmenes, sensibilidad, reducir movimiento, calidad gráfica y cielo pintado opcional. Pensado para gráficos integrados: tres niveles de calidad y escala de render dinámica (falta medir los fps en Intel Iris Xe).
+**Controles.** WASD o flechas para moverte, ratón para mirar, Espacio para saltar, Shift para impulsarte, E para interactuar, V para cambiar al visor, C para centrar, F para pantalla completa y Esc para pausar. G activa el rastreo de LUMA cuando está disponible.
 
-**Límites honestos.** La batería, el alcance de las antenas y los costes son valores de juego, no datos de equipos reales; los vuelos 3D entre destinos (despegue, crucero, acople) aún no existen y el viaje se cuenta entre capítulos; el equilibrio no se ha probado con muchos jugadores. Un prototipo 2D del capítulo 1 con diseño de nave, lanzador y órbita y aproximación pilotada se conserva en `?legacy&world=orbit`.
+**Alcance.** La batería, el alcance y la telemetría usan valores del escenario educativo. La campaña combina maniobras locales pilotadas y crucero acelerado. Queda medir duración y dificultad con jugadores. El prototipo 2D sigue en /?legacy&world=orbit.
 
 Guion de la demo de dos minutos: [GUION-DEMO](brain/06-Produccion/GUION-DEMO.md).
 
@@ -66,7 +70,7 @@ Juego de exploración espacial en 3D para navegador (three.js): diseñas el traj
 
 Una cápsula de la expedición desaparecida Aurora regresa con LUMA y registros dañados. Tu hermana viajaba en esa expedición. Debes reconstruir su ruta, encontrar a los supervivientes y traerlos a la Tierra.
 
-**Estado:** la campaña se juega en 3D de principio a fin, en orden: la estación de recepción en órbita (capítulo 1, donde aparece LUMA), la Luna «Nácar» (capítulo 2), el valle de Aurora en Marte (capítulo 3), Bennu «Carbono» (capítulo 4: refugio y reencuentro) y la evacuación con la despedida de LUMA, cerrada por un epílogo. Incluyen diseño de traje con accesorios, energía, contingencias, informe, logros, atlas de rocas con fuentes NASA, misión secundaria, ruinas con diario, diálogos con voz de LUMA, audio procedural, cielo pintado opcional y ES/EN. Cada informe completo abre el destino siguiente. Falta el vuelo 3D (despegue, cruceros y aproximaciones): el regreso final se cuenta en el epílogo. El juego 2D anterior sigue en `/?legacy`, con Primera luz completa en `/?legacy&world=orbit`. **¿Vas a colaborar? Empieza por la [guía para colaboradores 3D](brain/06-Produccion/GUIA-COLABORADORES-3D.md).**
+**Estado.** La campaña enlaza las 24 misiones principales en Tierra, estación, Luna, Marte y Bennu, y concluye con el regreso de Aurora. Guarda las siete pruebas, el manifiesto de rescate y la despedida. La expedición lunar conserva la demostración de diseño, informe, atlas y misiones secundarias del equipo. [Guía de integración](brain/06-Produccion/CAMPANA-3D.md).
 
 Este espacio local empezó con la documentación y un historial Git propio. Reutiliza la planificación de octubre, cuyo origen está registrado en la [bitácora del 14 de noviembre](brain/08-Bitacora/2026-11-14.md).
 

@@ -14,7 +14,7 @@ const nacar = {
   rockLit: '#c7bcdc', rockDark: '#7f71a6', gold: '#f2c14e', pink: '#ff9ec7', mint: '#9dffc8', coral: '#ff7a5c',
   cyan: '#7fe3e0', amber: '#ffaf68',
   /** Sky objects, light and air. */
-  sky: 'earth' as 'earth' | 'mars-moons' | 'earth-below' | 'deep', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
+  sky: 'earth' as 'earth' | 'mars-moons' | 'earth-below' | 'deep' | 'day', sunGlow: '#fff1cf', sunScale: 110, sunColor: '#fff4e0',
   /** Ground: scattered rocks and boot prints (factor and switch), regolith or metal plating, and the height below
    * which the terrain is the void under a station deck (vertices there take the sky colour and vanish in fog). */
   rockScatter: 1, footprints: true, plating: false, voidBelow: null as number | null, ambientDust: 1,
@@ -134,7 +134,17 @@ const carbono: Biome = {
   },
 };
 
-export const biomes = { nacar, terracota, quirofano, carbono };
+const tierra: Biome = {
+  ...nacar, sky: 'day', starCount: 0, nebula: null, air: 1.6, wind: .4,
+  lit: '#a6b39a', mid: '#68877e', shadow: '#445d65', deep: '#183539', ink: '#243c3f',
+  skyTop: '#375879', skyHorizon: '#9eb5ad', fog: '#93a6a5', hemiSky: '#a6c3df',
+  rockLit: '#818778', rockDark: '#4e5a61', luma: '#ffe2a0', lumaCore: '#ffffff',
+  real: { ...nacar.real, exposure: .85, ground: '#849071', rock: '#686f65', planetshine: 0,
+    skyFill: '#9fc9ea', skyZenith: '#4d7dab', skyHorizon: '#c9dedf',
+    fog: { density: .001, scale: 900, base: 0, color: '#b8cdcf', sunColor: '#e9e3c8' } },
+};
+
+export const biomes = { nacar, terracota, quirofano, carbono, tierra };
 export type BiomeId = keyof typeof biomes;
 
 /** Active biome. Mutated in place by setBiome so every importer sees the level's palette. */

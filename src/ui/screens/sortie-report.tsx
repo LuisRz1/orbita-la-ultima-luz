@@ -4,6 +4,7 @@ import { compareAttempts, decisionLinks, recommend, type Slot } from '../../core
 import { ledgerLabels, type LedgerKey, type Report } from '../../core/sortie.ts';
 import { antennas, assessSuit, batteries, instruments, reserve, thrusters, type SuitDesign } from '../../core/suit.ts';
 import { useStore } from 'zustand';
+import type { Localized } from '../../core/contract/grid-v1.ts';
 import { useT, type StringKey } from '../i18n.ts';
 import { commands, hud } from '../store.ts';
 import { EnergyChart } from './energy-chart.tsx';
@@ -18,7 +19,12 @@ function DesignLine({ d }: { d: SuitDesign }) {
   return <small className="design-line">{t(batteries[d.battery].name)} · {t(thrusters[d.thruster].name)} · {t(antennas[d.antenna].name)} · {d.instruments.map(i => t(instruments[i].name)).join(', ') || '—'} · {assessSuit(d).mass} kg</small>;
 }
 
-export function SortieReport({ report, onRedesign, onRetry, onEpilogue }: { report: Report; onRedesign(): void; onRetry(): void; onEpilogue(): void }) {
+export type SortieSummary = { title: Localized; text: Localized; action: Localized; brief?: boolean };
+
+export function SortieReport({ report, onRedesign, onRetry, onEpilogue, onComplete, onExit, saving, summary }: {
+  report: Report; onRedesign(): void; onRetry(): void; onEpilogue(): void;
+  onComplete?: () => void; onExit?: () => void; saving?: boolean; summary?: SortieSummary;
+}) {
   const { t } = useT();
   const { outcome, next, finale, attempts, objectives, accessories } = useStore(hud);
   const done = report.outcome === 'complete';
@@ -32,11 +38,20 @@ export function SortieReport({ report, onRedesign, onRetry, onEpilogue }: { repo
   // The first two insights repeat the battery and mass rows of the decision table.
   const environment = report.insights.slice(2);
   const arrow = (a: number, b: number, better: 'up' | 'down') => (a === b ? '=' : (b > a) === (better === 'up') ? '▲' : '▼');
+  const complete = onComplete && <button className="primary" type="button" data-campaign-file disabled={saving} onClick={onComplete}>
+    {summary ? t(summary.action) : t({es:'Archivar y continuar',en:'File and continue'})} ↗
+  </button>;
+  if (done && summary?.brief) return <div className="screen report-screen">
+    <section className="panel report" role="region" aria-label={t(summary.title)}>
+      <h2>{t(summary.title)}</h2><p>{t(summary.text)}</p>{complete}
+    </section>
+  </div>;
   return <div className="screen report-screen">
     <section className={'panel report' + (done ? '' : ' failed')} role="region" aria-label={t('reportRegion')}>
       <header className="report-head">
         <span className="panel-title">{t('reportTitle')} · {t('attemptN')} {attempts.length}</span>
         <h2 className={done ? 'ok' : 'warn'}>{t(done ? 'transmission' : 'partial')}</h2>
+        {done && summary && <p>{t(summary.text)}</p>}
         <div className="report-stats">
           <div><b>{report.requiredDone}/{report.required}</b><span>{t('required')}</span></div>
           <div><b>{Math.round(report.used)}/{report.capacity}</b><span>{t('energyUsed')}</span></div>
@@ -98,10 +113,11 @@ export function SortieReport({ report, onRedesign, onRetry, onEpilogue }: { repo
       </div>
       <div className="actions">
         <button className={done ? '' : 'primary'} data-redesign onClick={onRedesign}>{t('redesign')}</button>
-        <button className={done && !next && !finale ? 'primary' : ''} data-retry onClick={onRetry}>{t('retry')}</button>
+        <button className={done && !next && !finale && !onComplete ? 'primary' : ''} data-retry disabled={saving} onClick={onRetry}>{t('retry')}</button>
+        {done && complete}
         {done && finale && <button className="primary" data-sfx="ui-confirm" data-epilogue-open onClick={onEpilogue}>{t('epilogue')} ↗</button>}
         {done && next && <button className="primary" data-sfx="ui-confirm" data-next={next.id} onClick={() => commands.travel(next.id)}>{t('continueTo')} {t(next.name)} ↗</button>}
-        <button data-report-menu onClick={() => commands.toMenu()}>{t('mainMenu')}</button>
+        <button data-report-menu disabled={saving} onClick={onExit ?? (() => commands.toMenu())}>{t('mainMenu')}</button>
       </div>
       <p className="model-note">{t('modelNote')} {t('adviceNote')}</p>
     </section>

@@ -21,7 +21,7 @@ function startNewExpedition() {
 
 type Sub = 'settings' | 'controls' | 'achievements' | 'journal' | 'science' | 'credits' | null;
 
-export function MainMenu() {
+export function MainMenu({ onCampaign, onExit }: { onCampaign?: () => void; onExit?: () => void }) {
   const { t } = useT();
   const { hasProgress, facts, destinations, collection } = useStore(hud);
   const [sub, setSub] = useState<Sub>(null);
@@ -38,6 +38,8 @@ export function MainMenu() {
         </li>)}
       </ol>
       <nav className="menu-list" aria-label="menu">
+        {onCampaign && <button onClick={onCampaign}>{t({es:'Campaña de Aurora',en:'Aurora campaign'})}</button>}
+        {onExit && <button onClick={onExit}>{t({es:'Volver a la configuración',en:'Back to setup'})}</button>}
         {hasProgress && <button className="first" data-menu="continue" onClick={() => commands.continueGame()}>{t('continue')}</button>}
         <button className={hasProgress ? '' : 'first'} data-sfx="ui-confirm" data-menu="new" onClick={() => startNewExpedition()}>{t('newExpedition')}</button>
         <button data-sfx="ui-open" data-menu="settings" onClick={() => setSub('settings')}>{t('settings')}</button>
@@ -71,7 +73,7 @@ export function MainMenu() {
   </div>;
 }
 
-export function PauseMenu() {
+export function PauseMenu({ onExit }: { onExit?: () => void }) {
   const { t } = useT();
   const [sub, setSub] = useState<Sub>(null);
   if (sub) return <SubScreen sub={sub} onBack={() => setSub(null)} />;
@@ -83,7 +85,7 @@ export function PauseMenu() {
         <button onClick={() => setSub('settings')}>{t('settings')}</button>
         <button data-pause="controls" onClick={() => setSub('controls')}>{t('controls')}</button>
         <button data-pause="abandon" onClick={() => commands.abandon()}>{t('abandon')}</button>
-        <button data-pause="menu" onClick={() => commands.toMenu()}>{t('mainMenu')}</button>
+        <button data-pause="menu" onClick={onExit ?? (() => commands.toMenu())}>{t('mainMenu')}</button>
       </nav>
     </section>
   </div>;
@@ -93,7 +95,7 @@ function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void })
   const { t } = useT();
   return <div className="screen sub-screen">
     <section className={'panel sub' + (sub === 'science' ? ' wide' : '')} role="dialog" aria-label={t(sub)}>
-      {sub === 'settings' && <Settings />}
+      {sub === 'settings' && <><span className="panel-title">{t('settings').toUpperCase()}</span><GameSettings /></>}
       {sub === 'achievements' && <Achievements />}
       {sub === 'journal' && <Journal />}
       {sub === 'science' && <Science />}
@@ -104,15 +106,23 @@ function SubScreen({ sub, onBack }: { sub: Exclude<Sub, null>; onBack(): void })
   </div>;
 }
 
-function Settings() {
+const qualityLabels = {
+  auto: { es: 'Auto', en: 'Auto' },
+  low: { es: 'Baja', en: 'Low' },
+  medium: { es: 'Media', en: 'Medium' },
+  high: { es: 'Alta', en: 'High' },
+} as const;
+
+export function GameSettings({ beforePlay = false }: { beforePlay?: boolean }) {
   const { t } = useT();
   const p = useStore(prefs);
   const [initialQuality] = useState(p.quality);
   const [initialLook] = useState(p.look);
   return <>
-    <span className="panel-title">{t('settings').toUpperCase()}</span>
     <div className="setting"><span>{t('language')}</span>
-      <div className="choice">{(['es', 'en'] as const).map(l => <button key={l} data-lang={l} className={p.lang === l ? 'on' : ''} onClick={() => prefs.setState({ lang: l })}>{l.toUpperCase()}</button>)}</div>
+      <div className="choice" role="group" aria-label={t('language')}>{(['es', 'en'] as const).map(l => <button key={l} data-lang={l}
+        aria-pressed={p.lang === l} className={p.lang === l ? 'on' : ''} onClick={() => prefs.setState({ lang: l })}>
+        {l==='es'?'Español':'English'}</button>)}</div>
     </div>
     <label className="setting"><span>{t('sensitivity')} · {p.sensitivity.toFixed(2)}</span>
       <input type="range" min={0.3} max={3} step={0.05} value={p.sensitivity} onChange={e => prefs.setState({ sensitivity: Number(e.target.value) })} />
@@ -121,27 +131,29 @@ function Settings() {
       <span>{t(k === 'master' ? 'volumeMaster' : k === 'music' ? 'volumeMusic' : 'volumeSfx')} · {Math.round(p[k] * 100)}%</span>
       <input type="range" min={0} max={1} step={0.05} value={p[k]} data-volume={k} onChange={e => prefs.setState({ [k]: Number(e.target.value) })} />
     </label>)}
-    <p className="setting-hint">{t('audioNote')}</p>
+    {!beforePlay && <p className="setting-hint">{t('audioNote')}</p>}
     <div className="setting"><span>{t('reduceMotion')}</span>
       <div className="choice">{[true, false].map(v => <button key={String(v)} className={p.reduceMotion === v ? 'on' : ''} onClick={() => prefs.setState({ reduceMotion: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
     </div>
-    <div className="setting"><span>{t('paintedSky')}</span>
+    {!beforePlay && <><div className="setting"><span>{t('paintedSky')}</span>
       <div className="choice">{[true, false].map(v => <button key={String(v)} data-sky={String(v)} className={p.paintedSky === v ? 'on' : ''} onClick={() => prefs.setState({ paintedSky: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
     </div>
     {([['effects', 'effects'], ['cinematics', 'cinematics']] as const).map(([k, label]) => <div className="setting" key={k}><span>{t(label)}</span>
       <div className="choice">{[true, false].map(v => <button key={String(v)} data-pref={k + '-' + String(v)} className={p[k] === v ? 'on' : ''} onClick={() => prefs.setState({ [k]: v })}>{t(v ? 'on' : 'off')}</button>)}</div>
-    </div>)}
+    </div>)}</>}
     <div className="setting"><span>{t('viewMode')}</span>
       <div className="choice">{(['third', 'first'] as const).map(v => <button key={v} data-view={v} className={p.view === v ? 'on' : ''} onClick={() => prefs.setState({ view: v })}>{t(v === 'third' ? 'viewThird' : 'viewFirst')}</button>)}</div>
     </div>
     <div className="setting"><span>{t('quality')}</span>
-      <div className="choice">{(['auto', ...tierIds] as const).map(q => <button key={q} className={p.quality === q ? 'on' : ''} onClick={() => prefs.setState({ quality: q })}>{q === 'auto' ? t('auto') : q}</button>)}</div>
+      <div className="choice" role="group" aria-label={t('quality')}>{(['auto', ...tierIds] as const).map(q => <button key={q}
+        data-quality={q} aria-pressed={p.quality===q} className={p.quality === q ? 'on' : ''}
+        onClick={() => prefs.setState({ quality: q })}>{t(qualityLabels[q])}</button>)}</div>
     </div>
-    <div className="setting"><span>{t('look')}</span>
+    {!beforePlay && <><div className="setting"><span>{t('look')}</span>
       <div className="choice">{lookIds.map(l => <button key={l} data-look={l} className={p.look === l ? 'on' : ''} onClick={() => prefs.setState({ look: l })}>{t(l === 'realista' ? 'lookReal' : 'lookInk')}</button>)}</div>
     </div>
     <p className="setting-hint">{t('lookNote')}</p>
-    {(p.quality !== initialQuality || p.look !== initialLook) && <p className="setting-note">{t('applyReload')} <button onClick={() => window.location.reload()}>{t('reloadNow')}</button></p>}
+    {(p.quality !== initialQuality || p.look !== initialLook) && <p className="setting-note">{t('applyReload')} <button onClick={() => window.location.reload()}>{t('reloadNow')}</button></p>}</>}
   </>;
 }
 
@@ -209,7 +221,7 @@ const sources = [
 ];
 
 const keys: [string, StringKey][] = [
-  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['F', 'keyLuma'], ['V / C', 'keyView'], ['P', 'keyPhoto'], ['Q', 'keyQuick'],
+  ['WASD / ↑←↓→', 'keyMove'], ['Espacio / Space', 'keyJump'], ['Shift', 'keyDash'], ['E', 'keyUse'], ['G', 'keyLuma'], ['V', 'keyView'], ['P', 'keyPhoto'], ['Q', 'keyQuick'],
   ['🖱', 'keyLook'], ['Esc', 'keyPause'],
 ];
 

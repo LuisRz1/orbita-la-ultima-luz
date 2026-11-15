@@ -34,6 +34,15 @@ La fecha global es 14–15 de noviembre de 2026. El propietario confirmó su sed
 - No publicar claves, tokens, partidas personales, conversaciones completas ni configuraciones privadas en este repositorio público.
 - Nunca dar a la IA autoridad para modificar progreso, recursos o recompensas.
 - Los datos científicos deben enlazar una fuente y distinguir observación, simplificación y ficción.
+- El propietario coordina commits y despliegues. El 15 de noviembre autorizó integrar todas las ramas en una rama de entrega y publicar esa versión en Vercel. Mantén separados los guardados y archivos locales al publicar.
+
+## Estándar obligatorio en todos los capítulos
+
+- Muestra el mundo en toda la ventana y ofrece pantalla completa con `F`. Usa la misma cámara en tercera persona con el cuerpo del astronauta visible, movimiento directo con `WASD` y flechas, ratón para girar la cámara, rueda para acercar y `C` para centrar. Usa el HUD del motor para objetivos, batería y enlace. Abre planificación e informes en la interfaz del juego.
+- Diseña regiones de exploración amplias y conectadas. Cada terreno principal debe ocupar varios encuadres al zoom normal y ofrecer al menos dos rutas transitables entre sectores, con hitos visibles y motivos para desviarse. Usa relieve, señalización, radio o líneas de vida para que los límites y el regreso se entiendan al jugar. Cabinas, esclusas y secuencias ancladas conservan la escala y los límites propios de su función.
+- Comprueba caminando que las acciones principales se puedan alcanzar y que los atajos y coleccionables sean opcionales. No uses un mapa vacío, paredes invisibles o una lista de botones como sustituto del mundo. En Bennu y EVA usa anclajes y colisiones acordes al escenario.
+- Sigue [el contrato de los niveles y la integración de campaña](brain/06-Produccion/CAMPANA-3D.md). Respeta el nivel lunar y los modelos que aporte el equipo. El motor central resuelve la entrada, los controles, el regreso, la validación, el guardado y el paso de capítulo.
+- Cada texto jugable, subtítulo y etiqueta tiene versiones `es` y `en`. El propietario genera la voz de LUMA con su modelo local. Usa los clips que entregue mediante el [manifiesto](public/assets/voice/luma/clips.json) y conserva el diálogo escrito. Después de la despedida, las expediciones posteriores usan comunicaciones de Control y archivos identificados.
 
 ## Verificación y cierre
 

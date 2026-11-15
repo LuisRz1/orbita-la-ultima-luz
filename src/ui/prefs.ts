@@ -1,7 +1,6 @@
 // Player preferences, kept per browser. Read by both the interface and the engine.
 import { createStore } from 'zustand/vanilla';
 import type { Language } from '../core/contract/grid-v1.ts';
-import { debugEnabled } from '../engine/debug.ts';
 import { lookIds, type Look } from '../engine/look.ts';
 import { tierIds, type Tier } from '../engine/quality.ts';
 
@@ -14,10 +13,10 @@ export type Prefs = { lang: Language; sensitivity: number; reduceMotion: boolean
   view: 'third' | 'first';
   /** Look of the 3D world on medium and high quality (low always uses the illustrated one). Applied on reload. */
   look: Look;
-  /** Defaults revision: 2 = showcase graphics (high quality, painted sky, effects) for every player. */
+  /** Defaults revision recorded with the player's preferences. */
   rev: number;
 };
-const currentRev = 2;
+const currentRev = 3;
 const key = 'orbita-3d-prefs';
 
 const volume = (v: unknown, fallback: number) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : fallback);
@@ -30,27 +29,25 @@ function firstLanguage(): Language {
 }
 
 function load(): Prefs {
-  const showcase = !debugEnabled();
   const base: Prefs = {
     lang: firstLanguage(), sensitivity: 1,
-    // Showcase defaults: maximum graphics. Browser tests (?debug) keep the light defaults so software rendering stays fast.
-    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: showcase ? 'high' : 'auto', master: 0.8, music: 0.7, sfx: 0.9, paintedSky: showcase, patch: null, effects: true, cinematics: true, view: 'third', look: 'realista', rev: currentRev,
+    reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches, quality: 'auto',
+    master: 0.8, music: 0.7, sfx: 0.9, paintedSky: false, patch: null,
+    effects: false, cinematics: true, view: 'third', look: 'ilustrado', rev: currentRev,
   };
   try {
     const saved = JSON.parse(localStorage.getItem(key) ?? 'null') as Partial<Prefs> | null;
     if (!saved) return base;
-    // Saves from before the showcase defaults move up to maximum graphics once; later choices are kept.
-    const upgrade = saved.rev !== currentRev;
     return {
       // An explicit ?lang= in the link wins over the saved choice, so a shared link opens in its language.
       lang: new URLSearchParams(window.location.search).has('lang') ? base.lang : saved.lang === 'en' || saved.lang === 'es' ? saved.lang : base.lang,
       sensitivity: typeof saved.sensitivity === 'number' && saved.sensitivity >= 0.3 && saved.sensitivity <= 3 ? saved.sensitivity : 1,
       reduceMotion: typeof saved.reduceMotion === 'boolean' ? saved.reduceMotion : base.reduceMotion,
-      quality: upgrade ? base.quality : saved.quality === 'auto' || tierIds.includes(saved.quality as Tier) ? saved.quality as Prefs['quality'] : 'auto',
+      quality: saved.quality === 'auto' || tierIds.includes(saved.quality as Tier) ? saved.quality as Prefs['quality'] : base.quality,
       master: volume(saved.master, base.master), music: volume(saved.music, base.music), sfx: volume(saved.sfx, base.sfx),
-      paintedSky: upgrade ? base.paintedSky : saved.paintedSky === true,
+      paintedSky: saved.paintedSky === true,
       patch: typeof saved.patch === 'string' ? saved.patch : null,
-      effects: upgrade || saved.effects !== false, cinematics: saved.cinematics !== false, view: saved.view === 'first' ? 'first' : 'third',
+      effects: saved.effects === true, cinematics: saved.cinematics !== false, view: saved.view === 'first' ? 'first' : 'third',
       look: lookIds.includes(saved.look as Look) ? saved.look as Look : base.look, rev: currentRev,
     };
   } catch { return base; }

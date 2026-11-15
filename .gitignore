@@ -33,3 +33,6 @@ brain/.DS_Store
 data-raw/
 local-saves/
 *.log
+
+.vercel
+.env*

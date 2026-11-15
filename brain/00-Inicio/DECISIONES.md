@@ -2,7 +2,7 @@
 id: decisiones-propietario
 type: decisiones
 status: acordado
-updated: 2026-11-14
+updated: 2026-11-15
 tags: [orbita, producto]
 ---
 # Decisiones del propietario
@@ -10,7 +10,9 @@ tags: [orbita, producto]
 | Tema | Decisión |
 | --- | --- |
 | Formato | Juego directo en navegador. |
-| Estética | 3D en tercera persona con cel-shading, contornos y luz horneada; interfaz densa de tipo terminal. Sustituye al pixel art 2.5D isométrico desde el 14 de noviembre ([ADR 006](../03-Arquitectura/ADR/ADR-006.md)). |
+| Estética | Tercera persona con cuerpo completo y vista de visor con `V`. Calidad automática y aspecto ilustrado de entrada. El aspecto realista y los efectos se pueden activar en Ajustes. [ADR 006](../03-Arquitectura/ADR/ADR-006.md). |
+| Exploración | Mundo abierto por regiones amplias con límites visibles, sectores conectados y rutas alternativas. `WASD` y ratón en los cuatro capítulos. |
+| Idioma y voz | Texto, diálogos y subtítulos ES/EN. El propietario genera la voz de LUMA con su modelo local e incorpora los clips por idioma. |
 | Ciencia | Futuro cercano plausible con Sistema Solar real. |
 | Duración | Objetivo de campaña completa de 12–20 horas. |
 | Fecha del evento | 14–15 de noviembre de 2026. |
@@ -24,7 +26,7 @@ tags: [orbita, producto]
 | Viaje espacial | Pilotaje directo y trayectos largos acelerados; la vista pasa a 3D cuando el capítulo 1 se integre. |
 | Movimiento | A pie con doble salto y dash; su coste de energía depende del traje diseñado. |
 | Logros | Opcionales; nunca bloquean la historia. |
-| Commits | Los hace el propietario; los agentes no hacen commit, push ni despliegue. |
+| Commits y publicación | El propietario coordina los commits y autorizó integrar y publicar la entrega del 15 de noviembre en GitHub y Vercel. |
 | Coste de IA | Sin pagos por ahora; solo acceso gratuito disponible. |
 | Repositorio | Código y assets en el repositorio público [LuisRz1/orbita-la-ultima-luz](https://github.com/LuisRz1/orbita-la-ultima-luz). La planificación original y los Issues se conservan en nasa-orbita. |
 | Demo | Pública y jugable sin registro. |
@@ -52,3 +54,7 @@ El propietario indicó en la sesión del 15-nov-2026 («olvida mi gráfica, no t
 ## 15 de noviembre: aspecto realista
 
 El 15-nov-2026 el propietario pidió pasar del aspecto ilustrado (tinta y sombreado en tres tonos) a uno realista, inspirado en las técnicas de [Valle Morta](https://github.com/Leonxlnx/valle-morta) (MIT), y conservar el ilustrado como ajuste. Decidido: realista por defecto en calidad media y alta; la calidad baja usa el ilustrado salvo `?look=realista`. Se reimplementan las ideas; no se copian recursos. Ver [ADR-006](../03-Arquitectura/ADR/ADR-006.md).
+
+## Entrega del 15 de noviembre
+
+La última indicación del propietario bajó el coste gráfico de entrada. Se abre la configuración antes de cargar el motor, el acabado ilustrado usa texturas procedurales y los efectos avanzados se habilitan desde Ajustes. La historia y la secuencia de los cuatro capítulos siguen la ficha de campaña.

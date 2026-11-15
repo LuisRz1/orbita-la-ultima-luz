@@ -1,6 +1,7 @@
-import { PerspectiveCamera, Vector3, type MeshBasicMaterial } from 'three';
+import { MathUtils, PerspectiveCamera, Vector3, type BufferAttribute, type MeshBasicMaterial } from 'three';
 import { buildHeightfield, heightAt, slopeAt } from '../core/heightfield.ts';
 import { createBody, groundAt, stepBody, type Body, type Ground } from '../core/movement.ts';
+import type { LevelModule } from '../levels/registry.ts';
 import { emptyProgress, readProgress, writeProgress, type Progress } from '../core/save/progress3d.ts';
 import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
 import { beaconCost, beaconInReach } from '../core/beacons.ts';
@@ -27,14 +28,19 @@ import { tuning } from './tuning.ts';
 import { buildInterior, type StationId } from './interior.ts';
 import { buildWorldView, palette } from './world-view.ts';
 import { biome, setBiome } from './style.ts';
-import { zoneDrain, type Vec2 } from '../core/contract/level-v2.ts';
+import { bulkheadColliders, zoneDrain, type Vec2 } from '../core/contract/level-v2.ts';
 import { cooldownLeft, createAbilities, glowRelief, hazardAhead, highEcho, sniffTarget, trail, type ScentKind } from '../core/luma-abilities.ts';
 import { createFx } from './fx.ts';
 import { createPost, type Post } from './post.ts';
 import { arrivalShot, type Shot, type ShotFrame } from './cinematic.ts';
 import { debugEnabled } from './debug.ts';
+import { playLumaLine, stopLumaLine } from './voice.ts';
 
 export type Game = { dispose(): void };
+export type GameOptions = {
+  module: LevelModule; site: string; chapter: number; autostart: boolean; luma?: boolean;
+  saveId?: string; entryDesign?: SuitDesign;
+};
 
 /** Recorded LUMA lines known at build time (lang/level/key-index.m4a); lines without a recording stay silent. */
 const lumaVoices = import.meta.glob('../assets/voice/luma/*/*/*.m4a', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
@@ -62,11 +68,29 @@ const angleLerp = (a: number, b: number, t: number) => {
 };
 
 /** Mounts the engine with the requested level. Resolves once the level is built and the first frame is queued. */
-export async function createGame(host: HTMLElement): Promise<Game> {
+export async function createGame(host: HTMLElement, options?: GameOptions, signal?: AbortSignal): Promise<Game> {
   const { levels, requestedLevel, route, levelUrl } = await import('../levels/registry.ts');
-  const levelId = requestedLevel(window.location.search);
-  const { level, dialogue: baseScript, facts, biome: biomeId, personalize } = await levels[levelId]();
+  const levelId = options?.site ?? requestedLevel(window.location.search);
+  const { level, dialogue: baseScript, facts, biome: biomeId, personalize } = options?.module ?? await levels[levelId]();
+  const saveId = options?.saveId ?? (options ? level.mission : level.id);
+  let progress: Progress = emptyProgress(saveId, proposals[0].design);
+  let saveError = false;
+  try {
+    const saved = await readProgress(saveId);
+    if (saved && saved !== 'invalid') progress = saved;
+  } catch { saveError = true; }
   let script = baseScript;
+  const saves = new Map<string, Progress | null>();
+  if (!options) {
+    await Promise.all(route.map(async r => {
+      try {
+        const p = r.id === levelId ? progress : await readProgress(r.id);
+        saves.set(r.id, p && p !== 'invalid' ? p : null);
+      } catch { saves.set(r.id, null); }
+    }));
+  }
+  if (personalize) script = { ...baseScript, ...personalize(gatherMemories(saves.values())) };
+  signal?.throwIfAborted();
   // The look and the palette must be chosen before any material, texture or model is built.
   const tier = startingTier();
   setLook(resolveLook(window.location.search, prefs.getState().look, tier));
@@ -76,6 +100,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   audio.setStorm(0);
   const viewport = createViewport(host, tier);
   const hf = buildHeightfield(level.terrain.size, level.terrain.res, level.terrain.height);
+  const bay = level.pressurizedBay, course = level.anchorCourse, berth = level.companionBerth, site = options?.site;
+  const bulkheads = bay ? bulkheadColliders(bay) : [];
   const ground: Ground = { height: (x, z) => heightAt(hf, x, z), slope: (x, z) => slopeAt(hf, x, z), solids: level.props.map(p => p.solid) };
   const view = buildWorldView(level, hf, tier, viewport.renderer);
   const interior = buildInterior();
@@ -124,7 +150,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   let crewStart: number | null = null;
   /** Geophones carried this sortie (S1), and when the cosmetic quake happens once the network is complete. */
   let carrying = 0, quakeAt = Infinity, quakeUntil = 0;
-  let stepDistance = 0, lastLine: unknown = null, pendingZoneLine: string | null = null;
+  let stepDistance = 0, lastLine: unknown = null, lastLang = '', pendingZoneLine: string | null = null;
   /** LUMA's abilities this sortie (luma-abilities.ts): its run along a scent trail, a fetch and its alert posture. */
   let abilities = createAbilities(level.id);
   let lumaRun: { start: number; marks: Vec2[]; until: number } | null = null;
@@ -134,7 +160,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   /** Arrival shot (cinematic.ts): plays on the first sortie of a visit; the sortie begins when it ends or is skipped. */
   let cine: { shot: Shot; start: number; touched: boolean } | null = null, arrived = false;
   const shotFrame: ShotFrame = { position: new Vector3(), look: new Vector3(), focus: 8 };
-  const cinematicsOn = () => prefs.getState().cinematics && !prefs.getState().reduceMotion
+  const cinematicsOn = () => !options?.autostart && prefs.getState().cinematics && !prefs.getState().reduceMotion
     && (!debugEnabled() || new URLSearchParams(window.location.search).has('cinematic'));
   /** Camera feel: field-of-view kick after a dash and a short shake after a hard landing. */
   let fovKick = 0, shake = 0, fallSpeed = 0;
@@ -145,27 +171,14 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
 
-  let progress: Progress = emptyProgress(level.id, proposals[0].design);
-  let saveError = false;
-  try {
-    const saved = await readProgress(level.id);
-    if (saved && saved !== 'invalid') progress = saved;
-  } catch { saveError = true; }
+  let disposed = false;
   const save = () => writeProgress(progress).then(() => { saveError = false; }).catch(() => { saveError = true; }).finally(() => publish(true));
 
   // Destinations follow the story order: each opens once the previous one has a completed sortie. A destination
   // already played (it has attempts of its own) stays open, so the player can always go back to it.
   const completedHere = () => progress.attempts.some(a => a.outcome === 'complete');
   const unlocked = new Set<string>([route[0].id, levelId]);
-  const saves = new Map<string, Progress | null>();
-  for (const r of route) {
-    try {
-      const p = r.id === levelId ? progress : await readProgress(r.id);
-      saves.set(r.id, p && p !== 'invalid' ? p : null);
-    } catch { saves.set(r.id, null); /* storage unavailable: only the current destination is listed */ }
-  }
   const ruinsEverywhere = () => [...new Set([...[...saves.values()].flatMap(p => p?.ruins ?? []), ...progress.ruins])];
-  if (personalize) script = { ...baseScript, ...personalize(gatherMemories(saves.values())) };
   route.forEach((r, i) => {
     const own = saves.get(r.id), prior = i > 0 ? saves.get(route[i - 1].id) : null;
     if (own?.attempts.length || prior?.attempts.some(a => a.outcome === 'complete')) unlocked.add(r.id);
@@ -173,7 +186,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   // ?demo opens every destination for a quick tour (judges, presentations). It writes nothing to the saves.
   if (new URLSearchParams(window.location.search).has('demo')) for (const r of route) unlocked.add(r.id);
   const routeIndex = route.findIndex(r => r.id === levelId);
-  const nextStop = routeIndex >= 0 && routeIndex < route.length - 1 ? route[routeIndex + 1] : null;
+  const nextStop = !options && routeIndex >= 0 && routeIndex < route.length - 1 ? route[routeIndex + 1] : null;
   // Travelling fades to black first, then loads the destination.
   let leavingTo: string | null = null;
   const travel = (id: string) => {
@@ -208,12 +221,22 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const lumaPos = new Vector3(body.x + 1, body.y + 1.6, body.z + 1);
   const camPos = new Vector3(), target = new Vector3();
   let camDist = 6.4;
+  let hatchOpenedAt = 0, releasing = 0;
+  const done = (id: string) => sortie.session.completed.includes(id);
+  const nearestAnchor = (x: number, z: number) => course?.anchors.reduce((nearest, anchor) =>
+    Math.hypot(anchor.x - x, anchor.z - z) < Math.hypot(nearest.x - x, nearest.z - z) ? anchor : nearest);
+  const link = () => signalAt(level, body.x, body.z, options
+    ? Math.min(level.comms.radius, sortie.stats.commsRadius + (level.comms.radius > 100 ? 10 : 0))
+    : sortie.stats.commsRadius);
 
   const untag = (v: string) => v.replace(/^LUMA:\s*/, '');
   /** LUMA is with the player unless the level makes it join later (chapter 1: once the protected bay is open). */
   // LUMA's death is permanent: after the farewell level is complete it never appears or speaks there again.
   const lumaGone = () => !!level.farewell && progress.attempts.some(a => a.outcome === 'complete') && !dialogue;
-  const lumaHere = () => !lumaGone() && (!level.companionAfter || (phase === 'eva' && sortie.session.completed.includes(level.companionAfter)));
+  const lumaHere = () => options?.luma !== false && site !== 'ground' && site !== 'eva' && site !== 'earth'
+    && (!berth || done('protected-bay')) && !lumaGone() && (!level.companionAfter || (phase === 'eva' && done(level.companionAfter)));
+  const canTalk = () => phase === 'eva' && !paused && !dialogue && !recalling && !returning && !ending
+    && lumaHere() && (!berth || done('translator') && !done('capsule-auth')) && !!script.chat;
   const carried = () => !!level.carryAfter && phase === 'eva' && sortie.session.completed.includes(level.carryAfter);
   const tell = (text: Notice['text'], tone: Notice['tone'] = 'luma') => {
     // Before LUMA has joined, its messages come from the suit system instead.
@@ -225,11 +248,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   const guide = (luma: Notice['text'], control: Notice['text']) => (lumaHere() ? luma : control);
 
   /** Plays a story sequence once per save. */
-  function play(key: string) {
+  function play(key: string, repeat = false) {
     const lines = script[key];
-    if (!lines || progress.seen.includes(key)) return;
-    progress = { ...progress, seen: [...progress.seen, key] };
-    void save();
+    if (!lines?.length || !repeat && progress.seen.includes(key)) return;
+    if (!repeat) { progress = { ...progress, seen: [...progress.seen, key] }; void save(); }
     dialogue = { key, lines, index: 0 };
     publish(true);
   }
@@ -237,7 +259,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (!dialogue) return;
     audio.play('click');
     dialogue.index++;
-    if (dialogue.index >= dialogue.lines.length) { dialogue = null; audio.stopVoice(); }
+    if (dialogue.index >= dialogue.lines.length) { dialogue = null; stopLumaLine(); }
     publish(true);
   }
   function award(event: GameEvent) {
@@ -252,9 +274,14 @@ export async function createGame(host: HTMLElement): Promise<Game> {
 
   function teleport(x: number, z: number) {
     body = createBody(x, z, activeGround);
+    view.player.rotation.y = body.facing + Math.PI;
+    view.astronaut.resetMotion();
     Object.assign(prev, { x: body.x, y: body.y, z: body.z });
     safeSpots = []; safeClock = 0;
-    lumaPos.set(x + 1, body.y + 1.6, z + 1);
+    if (berth && phase !== 'ship' && !done('translator')) {
+      const spot = done('rest') ? berth.rest : berth.hatch;
+      lumaPos.set(spot.x, done('rest') ? .51 : .62, spot.z);
+    } else lumaPos.set(x + 1, body.y + 1.6, z + 1);
   }
 
   function resetPointsView() {
@@ -264,16 +291,26 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       (v.beam.material as MeshBasicMaterial).color.set(done ? palette.warn : palette.accent);
       (v.ring.material as MeshBasicMaterial).color.set(done ? palette.warn : palette.accent);
       v.beam.scale.y = done ? 0.15 : 1;
+      if (options) v.beam.visible = v.ring.visible = done || missingFor(level, sortie.session, p).length === 0;
     }
     for (const [id, m] of view.echoes) m.visible = !progress.echoes.includes(id);
     for (const id of view.specimens.keys()) view.setScanned(id, progress.atlas.includes(id));
     for (const id of view.beacons.keys()) view.setBeacon(id, progress.beacons.includes(id));
     for (const id of view.geophones.keys()) view.setGeophone(id, progress.geophones.includes(id));
+    ground.solids = [...bulkheads, ...level.props.filter(p => {
+      const visible = p.kind === 'gate' ? done('disconnect') && (releasing > 0 || !done('life-line'))
+        : !p.hideAfter || !done(p.hideAfter);
+      const model = view.hardware.get(p);
+      if (model) model.visible = visible;
+      return visible;
+    }).map(p => p.solid)];
+    view.luma.visible = lumaHere();
   }
 
   function start(design: SuitDesign) {
     if (assessSuit(design).problems.length) return;
     sortie = startSortie(design);
+    releasing = 0;
     crewStart = null; carrying = 0; quakeUntil = 0;
     if (fetching) view.echoes.get(fetching.id)!.position.copy(fetching.home);
     abilities = createAbilities(level.id); lumaRun = null; fetching = null; alertUntil = 0; quakeWarned = false; warmth = 0;
@@ -451,6 +488,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   commands.resume = () => { paused = false; publish(true); };
   commands.abandon = toDesign;
   commands.advance = advance;
+  commands.talk = () => { if (canTalk()) play('chat', true); };
   commands.travel = travel;
 
   /** Atlas scan: optional, costs one unit above the reserve and is saved at once, even if the sortie ends in a recall. */
@@ -600,19 +638,30 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   }
 
   function updateEva(dt: number) {
-    const params = suitMovement({ ...tuning, ...level.movement }, sortie.stats);
+    const params = suitMovement({ ...tuning, ...level.movement, ...(course ? { runSpeed: site === 'bennu' ? 5.5 : 4.5 } : {}) }, sortie.stats);
     const k = input.look.yaw, fx = -Math.sin(k), fz = -Math.cos(k), rx = Math.cos(k), rz = -Math.sin(k);
     const ax = (input.isHeld('right') ? 1 : 0) - (input.isHeld('left') ? 1 : 0);
     const ay = (input.isHeld('up') ? 1 : 0) - (input.isHeld('down') ? 1 : 0);
     Object.assign(prev, { x: body.x, y: body.y, z: body.z });
-    const frozen = recalling || ending > 0;
-    let dash = !frozen && input.wasPressed('dash');
+    const frozen = recalling || ending > 0 || releasing > 0;
+    let dash = !course && !frozen && input.wasPressed('dash');
     if (dash && spendable(sortie) < dashCost) { dash = false; tell(say('Energía en reserva: sin dash.', 'Energy at reserve: no dash.'), 'warn'); }
     if (!body.grounded && spendable(sortie) < sortie.stats.airJumpCost) body.airJumpsLeft = 0;
     const events = stepBody(body, frozen ? { x: 0, z: 0, jump: false, jumpHeld: false, dash: false } : {
       x: fx * ay + rx * ax, z: fz * ay + rz * ax,
-      jump: input.wasPressed('jump'), jumpHeld: input.isHeld('jump'), dash,
+      jump: !course && input.wasPressed('jump'), jumpHeld: !course && input.isHeld('jump'), dash,
     }, ground, params, dt);
+    const anchor = nearestAnchor(body.x, body.z);
+    if (course && anchor && Math.hypot(body.x - anchor.x, body.z - anchor.z) > course.length) {
+      Object.assign(body, prev, { vx: 0, vz: 0 });
+      if (notice?.tone !== 'warn' || time - notice.at > 3) {
+        tell(say('Línea tensa. Busca el siguiente poste iluminado.', 'Tether taut. Follow the next lit anchor.'), 'warn');
+      }
+    }
+    if (releasing > 0) {
+      releasing = Math.max(0, releasing - dt);
+      if (!releasing) { audio.play('objective'); resetPointsView(); }
+    }
     if (events.dashed) { spend(sortie, 'dash', dashCost); award({ kind: 'dash' }); view.dust.burst(body.x, body.y, body.z, 16, 1.6); audio.play('dash'); fovKick = 1; post?.kick(0.5); }
     if (events.landed) {
       // Harder landings throw more dust and shake the camera a little.
@@ -634,13 +683,22 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       }
     }
 
-    if (!frozen && input.wasPressed('interact')) {
+    const nearby = options && pointInReach(level, sortie.session, body.x, body.z);
+    if (!frozen && (input.wasPressed('interact') || nearby && nearby.action === 'scan' && input.wasPressed('scan'))) {
       const result = sortieInteract(level, sortie, body.x, body.z);
       if (result.ok) {
         audio.play(result.point.action === 'scan' ? 'scan' : 'objective');
         vfx.pulse(body.x, body.y, body.z, result.point.action === 'scan' ? 16 : 7, result.point.action === 'scan' ? biome.cyan : biome.amber);
+        view.astronaut.act(result.point.action);
+        const { x, z } = result.point.position;
+        if (Math.hypot(x - body.x, z - body.z) > .25) body.facing = Math.atan2(x - body.x, z - body.z);
+        if (berth && result.point.id === 'protected-bay') {
+          hatchOpenedAt = time;
+          lumaPos.set(berth.hatch.x, .62, berth.hatch.z);
+        }
+        if (site === 'service' && result.point.id === 'life-line') releasing = 2.6;
         resetPointsView();
-        tell(result.point.result);
+        tell(result.point.result, level.id === 'orbit' ? 'system' : 'luma');
         if (sortie.outcome === 'complete') ending = 1.2;
         // Contingency: a point can set off a hazard (the relay repair on Mars brings a dust front over the dunes).
         const surge = level.zones.find(z => z.surge?.after === result.point.id)?.surge;
@@ -675,7 +733,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const picked = collect(level, sortie.session, body.x, body.y, body.z, (x, z) => heightAt(hf, x, z));
     for (const id of picked) gainEcho(id);
 
-    if (!frozen && input.wasPressed('luma')) callLuma();
+    if (!frozen && input.wasPressed('luma') && (!berth || done('translator') && !done('capsule-auth'))) callLuma();
     // R: free scanner sweep over the ground. Purely a look around: it shows nothing the map does not.
     if (!frozen && input.wasPressed('scan')) { vfx.pulse(body.x, body.y, body.z, 18, biome.cyan); audio.play('scan'); }
     if (fetching && time - fetching.start > 2.2) {
@@ -782,7 +840,7 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     }
 
     // Radio link: losing it for a moment is a warning; losing it for longer triggers LUMA's recall.
-    const signal = signalAt(level, body.x, body.z, sortie.stats.commsRadius);
+    const signal = link();
     lostFor = signal <= 0 ? lostFor + dt : 0;
     if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae: vuelve hacia el centro de la zona de enlace.', 'Signal fading: head back toward the middle of the link area.'), 'warn');
     if (lostFor > 1.5 && !recalling) {
@@ -802,7 +860,6 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (ending > 0) { ending -= dt; if (ending <= 0) { finish(); return; } }
 
     idleFor = moving ? 0 : idleFor + dt;
-    if (moving && !firstPerson() && performance.now() - input.lastLook > 1800) input.look.yaw = angleLerp(input.look.yaw, Math.atan2(-body.dirX, -body.dirZ), dt * 0.9);
     if (events.landed || events.dashed || events.airJumped) publish(true);
   }
 
@@ -834,23 +891,32 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (phase === 'ship' && input.locked) document.exitPointerLock();
     audio.mood(currentMood());
     audio.lumaMotif(phase === 'eva' && lumaHere() && !carried());
-    audio.tick(phase === 'eva' && !paused ? signalAt(level, body.x, body.z, sortie.stats.commsRadius) : 1,
+    audio.tick(phase === 'eva' && !paused ? link() : 1,
       phase === 'eva' && !paused && spendable(sortie) < 15);
     const line = dialogue ? dialogue.lines[dialogue.index] : null;
-    if (line && line !== lastLine && dialogue) {
+    const lang = prefs.getState().lang;
+    if (line && (line !== lastLine || lang !== lastLang) && dialogue) {
       audio.play(line.speaker === 'LUMA' ? 'luma' : 'control');
-      // LUMA speaks through the translator: a recorded line per language, if one exists for this line.
-      const voiceUrl = lumaVoices[`../assets/voice/luma/${prefs.getState().lang}/${level.id}/${dialogue.key.replace(/:/g, '_')}-${dialogue.index}.m4a`];
+      // Only use bundled clips whose dialogue matches the active scene.
+      const recordedLevel = !options || site === 'moon' || site === 'station' && dialogue.key === 'point:translator' ? level.id : null;
+      const voiceUrl = recordedLevel && lumaVoices[`../assets/voice/luma/${lang}/${recordedLevel}/${dialogue.key.replace(/:/g, '_')}-${dialogue.index}.m4a`];
+      stopLumaLine();
       if (line.speaker === 'LUMA' && voiceUrl) audio.voice(voiceUrl);
-      else audio.stopVoice();
+      else if (line.speaker === 'LUMA' && options) void playLumaLine(site!, dialogue.key, dialogue.index, lang);
     }
-    lastLine = line;
+    lastLine = line; lastLang = lang;
     // Losing pointer lock in the middle of a sortie (Esc, alt-tab) pauses it.
     const locked = input.locked;
     const lostLock = wasLocked && !locked;
     // Esc releases the mouse first: it pauses even with a story line open (the line waits under the pause menu).
     if (lostLock && phase === 'eva' && !photo) { paused = true; publish(true); }
     wasLocked = locked;
+    if (document.querySelector('dialog[data-campaign-journal][open]')) { input.endStep(); return; }
+    if (phase === 'eva' && input.wasPressed('center')) {
+      input.look.yaw = Math.atan2(-body.dirX, -body.dirZ);
+      input.look.pitch = .32; input.zoom = 6.4;
+    }
+    if (input.wasPressed('talk')) commands.talk();
     if (dialogue && !paused && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();
     else if (phase === 'eva' && input.wasPressed('pause') && !lostLock && !photo) { paused = !paused; publish(true); }
     // V switches the camera live at any moment of a sortie, story lines included; in the lander it is remembered for
@@ -882,12 +948,20 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       Object.assign(prev, { x: body.x, y: body.y, z: body.z });
       if (phase !== 'eva') fade = Math.max(0, fade - dt * 1.5);
     }
+    const heading = body.facing + Math.PI;
+    const turn = Math.sin(heading - view.player.rotation.y);
+    view.player.rotation.y = angleLerp(view.player.rotation.y, heading, 1 - Math.exp(-dt * 17));
+    const moving = phase === 'ship' || phase === 'eva' && !paused && !dialogue;
+    view.astronaut.animate(paused && phase === 'eva' ? 0 : dt, {
+      speed: moving ? Math.hypot(body.vx, body.vz) : 0, grounded: body.grounded, vertical: body.vy, turn,
+      boosting: body.dash > 0 && moving, tethered: !!course,
+    });
     input.endStep();
   }
 
   let sincePublish = 0;
   function publish(now = false) {
-    if (!now && sincePublish < 100) return;
+    if (disposed || !now && sincePublish < 100) return;
     sincePublish = 0;
     const reach = phase === 'eva' ? pointInReach(level, sortie.session, body.x, body.z) : null;
     const needs = reach ? instrumentFor[reach.action] : undefined;
@@ -907,10 +981,11 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       compass: { heading: input.look.yaw + Math.PI, marks },
       ready: true, phase, tier, frameMs: viewport.governor.average, renderScale: viewport.governor.scale,
       drawCalls: frameStats().calls || info.calls, triangles: frameStats().triangles || info.triangles,
-      levelTitle: level.title, briefing: level.briefing,
+      levelTitle: level.title, levelSubtitle: level.subtitle, briefing: level.briefing,
       objectives: level.points.map(p => ({ id: p.id, title: p.title, required: p.required, done: sortie.session.completed.includes(p.id), action: p.action, power: p.power })),
       echoes: { found: progress.echoes.length, total: level.collectibles.length },
-      prompt: reach ? { verb: verbs[reach.action], title: reach.title, cost: actionCost(reach.power, reach.action, sortie.design),
+      prompt: reach ? { verb: level.id === 'orbit' && reach.action === 'service' ? say('Usar', 'Use') : verbs[reach.action],
+        title: reach.title, hint: reach.hint, cost: actionCost(reach.power, reach.action, sortie.design),
         blocked: missingFor(level, sortie.session, reach).map(id => level.points.find(p => p.id === id)!.title),
         missing: needs && !sortie.design.instruments.includes(needs) ? instruments[needs].name : null }
         : ruin ? { verb: say('Abrir', 'Open'), title: ruin.title, cost: ruin.cost, blocked: [], missing: null }
@@ -928,13 +1003,13 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       pages: { found: progress.ruins.length, total: level.ruins?.length ?? 0 },
       beacons: { lit: progress.beacons.length, total: level.beacons?.posts.length ?? 0 },
       atlas: { found: progress.atlas.length, total: level.specimens?.length ?? 0 },
-      notice, signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), fade, locked: input.locked,
+      notice, signal: link(), fade, locked: input.locked, canTalk: canTalk(), tethered: !!course,
       player: { x: body.x, y: body.y, z: body.z, speed: Math.hypot(body.vx, body.vz), grounded: body.grounded },
       realGravity: level.realGravity, elapsed: sortie.time, now: time,
       design: progress.design, energy: sortie.energy, capacity: sortie.stats.capacity,
       draining: cold && phase === 'eva' ? (here?.hazard === 'dust' ? say('polvo', 'dust') : here?.hazard === 'sun' ? say('sol', 'sun') : say('frío', 'cold')) : null,
       levelId, facts, outcome: level.outcome,
-      destinations: route.map(r => ({ id: r.id, name: r.name, current: r.id === levelId, unlocked: unlocked.has(r.id) })),
+      destinations: options ? [] : route.map(r => ({ id: r.id, name: r.name, current: r.id === levelId, unlocked: unlocked.has(r.id) })),
       next: nextStop && unlocked.has(nextStop.id) && completedHere() ? { id: nextStop.id, name: nextStop.name } : null,
       attempts: progress.attempts, saveError,
       paused, dialogue: dialogue ? dialogue.lines[dialogue.index] : null, toast, achievements: progress.achievements,
@@ -1035,11 +1110,12 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     viewport.tick(frameMs);
     const px = prev.x + (body.x - prev.x) * alpha, py = prev.y + (body.y - prev.y) * alpha, pz = prev.z + (body.z - prev.z) * alpha;
     view.player.position.set(px, py, pz);
-    view.player.rotation.y = angleLerp(view.player.rotation.y, body.facing + Math.PI, Math.min(1, frameMs / 60));
     const frameDt = Math.min(0.1, frameMs / 1000);
     view.astronaut.setBattery(sortie.energy / sortie.stats.capacity, phase === 'eva' && spendable(sortie) <= 0.5);
-    view.astronaut.animate((phase === 'eva' && !paused && !dialogue) || phase === 'ship' ? frameDt : 0, Math.hypot(body.vx, body.vz), body.grounded, body.vy);
-    view.lumaModel.animate(time, idleFor > 2, Math.max(0, Math.min(1, (alertUntil - time) * 2)));
+    const waitingInBerth = !!berth && (!done('translator') || done('capsule-auth'));
+    const sayingGoodbye = site === 'service' && done('safe-bay');
+    const vitality = sayingGoodbye ? (dialogue ? .39 : Math.min(.39, ending / 1.2 * .39)) : 1;
+    view.lumaModel.animate(time, waitingInBerth || idleFor > 2, Math.max(0, Math.min(1, (alertUntil - time) * 2)), vitality);
     view.luma.visible = lumaHere();
     view.player.visible = !(firstPerson() && !photo);
     // The blob stays where no shadow map reaches: low quality, the illustrated look and the lander's interior.
@@ -1083,10 +1159,36 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       const k = input.look.yaw;
       target.set(px - Math.sin(k) * 2.9 + Math.cos(k) * 1.5, py + 1.25, pz - Math.cos(k) * 2.9 - Math.sin(k) * 1.5);
     } else target.set(px - Math.sin(body.facing) * 1.2 + Math.cos(body.facing) * 0.9, py + 1.7, pz - Math.cos(body.facing) * 1.2 - Math.sin(body.facing) * 0.9);
+    if (berth) {
+      if (done('capsule-auth')) target.set(berth.secured.x, .48, berth.secured.z);
+      else if (!done('translator')) {
+        const rest = done('rest'), spot = rest ? berth.rest : berth.hatch;
+        const peek = prefs.getState().reduceMotion || rest || !done('protected-bay')
+          ? 0 : Math.min(.58, Math.max(0, time - hatchOpenedAt) * .24);
+        target.set(spot.x - peek, rest ? .51 : .62, spot.z);
+      } else target.y = py + .47;
+    }
+    if (site === 'service' && releasing > 0) {
+      const fraction = 1 - releasing / 2.6;
+      target.set(fraction < .64 ? 7.65 : 7.65 - (fraction - .64) * 11, .75, -6 + 15 * fraction);
+    }
+    if (site === 'service' && done('life-line') && !releasing) target.set(px + .45, py + 1.05, pz - .33);
+    if (sayingGoodbye) target.set(px + .64, py + .21, pz - .72);
     lumaPos.lerp(target, smooth());
-    view.luma.position.set(lumaPos.x, lumaPos.y + (prefs.getState().reduceMotion || carried() ? 0 : Math.sin(time * 2.2) * 0.12), lumaPos.z);
+    const hover = prefs.getState().reduceMotion || carried() || waitingInBerth ? 0 : Math.sin(time * 2.2) * .12 * vitality;
+    view.luma.position.set(lumaPos.x, lumaPos.y + hover, lumaPos.z);
     view.luma.scale.setScalar(carried() ? 0.8 : 1);
     view.luma.rotation.y = lumaRun ? Math.atan2(lumaRun.marks.at(-1)!.x - lumaPos.x, lumaRun.marks.at(-1)!.z - lumaPos.z) + Math.PI : Math.atan2(px - lumaPos.x, pz - lumaPos.z) + Math.PI;
+    if (view.anchorLine) {
+      const anchor = nearestAnchor(px, pz);
+      view.anchorLine.visible = !!anchor && phase === 'eva';
+      if (anchor) {
+        const points = view.anchorLine.geometry.attributes.position as BufferAttribute;
+        points.setXYZ(0, anchor.x, heightAt(hf, anchor.x, anchor.z) + 1, anchor.z);
+        points.setXYZ(1, px, py + 1.03, pz);
+        points.needsUpdate = true;
+      }
+    }
     vfx.warmth(lumaPos.x, heightAt(hf, lumaPos.x, lumaPos.z) + 0.3, lumaPos.z, phase === 'eva' && warmth > 0 ? 0.5 : 0);
     vfx.update(time, frameDt);
 
@@ -1132,13 +1234,20 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         for (const f of [0.35, 0.7, 1]) {
           const cx = px + Math.sin(yaw) * Math.cos(pitch) * dist * f, cz = pz + Math.cos(yaw) * Math.cos(pitch) * dist * f;
           const cy = py + 1.5 + Math.sin(pitch) * dist * f;
-          if (heightAt(hf, cx, cz) + 0.5 > cy) { clear = false; break; }
+          const behindBulkhead = bay && (cx < bay.min.x + .48 || cx > bay.max.x - .48 ||
+            cz < bay.min.z + .48 || cz > bay.max.z - .48 || cy > bay.ceiling - .3);
+          if (behindBulkhead || heightAt(hf, cx, cz) + 0.5 > cy) { clear = false; break; }
         }
         if (clear) break;
       }
       camDist += (dist - camDist) * Math.min(1, frameMs / 1000 * (dist < camDist ? 14 : 4));
       camPos.set(px + Math.sin(yaw) * Math.cos(pitch) * camDist, py + 1.5 + Math.sin(pitch) * camDist, pz + Math.cos(yaw) * Math.cos(pitch) * camDist);
       camPos.y = Math.max(camPos.y, heightAt(hf, camPos.x, camPos.z) + 0.6);
+      if (bay) {
+        camPos.x = MathUtils.clamp(camPos.x, bay.min.x + .48, bay.max.x - .48);
+        camPos.z = MathUtils.clamp(camPos.z, bay.min.z + .48, bay.max.z - .48);
+        camPos.y = Math.min(camPos.y, bay.ceiling - .3);
+      }
       camera.position.copy(camPos);
       // Cosmetic quake (S1 complete): one second of small shake, skipped with reduced motion.
       if (time < quakeUntil && !calm) camera.position.add(target.set(Math.sin(time * 61) * 0.06, Math.sin(time * 47) * 0.05, Math.cos(time * 53) * 0.06));
@@ -1173,8 +1282,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     state: () => ({ steps: loop.steps, paused: loop.paused, gamePaused: paused, dialogue: !!dialogue, tier, look: look.id, shadows: view.lighting.shadows, phase, x: body.x, y: body.y, z: body.z, grounded: body.grounded,
       zone, storm, level: levelId, unlocked: [...unlocked], ledger: { ...sortie.ledger }, luma: lumaHere(),
       completed: [...sortie.session.completed], collected: [...progress.echoes], recalls: sortie.session.recalls, falls: sortie.session.falls,
-      signal: signalAt(level, body.x, body.z, sortie.stats.commsRadius), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length,
+      signal: link(), energy: sortie.energy, outcome: sortie.outcome, attempts: progress.attempts.length,
       cinematic: !!cine, fov: camera.fov, view: firstPerson() ? 'first' : 'third', photo, camera: camera.position.toArray(),
+      cameraLook: { ...input.look }, companion: lumaHere(), companionAt: { x: lumaPos.x, z: lumaPos.z },
+      gate: level.props.some(p => p.kind === 'gate' && view.hardware.get(p)?.visible),
       lumaAbilities: { readyIn: cooldownLeft(abilities, sortie.time), fetchesLeft: abilities.fetchesLeft, warned: [...abilities.warned], sniffs: abilities.sniffs,
         running: !!lumaRun, fetching: fetching?.id ?? null, warmth: sortie.lumaWarmth, relief: warmth, trail: lumaRun?.marks.length ?? 0 } }),
     step: (count: number) => loop.step(count),
@@ -1185,6 +1296,10 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     press: (action: Actions) => input.press(action),
     hold: (action: Actions, down: boolean) => input.hold(action, down),
     look: (yaw: number, pitch: number) => { input.look.yaw = yaw; input.look.pitch = pitch; },
+    pose: () => ['astronaut rig', 'left hip', 'right hip', 'left knee', 'right knee', 'torso', 'right elbow'].map(name => {
+      const part = view.player.getObjectByName(name)!;
+      return [part.rotation.x, part.rotation.y, part.rotation.z, part.position.y];
+    }),
     start: (design: SuitDesign | string) => start(typeof design === 'string' ? proposals.find(p => p.id === design)!.design : design),
     // Spends through the ledger so the report stays consistent with the battery level.
     menu: () => commands.toMenu(),
@@ -1199,11 +1314,16 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   });
   resetPointsView();
   view.astronaut.setLoadout(progress.design);
+  if (options) {
+    if (options.autostart) start(options.entryDesign ?? progress.design);
+    else enterShip(false);
+  }
   publish(true);
   loop.start();
 
   return {
     dispose() {
+      disposed = true;
       loop.stop();
       hideDebug();
       input.dispose();
@@ -1212,6 +1332,9 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       window.removeEventListener('keydown', unlockAudio);
       document.removeEventListener('visibilitychange', onVisibility);
       audio.mood('silent');
+      stopLumaLine();
+      post?.dispose();
+      enterWorld('surface');
       view.dispose();
       interior.dispose();
       viewport.dispose();

@@ -26,7 +26,7 @@ export const prologueLines: { text: Localized; cue: Cue; tag: Localized }[] = [
 /** Reading time when a line has no recording (or audio is blocked): about 2.6 words per second, at least 2.4 s. */
 const readTime = (text: string) => Math.max(2.4, text.split(/\s+/).length / 2.6);
 
-export function Prologue() {
+export function Prologue({ onFinish }: { onFinish?: () => void } = {}) {
   const { t, lang } = useT();
   const [index, setIndex] = useState(0);
   const [shown, setShown] = useState(false);
@@ -36,7 +36,8 @@ export function Prologue() {
     done.current = true;
     sound.stopVoice();
     hud.setState({ prologue: false });
-    commands.newGame();
+    if (onFinish) onFinish();
+    else commands.newGame();
   };
 
   useEffect(() => {
