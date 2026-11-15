@@ -22,6 +22,9 @@ import { zoneDrain } from '../core/contract/level-v2.ts';
 
 export type Game = { dispose(): void };
 
+/** Recorded LUMA lines known at build time (lang/level/key-index.m4a); lines without a recording stay silent. */
+const lumaVoices = import.meta.glob('../assets/voice/luma/*/*/*.m4a', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
 const verbs = {
   scan: { es: 'Escanear', en: 'Scan' }, salvage: { es: 'Recuperar', en: 'Recover' },
   service: { es: 'Reparar', en: 'Repair' }, upload: { es: 'Transmitir', en: 'Transmit' },
@@ -463,7 +466,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     if (line && line !== lastLine && dialogue) {
       audio.play(line.speaker === 'LUMA' ? 'luma' : 'control');
       // LUMA speaks through the translator: a recorded line per language, if one exists for this line.
-      if (line.speaker === 'LUMA') audio.voice(`${import.meta.env.BASE_URL}assets/voice/luma/${prefs.getState().lang}/${dialogue.key}-${dialogue.index}.m4a`);
+      const voiceUrl = lumaVoices[`../assets/voice/luma/${prefs.getState().lang}/${level.id}/${dialogue.key.replace(/:/g, '_')}-${dialogue.index}.m4a`];
+      if (line.speaker === 'LUMA' && voiceUrl) audio.voice(voiceUrl);
       else audio.stopVoice();
     }
     lastLine = line;

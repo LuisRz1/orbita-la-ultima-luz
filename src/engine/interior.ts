@@ -35,8 +35,8 @@ export function buildInterior(): Interior {
   for (const x of [-1.5, 0, 1.5]) { const l = new Mesh(new BoxGeometry(0.03, 0.006, D), frame); l.position.set(x, 0.004, 0); seams.add(l); }
   for (const z of [-1.25, 1.25]) { const l = new Mesh(new BoxGeometry(W, 0.006, 0.03), frame); l.position.set(0, 0.004, z); seams.add(l); }
   // Walls face inward (BackSide); a dedicated material so the shared toon cache is not mutated.
-  const shell = new Mesh(new BoxGeometry(W, H, D), new MeshLambertMaterial({ color: '#d9d0e8', side: BackSide }));
-  shell.position.y = H / 2;
+  const shell = new Mesh(new BoxGeometry(W, H + 0.1, D), new MeshLambertMaterial({ color: '#d9d0e8', side: BackSide }));
+  shell.position.y = H / 2 - 0.05; // bottom face sits under the floor, so they never z-fight
   scene.add(floor, seams, shell);
   // Wall ribs and ceiling light strips.
   for (const x of [-W / 2 + 0.05, W / 2 - 0.05]) for (const z of [-1.6, 0, 1.6]) {
