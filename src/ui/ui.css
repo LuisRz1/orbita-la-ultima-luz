@@ -441,3 +441,20 @@
 .orbita .science-cols small { display: block; color: var(--dim); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
 .orbita .science-cols a { color: var(--accent); font-size: 11px; }
 @media (max-width: 700px) { .orbita .science-cols { grid-template-columns: 1fr; } }
+
+/* ---------- mission requirements in the lander ---------- */
+.orbita .mission-brief { top: 64px; left: 16px; width: min(300px, 40vw); max-height: calc(100vh - 300px); overflow: auto; }
+.orbita .mission-brief h3 { margin: 0 0 4px; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; }
+.orbita .mission-brief .brief-text { margin: 0 0 8px; color: var(--dim); font-size: 11.5px; line-height: 1.45; }
+.orbita .mission-brief ul { margin: 0 0 8px; padding: 0; list-style: none; }
+.orbita .mission-brief li { display: grid; padding: 3px 0; border-bottom: 1px solid var(--line); }
+.orbita .mission-brief li.ok span { color: var(--text); }
+.orbita .mission-brief li.ok span::first-letter { color: var(--accent); }
+.orbita .mission-brief li.bad span { color: #ff7a6b; }
+.orbita .mission-brief li small { color: var(--dim); font-size: 11px; padding-left: 14px; }
+.orbita .mission-brief dl { display: grid; grid-template-columns: 1fr auto; gap: 1px 12px; margin: 0; font-variant-numeric: tabular-nums; }
+.orbita .mission-brief dt { color: var(--dim); }
+.orbita .mission-brief dd { margin: 0; text-align: right; }
+.orbita .mission-brief .total { padding-top: 3px; border-top: 1px solid var(--line); color: var(--text); }
+.orbita .mission-brief dd.total.warn { color: var(--warn); }
+@media (max-width: 760px) { .orbita .mission-brief { display: none; } }

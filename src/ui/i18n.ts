@@ -44,6 +44,8 @@ export const strings = {
   modelNote: s('Valores de juego. La gravedad, la batería y el enlace son simplificaciones educativas, no datos de una misión real.',
     'Gameplay values. Gravity, battery and link are educational simplifications, not data from a real mission.'),
   // ship
+  briefTitle: s('Requisitos de la misión', 'Mission requirements'), noInstrument: s('sin instrumento', 'no instrument'), kitHalf: s('kit: mitad de coste', 'kit: half cost'),
+  objectivesCost: s('objetivos', 'objectives'), toMove: s('para moverte', 'to move'),
   suitStatus: s('Estado del traje', 'Suit status'), freeEnergy: s('energía libre', 'free energy'), use: s('Usar', 'Use'),
   confirmKey: s('Confirmar · E', 'Confirm · E'),
   overMass: s('ajusta otra pieza antes de salir', 'adjust another part before leaving'),

@@ -124,6 +124,9 @@ test('design, fail, read the report, redesign and complete: the full mission loo
   for (const id of ['battery', 'thruster', 'antenna']) await station(id);
   await station('instruments', '[data-instrument="drill"]');
   await expect(page.locator('.ship-bar .goals b.bad')).toHaveAttribute('title', 'Caché de Aurora');
+  // The requirements panel says the same before leaving, with the cost of each objective for this suit.
+  await expect(page.locator('[data-brief-row="archive"]')).toHaveClass(/bad/);
+  await expect(page.locator('[data-brief-row="relay"]')).toContainText('12 u.');
   await leave();
   await settle(page);
   for (const id of ['sample', 'relay', 'archive']) await visit(id);
