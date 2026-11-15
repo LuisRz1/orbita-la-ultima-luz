@@ -213,3 +213,18 @@ test('opening the buried shelter costs energy and shows the first journal page',
   await expect(page.locator('[data-pages]')).toContainText('1/3');
   expect(errors).toEqual([]);
 });
+
+test('the seismic network: pick up the geophones at the crate and plant all three for the card', async ({ page }) => {
+  const errors = await open(page);
+  const act = async (x: number, z: number) => {
+    await call(page, 'teleport', x, z); await call(page, 'step', 2); await settle(page);
+    await call(page, 'press', 'interact'); await call(page, 'step', 2);
+  };
+  await act(4, 79.5);
+  await expect(page.getByText('Llevas 3 geófonos')).toBeVisible();
+  await act(-24, 47); await act(40, 11);
+  await call(page, 'setEnergy', 120);
+  await act(-34, -7);
+  await expect(page.getByText('Red sísmica completa')).toBeVisible();
+  expect(errors).toEqual([]);
+});

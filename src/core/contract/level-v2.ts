@@ -35,6 +35,14 @@ export type Ruin = {
   page: { title: Localized; text: Localized };
   card?: { fact: Localized; basis: 'observation' | 'simplification'; source: { name: string; url: string } };
 };
+/**
+ * Side mission S1: pick up geophones at `pickup` and plant one at each site (`cost` each). When the network is
+ * complete, `card` is shown and later sorties log a short cosmetic quake.
+ */
+export type SeismicNetwork = {
+  title: Localized; pickup: Vec2; sites: { id: string; position: Vec2 }[]; cost: number;
+  card: { fact: Localized; basis: 'observation' | 'simplification'; source: { name: string; url: string } };
+};
 export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover'
   | 'capsule' | 'module' | 'panel' | 'ruin-dome' | 'ruin-arch' | 'ruin-dish';
 export type Prop = { kind: PropKind; solid: Solid };
@@ -71,6 +79,7 @@ export type LevelV2 = {
   specimens?: Specimen[];
   beacons?: BeaconLine;
   ruins?: Ruin[];
+  seismic?: SeismicNetwork;
 };
 
 /**
@@ -103,6 +112,11 @@ export function checkLevel(level: LevelV2, hf: Heightfield, maxSlope: number) {
     if (ids.has(b.id)) problems.push('duplicate id ' + b.id);
     ids.add(b.id);
     if (slopeAt(hf, b.position.x, b.position.z) > maxSlope) problems.push('beacon on a steep slope: ' + b.id);
+  }
+  for (const site of level.seismic?.sites ?? []) {
+    if (ids.has(site.id)) problems.push('duplicate id ' + site.id);
+    ids.add(site.id);
+    if (slopeAt(hf, site.position.x, site.position.z) > maxSlope) problems.push('geophone site on a steep slope: ' + site.id);
   }
   for (const r of level.ruins ?? []) {
     if (ids.has(r.id)) problems.push('duplicate id ' + r.id);

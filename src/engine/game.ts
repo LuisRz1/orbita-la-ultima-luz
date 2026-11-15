@@ -5,6 +5,7 @@ import { emptyProgress, readProgress, writeProgress, type Progress } from '../co
 import { canScan, scanCost, specimenInReach } from '../core/atlas.ts';
 import { beaconCost, beaconInReach } from '../core/beacons.ts';
 import { ruinInReach } from '../core/ruins.ts';
+import { seismicAction, type SeismicAction } from '../core/seismic.ts';
 import { gatherMemories } from '../levels/memories.ts';
 import type { Ruin, Specimen } from '../core/contract/level-v2.ts';
 import { collect, missingFor, pointInReach, signalAt, zoneAt } from '../core/session.ts';
@@ -88,6 +89,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
   let tetherWarned = false;
   /** Time the rescued crew started walking to the vehicle, or null while they wait. */
   let crewStart: number | null = null;
+  /** Geophones carried this sortie (S1), and when the cosmetic quake happens once the network is complete. */
+  let carrying = 0, quakeAt = Infinity, quakeUntil = 0;
   let stepDistance = 0, lastLine: unknown = null, pendingZoneLine: string | null = null;
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
@@ -203,12 +206,14 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     for (const [id, m] of view.echoes) m.visible = !progress.echoes.includes(id);
     for (const id of view.specimens.keys()) view.setScanned(id, progress.atlas.includes(id));
     for (const id of view.beacons.keys()) view.setBeacon(id, progress.beacons.includes(id));
+    for (const id of view.geophones.keys()) view.setGeophone(id, progress.geophones.includes(id));
   }
 
   function start(design: SuitDesign) {
     if (assessSuit(design).problems.length) return;
     sortie = startSortie(design);
-    crewStart = null;
+    crewStart = null; carrying = 0; quakeUntil = 0;
+    quakeAt = level.seismic && level.seismic.sites.every(s => progress.geophones.includes(s.id)) ? 25 : Infinity;
     view.astronaut.setLoadout(design);
     sortie.session.collected = [...progress.echoes];
     progress = { ...progress, design };
@@ -375,6 +380,36 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     publish(true);
   }
 
+  /** Side mission S1: pick up geophones (free) and plant them (energy each); the full network shows its card. */
+  function useSeismic(action: NonNullable<SeismicAction>) {
+    const net = level.seismic!;
+    if (action.kind === 'pickup') {
+      carrying += action.count;
+      audio.play('ui-confirm');
+      tell(say(`Llevas ${carrying} geófono${carrying > 1 ? 's' : ''}. Plántalos en los postes apagados.`, `Carrying ${carrying} geophone${carrying > 1 ? 's' : ''}. Plant them at the dark posts.`), 'system');
+      publish(true);
+      return;
+    }
+    if (spendable(sortie) < net.cost) {
+      audio.play('blocked');
+      tell(say(`Plantar un geófono cuesta ${net.cost} u. y no puedes tocar la reserva de retorno.`, `Planting a geophone costs ${net.cost} u and the return reserve is off limits.`), 'warn');
+      return;
+    }
+    spend(sortie, 'actions', net.cost);
+    carrying--;
+    audio.play('objective');
+    progress = { ...progress, geophones: [...progress.geophones, action.site] };
+    void save();
+    view.setGeophone(action.site, true);
+    const planted = progress.geophones.length, total = net.sites.length;
+    award({ kind: 'seismic', planted, total });
+    if (planted >= total) {
+      const basis = net.card.basis === 'observation' ? say('observación', 'observation') : say('simplificación', 'simplification');
+      tell({ es: `Red sísmica completa. ${net.card.fact.es} [${basis.es} · ${net.card.source.name}]`, en: `Seismic network complete. ${net.card.fact.en} [${basis.en} · ${net.card.source.name}]` }, 'system');
+    } else tell(say(`Geófono ${planted}/${total} plantado.`, `Geophone ${planted}/${total} planted.`), 'system');
+    publish(true);
+  }
+
   /** Side mission S2: repairing a post is saved at once and never touches the return reserve. */
   function repairBeacon(id: string) {
     const cost = beaconCost(sortie.design);
@@ -439,7 +474,11 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         const rock = ruin ? null : specimenInReach(level, progress.atlas, body.x, body.z);
         if (ruin) openRuin(ruin);
         else if (rock) scanSpecimen(rock);
-        else { const post = beaconInReach(level, progress.beacons, body.x, body.z); if (post) repairBeacon(post.id); }
+        else {
+          const post = beaconInReach(level, progress.beacons, body.x, body.z);
+          if (post) repairBeacon(post.id);
+          else { const geo = seismicAction(level, progress.geophones, carrying, body.x, body.z); if (geo) useSeismic(geo); }
+        }
       } else if (result.error === 'requirements') {
         audio.play('blocked');
         tell(say('Todavía no. Faltan pasos antes de esto: revisa la lista de objetivos.', 'Not yet. Other steps come first: check the objective list.'), 'warn');
@@ -486,6 +525,12 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const moving = Math.hypot(body.vx, body.vz) > 0.5;
     if (!frozen) {
       const atReserve = drain(sortie, level, dt, moving, zone);
+      if (sortie.time >= quakeAt) {
+        quakeAt = Infinity; quakeUntil = time + 1;
+        audio.play('land');
+        for (const p of level.props) if (p.kind === 'pillar') view.dust.burst(p.solid.x, p.solid.top, p.solid.z, 12, 1.4);
+        tell(say('Tu red sísmica registra un sismo superficial. Cae polvo de las columnas.', 'Your seismic network logs a shallow moonquake. Dust falls from the pillars.'), 'system');
+      }
       if (!lowWarned && spendable(sortie) < 15) { lowWarned = true; tell(say('Batería baja: queda poco sobre la reserva de retorno.', 'Battery low: little left above the return reserve.'), 'warn'); }
       // At the reserve the sortie is not over: walk home on what is left. Reaching the lander is a safe recall;
       // running dry on the way is an emergency rescue.
@@ -593,7 +638,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
     const needs = reach ? instrumentFor[reach.action] : undefined;
     const ruin = phase === 'eva' && !reach ? ruinInReach(level, progress.ruins, body.x, body.z) : null;
     const rock = phase === 'eva' && !reach && !ruin ? specimenInReach(level, progress.atlas, body.x, body.z) : null;
-    const post = phase === 'eva' && !reach && !rock ? beaconInReach(level, progress.beacons, body.x, body.z) : null;
+    const post = phase === 'eva' && !reach && !rock && !ruin ? beaconInReach(level, progress.beacons, body.x, body.z) : null;
+    const geo = phase === 'eva' && !reach && !rock && !ruin && !post ? seismicAction(level, progress.geophones, carrying, body.x, body.z) : null;
     const info = viewport.renderer.info.render;
     const here = level.zones.find(q => q.id === zone);
     const cold = zoneDrain(here, sortie.session.completed) > 0;
@@ -615,7 +661,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
         : ruin ? { verb: say('Abrir', 'Open'), title: ruin.title, cost: ruin.cost, blocked: [], missing: null }
         : rock ? { verb: say('Catalogar', 'Catalogue'), title: rock.title, cost: scanCost, blocked: [],
           missing: sortie.design.instruments.includes('camera') ? null : instruments.camera.name }
-        : post ? { verb: say('Reparar', 'Repair'), title: level.beacons!.title, cost: beaconCost(sortie.design), blocked: [], missing: null } : null,
+        : post ? { verb: say('Reparar', 'Repair'), title: level.beacons!.title, cost: beaconCost(sortie.design), blocked: [], missing: null }
+        : geo ? { verb: geo.kind === 'pickup' ? say('Recoger', 'Pick up') : say('Plantar', 'Plant'), title: level.seismic!.title, cost: geo.kind === 'pickup' ? 0 : level.seismic!.cost, blocked: [], missing: null } : null,
       collection: {
         atlas: (level.specimens ?? []).map(sp => { const got = progress.atlas.includes(sp.id); return { id: sp.id, title: got ? sp.title : say('Roca sin catalogar', 'Uncatalogued rock'), fact: got ? sp.fact : null, basis: sp.basis, source: got ? sp.source : null }; }),
         pages: (level.ruins ?? []).map(r => ({ id: r.id, title: r.page.title, text: progress.ruins.includes(r.id) ? r.page.text : null })),
@@ -724,6 +771,8 @@ export async function createGame(host: HTMLElement): Promise<Game> {
       camPos.set(px + Math.sin(yaw) * Math.cos(pitch) * camDist, py + 1.5 + Math.sin(pitch) * camDist, pz + Math.cos(yaw) * Math.cos(pitch) * camDist);
       camPos.y = Math.max(camPos.y, heightAt(hf, camPos.x, camPos.z) + 0.6);
       camera.position.copy(camPos);
+      // Cosmetic quake (S1 complete): one second of small shake, skipped with reduced motion.
+      if (time < quakeUntil && !prefs.getState().reduceMotion) camera.position.add(target.set(Math.sin(time * 61) * 0.06, Math.sin(time * 47) * 0.05, Math.cos(time * 53) * 0.06));
       camera.lookAt(px, py + (phase === 'eva' ? 1.4 : 1.1), pz);
     }
 

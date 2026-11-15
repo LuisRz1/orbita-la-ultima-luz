@@ -20,6 +20,8 @@ export const progressSchema = z.object({
   beacons: z.array(z.string()).default([]),
   /** Ruins opened; each one holds one journal page. */
   ruins: z.array(z.string()).default([]),
+  /** Geophones planted (side mission S1). */
+  geophones: z.array(z.string()).default([]),
 }).strict();
 export type Attempt = z.infer<typeof attemptSchema>;
 export type Progress = z.infer<typeof progressSchema>;
@@ -31,7 +33,7 @@ class Saves extends Dexie {
 let db: Saves | null = null;
 const open = () => (db ??= new Saves());
 
-export const emptyProgress = (level: string, design: SuitDesign): Progress => ({ version: 1, level, design, attempts: [], echoes: [], achievements: [], seen: [], atlas: [], beacons: [], ruins: [] });
+export const emptyProgress = (level: string, design: SuitDesign): Progress => ({ version: 1, level, design, attempts: [], echoes: [], achievements: [], seen: [], atlas: [], beacons: [], ruins: [], geophones: [] });
 
 /** Returns null when nothing is saved, and 'invalid' when the stored data does not match the schema. */
 export async function readProgress(level: string): Promise<Progress | null | 'invalid'> {

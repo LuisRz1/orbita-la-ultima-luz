@@ -30,6 +30,8 @@ export type WorldView = {
   specimens: Map<string, Mesh>; setScanned(id: string, scanned: boolean): void;
   /** Side-mission beacons: a post with a lamp that lights up once repaired. */
   beacons: Map<string, Mesh>; setBeacon(id: string, lit: boolean): void;
+  /** Geophone sites (S1): a short post whose lamp lights once a geophone is planted. */
+  geophones: Map<string, Mesh>; setGeophone(id: string, on: boolean): void;
   /** Rescued crew figures by id (empty unless the level has a crew). */
   crew: Map<string, Group>; dust: Dust; footprints: Footprints; ambience: Ambience;
   /** Switches between the plain sky band and the painted nebula (setting); `tick` drifts the nebula. */
@@ -550,6 +552,20 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
     lamp.getObjectByName('halo')!.visible = lit;
   };
 
+  const geophones = new Map<string, Mesh>();
+  const geoOff = new MeshBasicMaterial({ color: '#3a3542' }), geoOn = new MeshBasicMaterial({ color: palette.accent, fog: false });
+  for (const site of level.seismic?.sites ?? []) {
+    const y = heightAt(hf, site.position.x, site.position.z);
+    const post = new Mesh(new CylinderGeometry(0.05, 0.08, 0.7, 6), toon('#9a93a8'));
+    post.position.set(site.position.x, y + 0.35, site.position.z);
+    const lamp = new Mesh(new SphereGeometry(0.1, 8, 6), geoOff);
+    lamp.position.y = 0.4;
+    post.add(lamp);
+    scene.add(post);
+    geophones.set(site.id, lamp);
+  }
+  const setGeophone = (id: string, on: boolean) => { const l = geophones.get(id); if (l) l.material = on ? geoOn : geoOff; };
+
   const crew = new Map<string, Group>();
   for (const m of level.crew?.members ?? []) {
     const f = buildCrewFigure(!!m.sister);
@@ -570,7 +586,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, scatter = 1, oct
   scene.add(player, luma, shadow, dustPoints, printMesh, ambienceGroup);
 
   return {
-    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon, crew,
+    scene, player, astronaut, luma, lumaModel, shadow, beacon, points, echoes, specimens, setScanned, beacons, setBeacon, crew, geophones, setGeophone,
     setSky(on: boolean) { if (!painted) return; painted.visible = on; band.visible = !on; },
     tickSky(t: number) { if (painted?.visible) (painted.material as ShaderMaterial).uniforms.uTime.value = t; },
     dust, footprints, ambience, blinkers, sun,

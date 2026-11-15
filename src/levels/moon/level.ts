@@ -35,6 +35,8 @@ const props: Prop[] = [
   { kind: 'mast', solid: cylinder(2.2, 1.6, 0.35, 9) },
   { kind: 'shelter', solid: box(-10.5, 73, 1.6, 2.2, 2.4) },
   { kind: 'console', solid: box(8.4, 72, 0.5, 0.8, 1.2) },
+  // Cargo crate with the geophones of side mission S1.
+  { kind: 'cache', solid: box(5, 81.2, 0.9, 0.6, 0.8) },
   { kind: 'cache', solid: box(0, -83, 1.2, 0.8, 1) },
   { kind: 'pillar', solid: cylinder(-20, -40, 1.3, 4.6) },
   { kind: 'pillar', solid: cylinder(30, 30, 1.2, 3.4) },
@@ -88,6 +90,20 @@ export const moonLevel: LevelV2 = {
   ],
   specimens: moonSpecimens,
   ruins: moonRuins,
+  // S1 (LUNA-NACAR.md): geophones from the cargo crate beside the lander, planted around the crater.
+  seismic: {
+    title: t('Geófono', 'Geophone'), pickup: { x: 4, z: 80 }, cost: 3,
+    sites: [
+      { id: 'geophone-west', position: { x: -24, z: 46 } }, { id: 'geophone-east', position: { x: 40, z: 10 } },
+      { id: 'geophone-north', position: { x: -34, z: -8 } },
+    ],
+    card: {
+      basis: 'observation',
+      fact: t('Los sismómetros del Apollo registraron sismos lunares superficiales. La Luna se contrae al enfriarse su interior y eso empuja la corteza y forma escarpes.',
+        'The Apollo seismometers recorded shallow moonquakes. The Moon contracts as its still-hot interior cools, pushing the crust together into scarps.'),
+      source: { name: 'NASA · Shrinking Moon and moonquakes', url: 'https://www.nasa.gov/solar-system/moon/shrinking-moon-causing-moonquakes-and-faults-near-lunar-south-pole/' },
+    },
+  },
   // S2 (LUNA-NACAR.md): the posts run from the lander towards the buried shelter R1 in the west bowl.
   beacons: {
     title: t('Baliza de Aurora', 'Aurora beacon'),

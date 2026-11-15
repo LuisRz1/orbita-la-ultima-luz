@@ -17,6 +17,7 @@ export const achievements = {
   'beacons': { title: t('Faro', 'Lighthouse'), desc: t('Repara todas las balizas de Aurora.', 'Repair every Aurora beacon.') },
   'first-page': { title: t('Su letra', 'Her handwriting'), desc: t('Encuentra una página del diario de Aurora.', 'Find a page of the Aurora journal.') },
   'all-pages': { title: t('Diario completo', 'Full journal'), desc: t('Encuentra todas las páginas del diario de un destino.', 'Find every journal page at one destination.') },
+  'seismic': { title: t('Sismo', 'Quake'), desc: t('Completa la red sísmica de la Luna.', 'Complete the seismic network on the Moon.') },
   'complete': { title: t('Transmisión recibida', 'Transmission received'), desc: t('Completa una misión de superficie.', 'Complete a surface mission.') },
   'tight-reserve': { title: t('Al límite', 'On the edge'), desc: t('Completa la misión con 5 u. o menos sobre la reserva.', 'Complete the mission with 5 u or less above the reserve.') },
   'no-recall': { title: t('Enlace firme', 'Steady link'), desc: t('Completa la misión sin perder el enlace.', 'Complete the mission without losing the link.') },
@@ -34,6 +35,7 @@ export type GameEvent =
   | { kind: 'atlas'; found: number; total: number }
   | { kind: 'beacon'; lit: number; total: number }
   | { kind: 'page'; found: number; total: number }
+  | { kind: 'seismic'; planted: number; total: number }
   | { kind: 'sortie'; designs: SuitDesign[] }
   | { kind: 'report'; report: Report; previous: ('complete' | 'recalled')[] };
 
@@ -49,6 +51,7 @@ export function unlocks(event: GameEvent, held: readonly string[]): AchievementI
     case 'atlas': add('first-rock', event.found >= 1); add('full-atlas', event.found >= event.total); break;
     case 'beacon': add('beacons', event.lit >= event.total); break;
     case 'page': add('first-page', event.found >= 1); add('all-pages', event.found >= event.total); break;
+    case 'seismic': add('seismic', event.planted >= event.total); break;
     case 'sortie': add('two-designs', new Set(event.designs.map(d => JSON.stringify(d))).size >= 2); break;
     case 'report': {
       const done = event.report.outcome === 'complete';
