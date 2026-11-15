@@ -136,3 +136,7 @@ El orden de la ruta está en [registry.ts](../../src/levels/registry.ts): Luna �
   - Ascenso, acople y reabastecimiento con validación de plazas (resto de M06).
 - Secundarias del capítulo (12 encargos, 45 hallazgos) y cuidados de LUMA como mecánica.
 - Medir los fps en Iris Xe y equilibrar con partidas reales.
+
+## Atlas de rocas (15-nov)
+
+Cinco rocas en menta, catalogables con la cámara por 1 u. ([atlas.ts](../../src/levels/mars/atlas.ts)). Todas citan [NASA · Mars Facts](https://science.nasa.gov/mars/facts/): regolito oxidado (20, 40), huella de agua (26, −2), polvo de tormenta (−26, −8), roca volcánica (60, −40) y escarcha (−40, −70). La escarcha está marcada como simplificación: el hielo observado está en las regiones polares.

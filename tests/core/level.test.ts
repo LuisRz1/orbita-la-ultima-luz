@@ -104,3 +104,12 @@ test('every v1 lunar point has a 3D placement and keeps its rules', () => {
   assert.equal(relay.power, 6);
   assert.equal(relay.required, true);
 });
+
+test('the Martian atlas has five sourced rocks, each reachable on foot', () => {
+  const rocks = marsLevel.specimens!;
+  assert.equal(rocks.length, 5);
+  for (const r of rocks) {
+    assert.match(r.source.url, /^https:\/\/science\.nasa\.gov\//);
+    assert.equal(marsAt(r.position.x, r.position.z), 1, r.id);
+  }
+});

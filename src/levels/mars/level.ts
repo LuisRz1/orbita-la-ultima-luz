@@ -4,6 +4,7 @@
 // authenticates AUR-E04 and AUR-E05 together. M04 (outcrop + field kit) and M05 (relay) can be done in either order.
 import type { Localized } from '../../core/contract/grid-v1.ts';
 import type { LevelPoint, LevelV2, Prop } from '../../core/contract/level-v2.ts';
+import { marsSpecimens } from './atlas.ts';
 import { channelZ, landmarks, marsHeight } from './terrain.ts';
 
 const t = (es: string, en: string): Localized => ({ es, en });
@@ -103,6 +104,7 @@ export const marsLevel: LevelV2 = {
   spawn: { x: 0, z: 67 },
   comms: { center: { x: 0, z: 0 }, radius: 100, falloff: 20 },
   exit: 'terminal',
+  specimens: marsSpecimens,
   points,
   props,
   zones: [
