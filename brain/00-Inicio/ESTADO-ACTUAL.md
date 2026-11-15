@@ -1,13 +1,23 @@
 ---
 id: estado-actual
 type: estado
-status: niveles-1-a-3-jugables
-updated: 2026-11-14
+status: niveles-1-a-4-jugables
+updated: 2026-11-15
 tags: [orbita, continuidad]
 ---
 # Estado actual
 
 ## Punto de continuación
+
+**15 de noviembre: el juego 3D va del nivel 1 al 4** (Órbita → Luna → Marte → Bennu), todo en `main`. Detalle y evidencia en la [bitácora del 15](../08-Bitacora/2026-11-15.md).
+
+- Luna: atlas de 6 rocas con fuentes NASA, misión secundaria «Balizas de Aurora», ruinas R1–R3 con páginas del diario y entrada «Atlas y diario» en el menú ([Nácar](../02-Diseno/LUNA-NACAR.md)).
+- Bennu jugable, capítulo 4 M02–M03: anclaje, voz, dos accesos, archivo, muestra y refugio con AUR-E06 y el reencuentro; microgravedad estilizada con línea de anclaje; atlas de 5 rocas ([Carbono](../02-Diseno/BENNU-CARBONO.md)).
+- Cielo pintado opcional en ajustes (nebulosa por shader, apagado por defecto).
+- Voces de LUMA: Luna ES/EN, Órbita ES/EN y Marte ES en el juego. En generación: Marte EN, retakes de 6 líneas y Bennu ES/EN.
+- **Verificado:** build, 63 pruebas de reglas y 20 recorridos en Brave; capturas de rocas, balizas, ruinas, cielo y Bennu.
+- **Pendiente:** secuencias M04–M06 de Bennu (evacuación, incidente y sacrificio de LUMA, regreso); interiores de ruinas y ranura `accessories`; vuelo 3D; fps en Iris Xe; equilibrio con jugadores.
+- **Siguiente paso:** procesar y verificar con Whisper las voces pendientes y hacer commit; luego diseñar M04–M06 como secuencias.
 
 **El juego 3D va del nivel 1 al 3.** `/` abre la estación del capítulo 1 ([ficha](../02-Diseno/ESTACION-QUIROFANO.md)):
 
