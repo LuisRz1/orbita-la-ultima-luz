@@ -5,22 +5,11 @@ import { people } from '../../core/campaign.ts';
 import { archiveId, capsuleId, receptionId, sunlitCoolingDrain } from '../../core/orbit/first-light.ts';
 import { recordedLuma, type Line } from '../moon/dialogue.ts';
 import { orbitDialogue } from './dialogue.ts';
-import { at, mound, point, scenery, smooth, t, zone } from '../expedition-shapes.ts';
+import { earthPortProps, earthProp, earthTerrain } from './earth-port.ts';
+import { at, point, scenery, t, zone } from '../expedition-shapes.ts';
 
-const portHeight=(x:number,z:number)=>{
-  const apron=1-smooth(9,22,Math.abs(x-9));
-  return (1-apron)*(mound(x,z,-73,-50,63,12)+mound(x,z,68,44,44,7))+.18*Math.cos(x/9)*Math.sin(z/13)
-    +14*smooth(111,140,Math.hypot(x,z));
-};
 const dockHeight=()=>0;
-const groundProp=scenery(portHeight);
 const deckProp=scenery(dockHeight);
-const padProps=[
-  groundProp('lander',36,-36,4,4,5.5), groundProp('mast',6,-50,.48,0,17), groundProp('shelter',-21,19,6,5,3.8),
-  groundProp('shelter',34,29,6,4,3.4), groundProp('shelter',-52,-25,8,6,5.5), groundProp('console',3,33,.7,.5,1.2),
-  groundProp('shelter',63,-39,10,5,6), groundProp('boulder',-47,62,4,0,3), groundProp('shelter',-39,48,7,5,4),
-  groundProp('pillar',-31,-34,1.1,0,4), groundProp('pillar',57,13,.8,0,3),
-];
 const course=(prefix:string,cells:readonly [number,number][])=>cells.map(([x,z],i)=>({id:prefix+'-'+i,position:at(x,z)}));
 const template={kitVersion:2,id:'orbit',title:chapterTitle,sun:{azimuth:120,elevation:29}} as const;
 export const groundLevel:LevelV2={
@@ -29,7 +18,7 @@ export const groundLevel:LevelV2={
   briefing:t('Control ha reabierto la búsqueda de Aurora. Consulta el expediente de recuperación en la terminal.','Mission Control has reopened the search for Aurora. Read the recovery file at the terminal.'),
   arrival:t('Control a Apoyo Uno. La estación recuperó una cápsula con el código de Aurora. Cruza el patio hasta la terminal iluminada. Tu hermana figura en el expediente.',
     'Mission Control to Support One. The station recovered a capsule with Aurora’s code. Cross the plaza to the lit terminal. Your sister is in the file.'),
-  terrain:{size:288,res:161,height:portHeight,apron:{min:at(-4,18),max:at(14,73)}},spawn:at(5,58),
+  terrain:earthTerrain,spawn:at(5,58),
   comms:{center:at(0,0),radius:110,falloff:19},
   zones:[zone('plaza',groundPlan.subtitle,0,45,20),zone('pad',t('Pista de lanzamiento','Launch runway'),34,-37,44),
     zone('hangars',t('Patio de hangares','Hangar yard'),-43,4,27),zone('lookout',t('Mirador de seguimiento','Tracking overlook'),-58,-53,22)],
@@ -42,7 +31,7 @@ export const groundLevel:LevelV2={
     point('control','plaza',5,34,'upload',t('Acceder a Control de misión','Access Mission Control'),
       t('Control te da acceso al aviso de recuperación y al expediente de tu hermana.','Mission Control grants access to the recovery notice and your sister’s file.')),
   ],
-  props:padProps,collectibles:course('ground-echo',[[-41,41],[-59,-51],[43,-25],[53,30]]),
+  props:earthPortProps,collectibles:course('ground-echo',[[-41,41],[-51,-54],[49,-26],[53,30]]),
 };
 
 export const departureLevel:LevelV2={
@@ -57,8 +46,7 @@ export const departureLevel:LevelV2={
     verb:t('Hablar','Talk'),
   }],
   crew:{members:[{id:'sister',sister:true,uniform:'flight',at:at(5,38)}],boardAfter:'sister-goodbye',
-    route:[at(7,28),at(34,-29)]},
-  props:[...padProps,...[48,42,36].map(z=>groundProp('marker',2.8,z,.14,0,1.15))],
+    route:[at(7,20),at(34,14),at(34,-29)]},
   collectibles:[],
 };
 
@@ -177,7 +165,6 @@ export function evaLevel(route:EvaRoute):LevelV2 {
 const receiptSpots=[at(-5,36),at(0,32),at(9,32)];
 export const earthLevel:LevelV2={
   ...groundLevel,mission:'campaign-earth',title:t('Las cosas que quedan','The things that remain'),
-  attire:undefined,movement:undefined,
   subtitle:t('Centro de recepción terrestre','Earth reception centre'),spawn:at(5,47),
   briefing:t('Acompaña a Aurora al puesto de recepción y entrega los resultados.','Escort Aurora to reception and hand over the results.'),
   arrival:t('Aurora está en casa. Comprueba la recepción de las tres personas del manifiesto.','Aurora is home. Verify reception of all three people on the manifest.'),
@@ -190,8 +177,9 @@ export const earthLevel:LevelV2={
       t('Quedan en el archivo el manifiesto, los datos de la misión y el recuerdo de LUMA.','The archive holds the manifest, the mission data and LUMA’s memory.'),
       people.map(p=>'receive-'+p.id)),
   ],
-  props:[...padProps,...receiptSpots.map(({x,z})=>groundProp('crew',x+.85,z-.45,.4,0,1.8)),
-    groundProp('console',1,21,.65,.55,1.3)],
+  crew:{members:people.map(({id},i)=>({id,sister:id==='sister',uniform:'flight',at:at(receiptSpots[i].x+.85,receiptSpots[i].z-.45)})),
+    boardAfter:'receipts',route:[at(-5,27),at(-14,33.7)]},
+  props:[...earthPortProps,earthProp('earth-terminal',1,21,.51,.42,1.24)],
   collectibles:[],
 };
 

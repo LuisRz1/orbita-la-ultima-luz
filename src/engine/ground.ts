@@ -3,10 +3,10 @@
 // cavities baked once into vertex colours with three painted bands. «Realista» is a PHASE 0 STUB: the same grid with
 // a plain MeshStandardMaterial that casts and receives real shadows; the contract is `buildGround()`.
 import {
-  Color, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, type BufferAttribute, type Vector3,
+  BufferGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, type BufferAttribute, type Vector3,
   type WebGLRenderer,
 } from 'three';
-import type { LevelV2 } from '../core/contract/level-v2.ts';
+import type { LevelV2, SurfaceMarking } from '../core/contract/level-v2.ts';
 import { heightAt, normalAt, type Heightfield } from '../core/heightfield.ts';
 import type { Lighting } from './lighting.ts';
 import { look } from './look.ts';
@@ -138,14 +138,42 @@ float pits(vec2 p) {
   return m;
 }
 
-type Apron = LevelV2['terrain']['apron'];
-function apronCoverage(apron:NonNullable<Apron>,x:number,z:number){
-  const edge=Math.min(x-apron.min.x,apron.max.x-x,z-apron.min.z,apron.max.z-z);
-  return Math.max(0,Math.min(1,edge/1.6));
+type Aprons = LevelV2['terrain']['aprons'];
+function apronCoverage(aprons:NonNullable<Aprons>,x:number,z:number){
+  let coverage=0;
+  for(const {min,max} of aprons){
+    const edge=Math.min(x-min.x,max.x-x,z-min.z,max.z-z);
+    if(edge>=1.6)return 1;
+    coverage=Math.max(coverage,edge/1.6);
+  }
+  return coverage;
+}
+
+function paintedMarkings(hf:Heightfield,markings:SurfaceMarking[]) {
+  const positions:number[]=[],colors:number[]=[];
+  const paint=new Color();
+  function vertex(x:number,z:number){
+    positions.push(x,heightAt(hf,x,z)+.028,z);
+    colors.push(paint.r,paint.g,paint.b);
+  }
+  for(const {min,max,color} of markings){
+    paint.set(color);
+    const nx=Math.ceil((max.x-min.x)/2),nz=Math.ceil((max.z-min.z)/2);
+    const dx=(max.x-min.x)/nx,dz=(max.z-min.z)/nz;
+    for(let row=0;row<nz;row++)for(let col=0;col<nx;col++){
+      const x=min.x+col*dx,z=min.z+row*dz;
+      vertex(x,z);vertex(x,z+dz);vertex(x+dx,z);
+      vertex(x+dx,z);vertex(x,z+dz);vertex(x+dx,z+dz);
+    }
+  }
+  const geometry=new BufferGeometry();
+  geometry.setAttribute('position',new Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new Float32BufferAttribute(colors,3));
+  return new Mesh(geometry,new MeshBasicMaterial({vertexColors:true,toneMapped:false}));
 }
 
 /** The illustrated terrain: light baked into banded vertex colours, per-pixel albedo detail, no shadow map. */
-function terrainIllustrated(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[], apron:Apron) {
+function terrainIllustrated(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[], aprons:Aprons) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
   geometry.rotateX(-Math.PI / 2);
   const pos = geometry.attributes.position as BufferAttribute;
@@ -174,7 +202,7 @@ function terrainIllustrated(hf: Heightfield, sun: [number, number, number], octa
     }
     dark.copy(shadow).lerp(deep, inCold);
     c.copy(dark).lerp(mid, toMid).lerp(lit, toLit);
-    if(apron)c.lerp(paved.copy(concrete).multiplyScalar(.48+.52*toLit),apronCoverage(apron,x,z));
+    if(aprons)c.lerp(paved.copy(concrete).multiplyScalar(.48+.52*toLit),apronCoverage(aprons,x,z));
     // Cavity and crest terms from curvature: hollows darken; sharp breaks get an ink line.
     const lap = (h(x + 2, z) + h(x - 2, z) + h(x, z + 2) + h(x, z - 2) - 4 * hf.data[k]) / 4;
     c.multiplyScalar(Math.min(1.0, Math.max(0.62, 1 - lap * 0.7)));
@@ -189,7 +217,7 @@ function terrainIllustrated(hf: Heightfield, sun: [number, number, number], octa
 }
 
 /** PHASE 0 STUB of the realistic terrain: the heightfield grid with one flat physically based material. */
-function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadows: boolean, apron:Apron) {
+function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadows: boolean, aprons:Aprons) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
   geometry.rotateX(-Math.PI / 2);
   const pos = geometry.attributes.position as BufferAttribute;
@@ -202,12 +230,12 @@ function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadow
     bakedSun[k] = visible;
     // Without a shadow map the baked visibility darkens the albedo instead (crude; B replaces it with the `sun` hook).
     const light=shadows?1:.25+.75*visible;
-    if(apron)base.copy(ground).lerp(concrete,apronCoverage(apron,x,z)).multiplyScalar(light).toArray(tint,k*3);
+    if(aprons)base.copy(ground).lerp(concrete,apronCoverage(aprons,x,z)).multiplyScalar(light).toArray(tint,k*3);
     else tint.fill(light,k*3,k*3+3);
   }
   geometry.setAttribute('color', new Float32BufferAttribute(tint, 3));
   geometry.computeVertexNormals();
-  const material = new MeshStandardMaterial({ color: apron?'#ffffff':biome.real.ground, roughness: biome.plating ? 0.55 : 0.95, metalness: 0, vertexColors: true });
+  const material = new MeshStandardMaterial({ color: aprons?'#ffffff':biome.real.ground, roughness: biome.plating ? 0.55 : 0.95, metalness: 0, vertexColors: true });
   if (biome.voidBelow !== null) {
     // Station: the void under the decks is not drawn, so each deck reads as a slab floating over Earth. Panel seams
     // every 3 m darken the paint a little.
@@ -246,8 +274,9 @@ function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadow
 export function buildGround(level: LevelV2, hf: Heightfield, sun: [number, number, number], opts: GroundOptions): Ground {
   const group = new Group();
   const { mesh, bakedSun } = look.real
-    ? terrainRealistic(hf, sun, opts.lighting.shadows, level.terrain.apron)
-    : terrainIllustrated(hf, sun, opts.tier === 'low' ? 3 : 4, hazardCircles(level), level.terrain.apron);
+    ? terrainRealistic(hf, sun, opts.lighting.shadows, level.terrain.aprons)
+    : terrainIllustrated(hf, sun, opts.tier === 'low' ? 3 : 4, hazardCircles(level), level.terrain.aprons);
   group.add(mesh, scatterRocks(level, hf, opts.scatter, { shadows: opts.lighting.shadows }));
+  if(level.terrain.markings?.length)group.add(paintedMarkings(hf,level.terrain.markings));
   return { group, bakedSun };
 }

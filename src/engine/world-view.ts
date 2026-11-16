@@ -11,6 +11,7 @@ import {
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { LevelV2, Prop } from '../core/contract/level-v2.ts';
 import { heightAt, type Heightfield } from '../core/heightfield.ts';
+import { buildEarthProp } from './earth-props.ts';
 import { buildGround } from './ground.ts';
 import { createLighting, type Lighting } from './lighting.ts';
 import { look } from './look.ts';
@@ -461,7 +462,8 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   const propsRoot = new Group();
   const hardware = new Map<Prop, Group>();
   for (const p of level.props) {
-    const model = buildProp(p, heightAt(hf, p.solid.x, p.solid.z));
+    const base=heightAt(hf,p.solid.x,p.solid.z);
+    const model = buildEarthProp(p,base)??buildProp(p,base);
     if (p.kind === 'gate' || p.hideAfter || p.kind === 'solar-rack') {
       hardware.set(p, model);
       scene.add(model);
@@ -488,14 +490,16 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
     scene.add(anchorLine);
   }
 
-  const mast = level.props.find(p => p.kind === 'mast')?.solid;
+  const mast = level.props.find(p => p.kind === 'mast'||p.kind==='earth-tower')?.solid;
   const beacon = new Mesh(new SphereGeometry(0.4, 12, 8), new MeshBasicMaterial({ color: glowColor(palette.warn, 3), fog: false }));
   if (mast) beacon.position.set(mast.x, mast.top + 0.4, mast.z);
   scene.add(beacon);
 
   const points = new Map<string, PointView>();
-  const beamHeight = level.pressurizedBay ? level.pressurizedBay.ceiling - .6 : 60;
-  const beamGeo = new CylinderGeometry(0.18, 0.18, beamHeight, 6, 1, true);
+  const isDay=biome.sky==='day';
+  const beamHeight = level.pressurizedBay ? level.pressurizedBay.ceiling - .6 : isDay ? 3.2 : 60;
+  const beamRadius = isDay ? .09 : .18;
+  const beamGeo = new CylinderGeometry(beamRadius,beamRadius,beamHeight,6,1,true);
   beamGeo.translate(0, beamHeight / 2, 0);
   for (const p of level.points) {
     const y = heightAt(hf, p.position.x, p.position.z);

@@ -19,6 +19,7 @@ La carpeta de entrega es D:/PROYECTOS/Orbita-Entrega, rama codex/entrega-juego. 
 | --- | --- |
 | Secuencia, validación y retorno | [campaign.ts](../../src/core/campaign.ts), [escritura por checkpoint](../../src/core/save/campaign.ts) y [cinemáticas](../../src/ui/screens/campaign-scenes.tsx). |
 | Terreno, posiciones y diálogos | [registro](../../src/levels/registry.ts), [composición de destinos](../../src/levels/campaign.ts) y [reglas obligatorias](../../AGENTS.md). |
+| Complejo terrestre | [Plano y colisiones](../../src/levels/orbit/earth-port.ts) y [modelos](../../src/engine/earth-props.ts). Recorre patio, plataforma y mirador si cambias sus dimensiones. |
 | Pilotaje | [modelo de vuelo](../../src/core/orbit/flight.ts), [visor 3D](../../src/engine/flight-view.ts), [pantalla de vuelo](../../src/ui/screens/flight.tsx). |
 | LUMA y tus clips | [modelo](../../src/engine/models.ts), [reproductor](../../src/engine/voice.ts) y [manifiesto](../../public/assets/voice/luma/clips.json). Lleva tus modelos y clips a la escena y al idioma indicado en [la guía](../06-Produccion/CAMPANA-3D.md). |
 | Pruebas | [reglas y terreno](../../tests/core/campaign.test.ts) y [recorrido de Chrome](../../tests/e2e/campaign.spec.ts). |

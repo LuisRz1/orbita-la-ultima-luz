@@ -135,7 +135,7 @@ const carbono: Biome = {
 };
 
 const tierra: Biome = {
-  ...nacar, sky: 'day', starCount: 0, nebula: null, air: 1.6, wind: .4,
+  ...nacar, sky: 'day', starCount: 0, nebula: null, air: 1.6, wind: .4, rockScatter:0, footprints:false, ambientDust:0,
   lit: '#82975f', mid: '#5c7d50', shadow: '#435f50', deep: '#183539', ink: '#243c3f',
   skyTop: '#4d86ba', skyHorizon: '#c3d6d8', fog: '#adc0bf', hemiSky: '#a6c3df',
   rockLit: '#818778', rockDark: '#4e5a61', luma: '#ffe2a0', lumaCore: '#ffffff',

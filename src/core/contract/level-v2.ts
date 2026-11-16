@@ -5,6 +5,8 @@ import { heightAt, slopeAt, type Heightfield } from '../heightfield.ts';
 import type { MoveParams, Solid } from '../movement.ts';
 
 export type Vec2 = { x: number; z: number };
+export type SurfaceArea = { min: Vec2; max: Vec2 };
+export type SurfaceMarking = SurfaceArea & { color: string };
 
 export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: number; zone: string; verb?: Localized };
 /**
@@ -45,14 +47,16 @@ export type SeismicNetwork = {
 };
 export type PropKind = 'lander' | 'mast' | 'pillar' | 'boulder' | 'shelter' | 'console' | 'cache' | 'rock' | 'marker' | 'step' | 'habitat' | 'rover'
   | 'capsule' | 'module' | 'panel' | 'ruin-dome' | 'ruin-arch' | 'ruin-dish'
-  | 'crew' | 'gate' | 'recovery-capsule' | 'animal-berth' | 'solar-rack';
+  | 'crew' | 'gate' | 'recovery-capsule' | 'animal-berth' | 'solar-rack'
+  | 'earth-control' | 'earth-hangar' | 'earth-rocket' | 'earth-tower' | 'earth-dish' | 'earth-van'
+  | 'earth-terminal' | 'earth-lamp' | 'earth-fence' | 'earth-bench' | 'earth-tree';
 export type Prop = { kind: PropKind; solid: Solid; hideAfter?: string };
 export type PressurizedBay = { min: Vec2; max: Vec2; ceiling: number };
 
 export type LevelV2 = {
   kitVersion: 2; id: 'orbit' | 'moon' | 'mars' | 'bennu' | 'extraction'; mission: string;
   title: Localized; subtitle: Localized; briefing: Localized; arrival: Localized; outcome: Localized;
-  terrain: { size: number; res: number; height(x: number, z: number): number; apron?: { min:Vec2; max:Vec2 } };
+  terrain: { size: number; res: number; height(x: number, z: number): number; aprons?: SurfaceArea[]; markings?: SurfaceMarking[] };
   attire?: 'civilian';
   /** Inner faces of a walkable station bay, in world metres. */
   pressurizedBay?: PressurizedBay;

@@ -19,7 +19,7 @@ Usa el [estándar obligatorio](../../AGENTS.md). Coloca al jugador en un inicio 
 
 | Área | Tamaño del terreno | Borde y circulación | Entrada / cierre |
 | --- | ---: | --- | --- |
-| Complejo terrestre | 288 m | Patio, pista, hangares y mirador conectados por pistas y relieve de borde. | Despídete en el patio y, tras el prólogo, llega a Control y aprueba el diseño de la misión. |
+| Complejo terrestre | 288 m | Patio, edificio de Control, hangares, torre del cohete y antena de seguimiento conectados por carreteras y cruces señalizados. | Despídete en el patio y, tras el prólogo, llega a Control y aprueba el diseño de la misión. |
 | Estación | 196 m | Módulos presurizados, laboratorios y acceso a la esclusa. | Transfiere carga, autentica la cápsula y prepara la protección de LUMA. |
 | EVA | 155 m | Cubierta y anclajes solapados de 17 m, con dos rutas configurables. | Contrasta luz, recoge registrador y autentícalo de vuelta en la esclusa. |
 | Luna | 256 m | Base, llanura, cráter, cresta y dos caminos alrededor de la grieta de Nácar. | Selecciona zona, equipa el traje, reúne las tres piezas en orden libre y coteja en órbita. |

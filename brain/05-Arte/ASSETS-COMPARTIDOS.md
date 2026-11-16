@@ -2,7 +2,7 @@
 id: assets-compartidos
 type: guia
 status: kit-v1
-updated: 2026-11-14
+updated: 2026-11-15
 tags: [orbita, arte, kit, produccion]
 ---
 # Catálogo de assets compartidos
@@ -32,3 +32,9 @@ Las hojas de personajes ordenan filas SE, SO, NO, NE y cuatro cuadros por fila. 
 Conservar la fuente, licencia, tamaño, origen, hecho/ficción y destino. Cada propuesta respeta la escala de referencia, la luz y el anclaje inferido, e incluye una captura junto al astronauta en vista de campo. Se puede producir un objeto nuevo, pero no una segunda versión de astronauta, consola o interfaz sin acordar un cambio común. Evitar suavizado y márgenes distintos al exportar hojas. La aprobación de actores o terrenos nuevos exige revisar al menos recorrido, oclusión y legibilidad con la Luna.
 
 La primera versión no incluye banda sonora ni voz del traductor. La ampliación de audio sigue [animación y audio](ANIMACIONES-Y-AUDIO.md): señales con subtítulos y pista separada por tipo. No introducir un sonido obligatorio para completar un objetivo.
+
+## Complejo terrestre de la campaña 3D
+
+Los [modelos de la Tierra](../../src/engine/earth-props.ts) se generan con geometría y materiales de three.js. Incluyen el edificio de Control, hangares, cohete, torre de servicio, antena de seguimiento, furgonetas, terminales, farolas, vallas, bancos y árboles. Los rótulos se dibujan en canvas. Los edificios y vehículos usan materiales compartidos entre los modelos de la Tierra para agrupar su renderizado.
+
+El [plano terrestre](../../src/levels/orbit/earth-port.ts) coloca los activos, colisiones, carreteras, pasos peatonales y señalización. Las escenas de despedida, Control y recepción usan el complejo con puntos y personajes propios de cada momento. Para ajustar un modelo, comprueba sus dimensiones en metros y recorre las rutas al patio, al mirador y a la torre.

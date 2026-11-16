@@ -99,6 +99,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
   const hf = buildHeightfield(level.terrain.size, level.terrain.res, level.terrain.height);
   const bay = level.pressurizedBay, course = level.anchorCourse, berth = level.companionBerth, site = options?.site;
   const civilian=level.attire==='civilian';
+  const cameraPitch=civilian ? .20 : .32;
   const bulkheads = bay ? bulkheadColliders(bay) : [];
   const ground: Ground = { height: (x, z) => heightAt(hf, x, z), slope: (x, z) => slopeAt(hf, x, z), solids: level.props.map(p => p.solid) };
   const view = buildWorldView(level, hf, tier, viewport.renderer);
@@ -323,7 +324,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     void save();
     enterWorld('surface');
     teleport(level.spawn.x, level.spawn.z);
-    input.look.yaw = 0; input.look.pitch = 0.32;
+    input.look.yaw = 0; input.look.pitch = cameraPitch;
     zone = null; lostFor = 0; fade = 1; recalling = false; ending = 0; safeSpots = []; safeClock = 0; fallBack = null; endReason = null; returning = false; lowWarned = false;
     setStorm(false);
     resetPointsView();
@@ -917,7 +918,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     if (document.querySelector('dialog[data-campaign-journal][open]')) { input.endStep(); return; }
     if (phase === 'eva' && input.wasPressed('center')) {
       input.look.yaw = Math.atan2(-body.dirX, -body.dirZ);
-      input.look.pitch = .32; input.zoom = 6.4;
+      input.look.pitch = cameraPitch; input.zoom = 6.4;
     }
     if (input.wasPressed('talk')) commands.talk();
     if (dialogue && !paused && (input.wasPressed('interact') || input.wasPressed('jump'))) advance();

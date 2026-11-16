@@ -27,8 +27,8 @@ test('all destinations and variants are connected on foot or by a continuous cha
   }
 });
 
-test('First Light props leave a walking approach to each objective on both tether routes',()=>{
-  for(const level of [groundLevel,stationLevel,evaLevel('sheltered'),evaLevel('sunlit')]){
+test('Earth and First Light props leave a walking approach to objectives and discoveries',()=>{
+  for(const level of [departureLevel,groundLevel,earthLevel,stationLevel,evaLevel('sheltered'),evaLevel('sunlit')]){
     const hf=buildHeightfield(level.terrain.size,level.terrain.res,level.terrain.height);
     const bay=level.pressurizedBay;
     const colliders=[...(bay?bulkheadColliders(bay):[]),...level.props.map(({solid})=>solid)];
@@ -50,6 +50,17 @@ test('First Light props leave a walking approach to each objective on both tethe
         reach[(j+dz)*hf.res+i+dx]&&Math.hypot(p.position.x-((i+dx)*cell-hf.size/2),
           p.position.z-((j+dz)*cell-hf.size/2))<=p.radius),level.mission+' / '+p.id);
     }
+  }
+});
+
+test('the launch and reception scenes share Earth-specific infrastructure',()=>{
+  for(const level of [departureLevel,groundLevel,earthLevel]){
+    assert.equal(level.terrain,groundLevel.terrain);
+    assert.ok(level.terrain.aprons?.length);
+    assert.ok(level.terrain.markings?.length);
+    assert.ok(level.props.every(p=>p.kind.startsWith('earth-')&&p.solid.kind==='box'));
+    const assets=new Set(level.props.map(p=>p.kind));
+    for(const kind of ['earth-control','earth-hangar','earth-rocket','earth-tower','earth-tree'] as const)assert.ok(assets.has(kind));
   }
 });
 
