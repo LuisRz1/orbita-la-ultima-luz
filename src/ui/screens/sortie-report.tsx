@@ -3,6 +3,7 @@
 import { compareAttempts, decisionLinks, recommend, type Slot } from '../../core/debrief.ts';
 import { ledgerLabels, type LedgerKey, type Report } from '../../core/sortie.ts';
 import { antennas, assessSuit, batteries, instruments, reserve, thrusters, type SuitDesign } from '../../core/suit.ts';
+import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import type { Localized } from '../../core/contract/grid-v1.ts';
 import { useT, type StringKey } from '../i18n.ts';
@@ -38,6 +39,23 @@ export function SortieReport({ report, onRedesign, onRetry, onEpilogue, onComple
   // The first two insights repeat the battery and mass rows of the decision table.
   const environment = report.insights.slice(2);
   const arrow = (a: number, b: number, better: 'up' | 'down') => (a === b ? '=' : (b > a) === (better === 'up') ? '▲' : '▼');
+  // Expeditions run on: after a completed sortie the next destination opens by itself after a short countdown
+  // (Mars → Bennu → evacuation), unless the player picks anything else. Browser tests (?debug) stay manual.
+  const autoNext = done && !!next && !finale && !onComplete && !new URLSearchParams(window.location.search).has('debug');
+  const [countdown, setCountdown] = useState<number | null>(autoNext ? 12 : null);
+  useEffect(() => {
+    if (countdown === null || !next) return;
+    if (countdown <= 0) { commands.travel(next.id); return; }
+    const id = setTimeout(() => setCountdown(c => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [countdown, next]);
+  useEffect(() => {
+    if (countdown === null) return;
+    const stop = (e: Event) => { if (!(e.target as Element | null)?.closest?.('[data-next]')) setCountdown(null); };
+    window.addEventListener('pointerdown', stop, true);
+    window.addEventListener('keydown', stop, true);
+    return () => { window.removeEventListener('pointerdown', stop, true); window.removeEventListener('keydown', stop, true); };
+  }, [countdown === null]);
   const complete = onComplete && <button className="primary" type="button" data-campaign-file disabled={saving} onClick={onComplete}>
     {summary ? t(summary.action) : t({es:'Archivar y continuar',en:'File and continue'})} ↗
   </button>;
@@ -112,11 +130,11 @@ export function SortieReport({ report, onRedesign, onRetry, onEpilogue, onComple
         </div>
       </div>
       <div className="actions">
-        <button className={done ? '' : 'primary'} data-redesign onClick={onRedesign}>{t('redesign')}</button>
-        <button className={done && !next && !finale && !onComplete ? 'primary' : ''} data-retry disabled={saving} onClick={onRetry}>{t('retry')}</button>
+        <button data-redesign onClick={onRedesign}>{t('redesign')}</button>
+        <button className={'retry-big' + (done && (next || finale || onComplete) ? '' : ' primary')} data-retry disabled={saving} onClick={onRetry}>↻ {t('retry')}</button>
         {done && complete}
         {done && finale && <button className="primary" data-sfx="ui-confirm" data-epilogue-open onClick={onEpilogue}>{t('epilogue')} ↗</button>}
-        {done && next && <button className="primary" data-sfx="ui-confirm" data-next={next.id} onClick={() => commands.travel(next.id)}>{t('continueTo')} {t(next.name)} ↗</button>}
+        {done && next && <button className="primary" data-sfx="ui-confirm" data-next={next.id} onClick={() => commands.travel(next.id)}>{t('continueTo')} {t(next.name)} ↗{countdown !== null ? ` · ${countdown} s` : ''}</button>}
         <button data-report-menu disabled={saving} onClick={onExit ?? (() => commands.toMenu())}>{t('mainMenu')}</button>
       </div>
       <p className="model-note">{t('modelNote')} {t('adviceNote')}</p>

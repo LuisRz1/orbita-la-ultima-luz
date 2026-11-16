@@ -96,6 +96,13 @@ export function CampaignFlight({state,stage,onCapture,busy}:{
     return ()=>{bindings.abort();loop.stop();hide();graphics.dispose();};
   },[leg,mass,minimum]);
   const setMode=(next:typeof control)=>{held.current.clear();mode.current=next;setControl(next);};
+  /** Starts the leg over from its initial state; always available, not only after a failure. */
+  const restart=()=>{craft.current=start;setShown(start);look.current=flightLook();setMode('standby');};
+  const restartRef=useRef(restart);restartRef.current=restart;
+  useEffect(()=>{
+    const key=(e:KeyboardEvent)=>{if(e.code==='KeyR'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!document.querySelector('dialog[open]')){e.preventDefault();restartRef.current();}};
+    window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
+  },[]);
   const ready=checks.canCapture&&!rejected;
   const radio=firstLightFlightRadio[stage.id];
   return <>
@@ -117,15 +124,17 @@ export function CampaignFlight({state,stage,onCapture,busy}:{
       </section>
       <section className="panel flight-controls">
         <p><kbd>W/S</kbd> {translate(t('Impulso','Thrust'))} <kbd>A/D</kbd> {translate(t('Giro','Turn'))}
-          <kbd> Q/E</kbd> {translate(t('Traslación','Translation'))} <kbd>X</kbd> {translate(t('Freno','Brake'))}</p>
+          <kbd> Q/E</kbd> {translate(t('Traslación','Translation'))} <kbd>X</kbd> {translate(t('Freno','Brake'))} <kbd>R</kbd> {translate(t('Reintentar','Retry'))}</p>
         <p>{translate(t('Arrastra para mover la cámara · Rueda para zoom · C para centrar','Drag to move the camera · Scroll to zoom · C to centre'))}</p>
         {graphicsError?<p role="alert">{translate(t('No se pudo iniciar el visor 3D.','The 3D viewport could not start.'))}</p>:null}
         {rejected?<p className="warn" role="status">{translate(rejected==='fuel'?
           t('Se agotó el margen de combustible del tramo.','The fuel margin for this leg ran out.'):
           t('La nave salió del corredor seguro.','The spacecraft left the safe corridor.'))}</p>:null}
         <div className="actions">
-          {rejected?<button onClick={()=>{craft.current=start;setShown(start);look.current=flightLook();setMode('standby');}}>
-            {translate(t('Reintentar maniobra','Retry maneuver'))}</button>:<>
+          {rejected?<button className="primary retry-big" data-flight-retry onClick={restart}>
+            ↻ {translate(t('Reintentar maniobra','Retry maneuver'))}</button>:<>
+            <button className="retry-big" data-flight-retry disabled={busy} onClick={restart} title="R">
+              ↻ {translate(t('Reintentar','Retry'))} <kbd>R</kbd></button>
             <button disabled={!alive||control==='manual'||busy} onClick={()=>setMode('manual')}>
               {translate(t('Pilotar manualmente','Fly manually'))}</button>
             <button disabled={!alive||control==='assist'||busy} onClick={()=>setMode('assist')}>
