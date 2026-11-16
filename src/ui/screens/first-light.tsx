@@ -8,6 +8,12 @@ import { useT } from '../i18n.ts';
 import type { SortieSummary } from './sortie-report.tsx';
 
 export const firstLightSummaries:Record<string,SortieSummary>={
+  departure:{
+    title:t('Aurora despega','Aurora lifts off'),
+    text:t('La ves cruzar el patio rumbo a la lanzadera. Esa es la última vez que la ves en la Tierra antes del viaje.',
+      'You watch her cross the plaza toward the shuttle. That is the last time you see her on Earth before the journey.'),
+    action:t('Continuar','Continue'),brief:true,
+  },
   ground:{
     title:t('Expediente de Aurora disponible','Aurora file available'),
     text:t('Control abrió el aviso de recuperación. Revísalo y prepara la nave con la que vas a buscar a tu hermana.',

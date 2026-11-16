@@ -58,3 +58,5 @@ El 15-nov-2026 el propietario pidió pasar del aspecto ilustrado (tinta y sombre
 ## Entrega del 15 de noviembre
 
 La última indicación del propietario bajó el coste gráfico de entrada. Se abre la configuración antes de cargar el motor, el acabado ilustrado usa texturas procedurales y los efectos avanzados se habilitan desde Ajustes. La historia y la secuencia de los cuatro capítulos siguen la ficha de campaña.
+
+El propietario pidió que el personaje empiece de civil en la Tierra, se despida de su hermana y luego conozca a LUMA al avanzar las misiones de estación. Se conserva el prólogo grabado, situado después del salto de meses. Cada capítulo termina con una cinemática basada en su informe. Se reutilizan las tomas de LUMA cuyo texto coincide con la escena y se registran las pendientes en el [guion bilingüe](../05-Arte/GUION-LUMA.md).

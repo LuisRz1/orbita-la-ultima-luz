@@ -11,7 +11,7 @@ IndexedDB mediante Dexie será el almacenamiento principal. El usuario podrá ex
 
 El kit local ya usa Dexie para reanudar los hitos de cada escenario con una clave de misión y una versión. Su [contrato v1](ADR/ADR-005.md) no implementa todavía exportación, migración de campaña ni guardado de evidencias globales.
 
-C1 conserva su propia versión y tabla en `orbita-chapters`. La reanudación valida el diseño, el orden de los acoples, los puntos de cada región, las reservas y el progreso de crucero. La entrega lunar se calcula a partir del capítulo archivado, sin escribir ni migrar el registro `c2-reference`. No hay todavía un guardado global de campaña.
+C1 en el modo heredado conserva su propia versión y tabla en `orbita-chapters`. La reanudación valida el diseño, el orden de los acoples, los puntos de cada región, las reservas y el progreso de crucero. La entrega lunar se calcula a partir del capítulo archivado. El guardado global de la campaña 3D se describe más abajo.
 
 ## Contenido persistente
 
@@ -54,3 +54,5 @@ Se guarda al confirmar una maniobra, archivar una salida, aprobar un plan o regi
 La fase `farewell` se archiva antes del vuelo de regreso. Las expediciones posteriores usan perfiles separados y los textos de Control. Exportar e importar una partida sigue pendiente.
 
 `/?campana&primera-luz` utiliza la ranura `primera-luz` y perfiles de salida con prefijo `first-light:`. Al cerrar el informe lunar, **Continuar con el capítulo 2** copia el registro validado a `aurora` en una transacción si esa ranura está vacía. Con una campaña iniciada, la interfaz ofrece reanudar su último hito. Los resultados del plan aceptan el indicador opcional `compared`. En C1 se comprueba el orden de las acciones de estación y EVA al archivar y al restaurar.
+
+El registro v1 acepta `departureSeen` para la despedida inicial y `cinematic` para la escena pendiente. Se graba la transición junto con el hito que la habilita. Al terminar o saltar la escena se limpia su marca en otra transacción. Recargar antes de cerrarla la vuelve a abrir. Los guardados previos con un hito archivado retoman su avance y las cinemáticas cuentan fuera de las 24 misiones. La transferencia a la campaña conserva la partida que ya tenga la despedida inicial registrada.

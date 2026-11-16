@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import {
-  acceptStage, activeStage, chapterNames, fuelLeft, missionLog, option, spacecraft, type Campaign, type CampaignResult,
+  acceptStage, activeStage, chapterNames, fuelLeft, missionLog, option, pendingCampaignScene, spacecraft,
+  type Campaign, type CampaignResult, type CampaignScene,
 } from '../core/campaign.ts';
 import { t } from '../core/orbit/engineering.ts';
-import { checkpoint, continueFromFirstLight, readCampaign, type CampaignSlot } from '../core/save/campaign.ts';
+import { checkpoint, continueFromFirstLight, finishScene, readCampaign, type CampaignSlot } from '../core/save/campaign.ts';
 import { firstLightSuit } from '../core/orbit/first-light.ts';
 import type { Report } from '../core/sortie.ts';
 import { loadCampaignLevel, loadReturnExpedition } from '../levels/campaign.ts';
@@ -14,7 +15,7 @@ import { useT } from './i18n.ts';
 import { prefs } from './prefs.ts';
 import { CampaignCruise, CampaignDesign, CampaignReport, EvidenceList, RouteChoices } from './screens/campaign-panels.tsx';
 import { CampaignFlight } from './screens/flight.tsx';
-import { Prologue } from './screens/prologue.tsx';
+import { CampaignCinematicScene } from './screens/campaign-scenes.tsx';
 import { FirstLightArchive, FirstLightArrival, FirstLightCabin, firstLightSummaries } from './screens/first-light.tsx';
 import { SortieScreen } from './screens/sortie.tsx';
 import { hud } from './store.ts';
@@ -95,8 +96,8 @@ function Field({site,state,stage,revisit,busy,onDone,onExit,slot}:{
     load(site,state).then(value=>{if(live)setModule(value);}).catch(()=>{if(live)setError('level');});
     return ()=>{live=false;};
   },[site,state,revisit]);
-  const chapter=stage?.chapter??4;
-  const options=useMemo(()=>module?{module,site,chapter,autostart:['ground','station','eva','service','earth'].includes(site),
+  const chapter=stage?.chapter??(site==='departure'?1:4);
+  const options=useMemo(()=>module?{module,site,chapter,autostart:['departure','ground','station','eva','service','earth'].includes(site),
     luma:!revisit,saveId:slot==='primera-luz'?'first-light:'+module.level.mission:undefined,
     entryDesign:site==='station'||site==='eva'?firstLightSuit(spacecraft(state)):undefined}:undefined,[module,site,chapter,revisit,slot,state]);
   if(error)return <Panel title={translate(t('No se pudo abrir el terreno','The terrain could not be opened'))}>
@@ -105,13 +106,14 @@ function Field({site,state,stage,revisit,busy,onDone,onExit,slot}:{
   return <>
     {options&&<GameCanvas options={options} onError={setError}/>}
     {!ready&&<p className="loading" role="status">{translate('loading')}</p>}
-    {ready&&<SortieScreen campaign onExit={onExit} onComplete={onDone} busy={busy} summary={chapter===1?firstLightSummaries[site]:undefined}/>}
+    {ready&&<SortieScreen campaign civilian={module?.level.attire==='civilian'} onExit={onExit} onComplete={onDone} busy={busy}
+      summary={chapter===1?firstLightSummaries[site]:undefined}/>}
   </>;
 }
 
 const destinations=[['moon',t('Luna','Moon')],['mars',t('Marte','Mars')],['bennu',t('Bennu','Bennu')]] as const;
-export function CampaignGame({onExit,slot,onFullCampaign,opening=false}:{
-  onExit:()=>void;slot:CampaignSlot;onFullCampaign:()=>void;opening?:boolean;
+export function CampaignGame({onExit,slot,onFullCampaign}:{
+  onExit:()=>void;slot:CampaignSlot;onFullCampaign:()=>void;
 }){
   const {t:translate,lang}=useT();
   const [state,setState]=useState<Campaign|null>(null);
@@ -119,16 +121,18 @@ export function CampaignGame({onExit,slot,onFullCampaign,opening=false}:{
   const writing=useRef(false);
   const [error,setError]=useState<'read'|'write'|'rule'|'handoff'|null>(null);
   const [campaignExists,setCampaignExists]=useState(false);
-  const [showOpening,setShowOpening]=useState(()=>opening&&prefs.getState().cinematics);
   const [journal,setJournal]=useState(false);
   const [revisit,setRevisit]=useState<string|null>(null);
   const firstOnly=slot==='primera-luz';
+  const pending=state?pendingCampaignScene(state):null;
+  const cinematic=pending&&pending!=='departure'?pending:null;
   const load=useCallback(()=>{
     setError(null);
     readCampaign(slot).then(setState).catch(()=>setError('read'));
   },[slot]);
   useEffect(load,[load]);
   useEffect(()=>{
+    if(cinematic)return;
     const keys=(event:KeyboardEvent)=>{
       if(event.key==='Tab'&&!event.shiftKey&&!event.metaKey&&!event.ctrlKey&&
         (event.target===document.body||event.target instanceof HTMLCanvasElement)){
@@ -137,16 +141,23 @@ export function CampaignGame({onExit,slot,onFullCampaign,opening=false}:{
     };
     window.addEventListener('keydown',keys);
     return()=>window.removeEventListener('keydown',keys);
-  },[]);
+  },[cinematic]);
   const active=state?activeStage(state):null;
   const stage=firstOnly&&active?.chapter!==1?null:active;
-  async function record(result:CampaignResult){
-    if(!state||!stage||writing.current)return;
-    if(acceptStage(state,stage.id,result)===state){setError('rule');return;}
+  async function saveProgress(update:()=>Promise<Campaign>){
+    if(writing.current)return;
     writing.current=true;setBusy(true);setError(null);
-    try {setState(await checkpoint(state,stage.id,result,slot));}
+    try {setState(await update());}
     catch {setError('write');}
     finally{writing.current=false;setBusy(false);}
+  }
+  function record(result:CampaignResult){
+    if(!state||!stage||pending)return;
+    if(acceptStage(state,stage.id,result)===state){setError('rule');return;}
+    return saveProgress(()=>checkpoint(state,stage.id,result,slot,prefs.getState().cinematics));
+  }
+  function closeScene(id:CampaignScene){
+    if(state)return saveProgress(()=>finishScene(state,id,slot,prefs.getState().cinematics));
   }
   function fileField(report:Report){
     if(report.outcome==='complete'&&report.requiredDone===report.required)void record({
@@ -154,7 +165,7 @@ export function CampaignGame({onExit,slot,onFullCampaign,opening=false}:{
     });
   }
   async function handoffToCampaign() {
-    if (!firstOnly || stage || writing.current) return;
+    if (!firstOnly || stage || pending || writing.current) return;
     writing.current = true;
     setBusy(true);
     setError(null);
@@ -177,12 +188,17 @@ export function CampaignGame({onExit,slot,onFullCampaign,opening=false}:{
     </Panel>
   </div>;
   const finished=!stage;
-  if(stage?.id==='ground'&&showOpening)return <div className="campaign-sky">
-    <div className="campaign-orbital-art" aria-hidden="true"><i/><b/><span/></div>
-    <Prologue onFinish={()=>setShowOpening(false)}/>
-  </div>;
   let scene:ReactNode;
-  if(revisit)scene=<Field key={'post-'+revisit} site={revisit} state={state} stage={null} revisit busy={false}
+  if(pending==='departure')scene=<Field key="departure" site="departure" state={state} stage={null} revisit={false} busy={busy}
+    onDone={report=>{if(report.outcome==='complete'&&report.completed.includes('sister-goodbye'))void closeScene('departure');}}
+    onExit={onExit} slot={slot}/>;
+  else if(cinematic)scene=prefs.getState().cinematics?<CampaignCinematicScene key={cinematic} scene={cinematic} busy={busy}
+    onFinish={()=>void closeScene(cinematic)}/>:<div className="campaign-sky">
+    <Panel title={translate(t('Continuar la historia','Continue the story'))}>
+      <button className="primary" onClick={()=>void closeScene(cinematic)} disabled={busy}>{translate(t('Continuar','Continue'))}</button>
+    </Panel>
+  </div>;
+  else if(revisit)scene=<Field key={'post-'+revisit} site={revisit} state={state} stage={null} revisit busy={false}
     onDone={()=>setRevisit(null)} onExit={()=>setRevisit(null)}/>;
   else if(stage?.action==='field')scene=<Field key={stage.id} site={stage.site!} state={state} stage={stage} revisit={false} busy={busy} slot={slot}
     onDone={fileField} onExit={onExit}/>;
@@ -224,18 +240,19 @@ export function CampaignGame({onExit,slot,onFullCampaign,opening=false}:{
     </Panel>
   </div>;
   const chapter=firstOnly?1:stage?.chapter??4;
-  return <div className="campaign-game" data-stage={revisit?'revisit-'+revisit:stage?.id??'complete'}>
+  return <div className="campaign-game" data-stage={pending==='departure'?'departure':cinematic?'scene-'+cinematic:
+    revisit?'revisit-'+revisit:stage?.id??'complete'}>
     {scene}
-    <div className="campaign-toolbar">
+    {!cinematic&&<div className="campaign-toolbar">
       <span>{translate(chapterNames[chapter-1])} · {missionLog(state).length}/{firstOnly?6:24}</span>
       <button type="button" data-journal onClick={()=>setJournal(true)}>{translate(t('Diario','Journal'))}</button>
       <button type="button" data-campaign-lang onClick={()=>prefs.setState({lang:lang==='es'?'en':'es'})}
         aria-label={translate(t('Cambiar a inglés','Switch to Spanish'))}>{lang==='es'?'EN':'ES'}</button>
       {stage?.action!=='field'&&!revisit&&<button type="button" onClick={onExit} disabled={busy}>
         {translate(t('Menú','Menu'))}</button>}
-    </div>
-    {stage?.action==='flight'&&<p className="campaign-fuel">{translate(t('Combustible al inicio del tramo','Fuel at leg start'))} · {fuelLeft(state).toFixed(1)} u.</p>}
-    {journal&&<CampaignJournal state={state} firstOnly={firstOnly} close={()=>setJournal(false)}/>}
+    </div>}
+    {!pending&&stage?.action==='flight'&&<p className="campaign-fuel">{translate(t('Combustible al inicio del tramo','Fuel at leg start'))} · {fuelLeft(state).toFixed(1)} u.</p>}
+    {!cinematic&&journal&&<CampaignJournal state={state} firstOnly={firstOnly} close={()=>setJournal(false)}/>}
     {error&&<p className="save-error" role="alert">{translate(error==='rule'?
       t('Faltan requisitos para cerrar este tramo.','Some requirements for this leg are missing.'):error==='handoff'?
       t('No se pudo transferir el informe. Vuelve a confirmar para reintentar.','The report could not be transferred. Confirm again to retry.'):

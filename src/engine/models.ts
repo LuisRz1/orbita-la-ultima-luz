@@ -42,10 +42,14 @@ export type Astronaut = {
 };
 
 /** "Rounded explorer" suit: bubble helmet, broad shoulders and boots, coral commander stripes. Height ≈ 1.80 m. */
-export function buildAstronaut(): Astronaut {
+export function buildAstronaut(attire:'suit'|'civilian'|'flight'='suit'): Astronaut {
   const group = new Group();
-  const shell = toon(suitColors.shell), lilac = toon(suitColors.bellows), dark = toon(suitColors.frame), coral = toon(suitColors.coral);
-  const boots = toon(suitColors.boot), sole = toon(suitColors.frame), pack = toon(suitColors.pack), pelvis = toon(suitColors.pelvis);
+  const suited=attire==='suit';
+  const shell = toon(suited?suitColors.shell:attire==='flight'?'#95616f':'#3d807e');
+  const lilac = toon(suited?suitColors.bellows:'#26364d'), dark = toon(suitColors.frame), coral = toon(suitColors.coral);
+  const boots = toon(suited?suitColors.boot:'#393238'), sole = toon(suitColors.frame);
+  const pelvis = toon(suited?suitColors.pelvis:'#35445e');
+  const skin = suited?lilac:toon('#bd8363');
   const rig = new Group();
   rig.name='astronaut rig';
   group.add(rig);
@@ -60,23 +64,24 @@ export function buildAstronaut(): Astronaut {
     const hip = new Group();
     hip.name=side<0?'left hip':'right hip';
     hip.position.set(side * 0.12, 0.84, 0);
-    const upper = part(new CapsuleGeometry(0.11, 0.2, 4, 12), shell, 0.022);
+    const upper = part(new CapsuleGeometry(0.11, 0.2, 4, 12), suited?shell:pelvis, 0.022);
     upper.position.y = -0.17;
     const knee = new Group();
     knee.name=side<0?'left knee':'right knee';
     knee.position.y = -0.34;
     const bellows = part(new TorusGeometry(0.1, 0.025, 6, 16), lilac, 0.012);
     bellows.rotation.x = Math.PI / 2;
-    const lower = part(new CapsuleGeometry(0.095, 0.2, 4, 12), shell, 0.022);
+    const lower = part(new CapsuleGeometry(0.095, 0.2, 4, 12), suited?shell:pelvis, 0.022);
     lower.position.y = -0.17;
     const ankle=new Group();
     ankle.position.set(0,-.43,-.04);
     const boot = part(new RoundedBoxGeometry(0.22, 0.14, 0.34, 3, 0.05), boots, 0.02);
     const soleMesh = new Mesh(new RoundedBoxGeometry(0.23, 0.04, 0.35, 2, 0.015), sole);
     soleMesh.position.y=-.06;
-    ankle.add(boot,soleMesh);knee.add(bellows,lower,ankle);
+    ankle.add(boot,soleMesh);knee.add(lower,ankle);
+    if(suited)knee.add(bellows);
     hip.add(upper, knee);
-    if (side < 0) { const stripe = part(new CylinderGeometry(0.115, 0.115, 0.06, 14), coral, 0.01); stripe.position.y = -0.12; hip.add(stripe); }
+    if (suited && side < 0) { const stripe = part(new CylinderGeometry(0.115, 0.115, 0.06, 14), coral, 0.01); stripe.position.y = -0.12; hip.add(stripe); }
     rig.add(hip);
     return { hip, knee, ankle };
   });
@@ -96,11 +101,17 @@ export function buildAstronaut(): Astronaut {
     fore.position.y = -0.13;
     const cuff = part(new CylinderGeometry(0.09, 0.09, 0.05, 14), coral, 0.01);
     cuff.position.y = -0.23;
-    const glove = part(new SphereGeometry(0.09, 14, 10), lilac, 0.02);
+    const glove = part(new SphereGeometry(suited?0.09:0.069, 14, 10), skin, 0.02);
     glove.position.y = -0.31; glove.scale.set(1, 1.1, 0.9);
-    forearm.add(elbow,fore,cuff,glove);
+    forearm.add(fore,cuff,glove);
+    if(suited)forearm.add(elbow);
     shoulder.add(upper,forearm);
-    if (side < 0) { const stripe = part(new CylinderGeometry(0.09, 0.09, 0.05, 14), coral, 0.01); stripe.position.y = -0.1; shoulder.add(stripe); }
+    if ((suited && side < 0) || (attire==='flight' && side>0)) {
+      const stripe = part(new CylinderGeometry(0.09, 0.09, 0.05, 14), coral, 0.01);
+      stripe.position.y = -0.1;
+      if(attire==='flight')stripe.rotation.z=.28;
+      shoulder.add(stripe);
+    }
     upperBody.add(shoulder);
     return {shoulder,forearm};
   });
@@ -114,8 +125,13 @@ export function buildAstronaut(): Astronaut {
     ball.position.set(side * 0.31, 1.36, 0);
     const ring = part(new TorusGeometry(0.11, 0.022, 6, 16), lilac, 0.01);
     ring.position.set(side * 0.3, 1.3, 0); ring.rotation.set(Math.PI / 2, 0, side * 0.5);
-    return [ball, ring];
+    return suited?[ball,ring]:[ball];
   }).flat();
+  const helmetPivot=new Group();
+  helmetPivot.position.y=1.44;
+  const cells:Mesh[]=[];
+  const pressureGear=new Group();
+  if(suited){
   // Round chest module: two knobs and one steady cyan light.
   const chest = part(new CylinderGeometry(0.09, 0.09, 0.05, 18), lilac, 0.015);
   chest.rotation.x = Math.PI / 2; chest.position.set(0, 1.2, -0.25);
@@ -123,16 +139,16 @@ export function buildAstronaut(): Astronaut {
   const chestLight = new Mesh(new SphereGeometry(0.016, 8, 6), new MeshBasicMaterial({ color: suitColors.cyan }));
   chestLight.position.set(0, 1.23, -0.285);
 
-  const backpack = part(new RoundedBoxGeometry(0.5, 0.62, 0.24, 3, 0.06), pack);
+  const backpack = part(new RoundedBoxGeometry(0.5, 0.62, 0.24, 3, 0.06), toon(suitColors.pack));
   backpack.position.set(0, 1.2, 0.27);
   const frame = part(new RoundedBoxGeometry(0.52, 0.06, 0.26, 2, 0.02), dark, 0.012);
   frame.position.set(0, 1.5, 0.27);
   // Battery gauge facing the camera behind the player.
-  const cells = Array.from({ length: 5 }, (_, i) => {
+  cells.push(...Array.from({ length: 5 }, (_, i) => {
     const cell = new Mesh(new BoxGeometry(0.07, 0.06, 0.02), new MeshBasicMaterial({ color: suitColors.cyan }));
     cell.position.set(0, 1.04 + i * 0.075, 0.4);
     return cell;
-  });
+  }));
   const gaugeFrame = new Mesh(new BoxGeometry(0.11, 0.42, 0.015), dark);
   gaugeFrame.position.set(0, 1.19, 0.392);
 
@@ -145,11 +161,29 @@ export function buildAstronaut(): Astronaut {
     new MeshBasicMaterial({ map: visorTexture() }));
   visor.position.set(0, 1.58, -0.012);
   if (inked()) visor.add(new Mesh(visor.geometry, outlineMaterial(0.012)));
-  const helmetPivot=new Group();
-  helmetPivot.position.y=1.44;
   helmet.position.y-=helmetPivot.position.y;
   visor.position.y-=helmetPivot.position.y;
   helmetPivot.add(helmet,visor);
+  pressureGear.add(chest,...knobs,chestLight,backpack,frame,gaugeFrame,...cells,neck);
+  }else{
+    const hair=toon(attire==='flight'?'#382234':'#322b2f');
+    const face=part(new SphereGeometry(.155,16,12),skin,.017);
+    face.scale.set(.91,1.14,.96);face.position.y=.136;
+    const fringe=part(new SphereGeometry(.157,16,10,0,Math.PI*2,0,Math.PI*.62),hair,.016);
+    fringe.position.set(0,.169,.025);fringe.rotation.x=-.14;
+    const collar=part(new CylinderGeometry(.12,.15,.07,12),lilac,.012);
+    collar.position.y=-.015;
+    const eyes=[-.055,.055].map(x=>{
+      const eye=new Mesh(new SphereGeometry(.012,8,6),dark);
+      eye.position.set(x,.149,-.139);return eye;
+    });
+    const nose=part(new SphereGeometry(.03,10,7),skin,.006);
+    nose.position.set(0,.113,-.143);nose.scale.set(.78,.65,1);
+    const zip=new Mesh(new BoxGeometry(.014,.32,.025),toon('#e2b782'));
+    zip.position.set(0,1.22,-.239);
+    helmetPivot.add(collar,face,fringe,...eyes,nose);
+    upperBody.add(zip);
+  }
 
   // Equipment slots, filled by setLoadout.
   const antenna = new Group();
@@ -170,7 +204,7 @@ export function buildAstronaut(): Astronaut {
   if (inked()) patch.add(new Mesh(patch.geometry, outlineMaterial(0.01)));
   upperBody.add(patch);
   rig.add(hips);
-  upperBody.add(torso, ...shoulders, chest, ...knobs, chestLight, backpack, frame, gaugeFrame, ...cells, neck, helmetPivot, antenna, nozzles, camera);
+  upperBody.add(torso,...shoulders,pressureGear,helmetPivot,antenna,nozzles,camera);
 
   const clear = (g: Group) => { for (const c of [...g.children]) g.remove(c); };
   let phase=0,breath=0,pace=0,popT=1,gesture=0,landing=0,drop=0;
@@ -179,10 +213,11 @@ export function buildAstronaut(): Astronaut {
   const approach=(value:number,goal:number,weight:number)=>value+(goal-value)*weight;
   return {
     group,
-    setPatch(color) { patch.visible = !!color; if (color) patch.material = toon(color); },
+    setPatch(color) { patch.visible = suited && !!color; if (patch.visible) patch.material = toon(color!); },
     act(next){action=next;gesture=1;},
     resetMotion(){phase=0;pace=0;gesture=0;landing=0;drop=0;onGround=true;},
     setLoadout(d) {
+      if(!suited)return;
       clear(antenna); clear(nozzles); clear(camera); clear(drill); clear(kit);
       const len = { short: 0.25, medium: 0.45, long: 0.7 }[d.antenna];
       const whip = part(new CylinderGeometry(0.01, 0.014, len, 6), dark, 0.008);

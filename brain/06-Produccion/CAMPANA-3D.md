@@ -11,13 +11,15 @@ Abre la configuración inicial y elige **Jugar Primera luz** o **Campaña de Aur
 
 `/?campana&primera-luz` abre las seis misiones de C1 en su propio guardado. **Continuar con el capítulo 2** lleva los hitos al nodo lunar si la campaña está vacía. Su [ficha jugable](../02-Diseno/CAPITULOS/C1-PRIMERA-LUZ.md) detalla las escenas y las dos validaciones.
 
+En una partida nueva, usa `WASD` para caminar hasta tu hermana y `E` para despedirte. La escena ocurre en la Tierra antes de que salga Aurora. El prólogo original cubre el salto de meses y da paso a Control. LUMA aparece en el compartimento de la estación tras acoplar, transferir suministros y cotejar la cápsula. Después de calibrar el traductor, `L` iniciará una conversación cuando esté disponible.
+
 ## Contrato que aplica a cada destino
 
 Usa el [estándar obligatorio](../../AGENTS.md). Coloca al jugador en un inicio protegido con un hito visible, un primer objetivo y una ruta de vuelta. La cámara y el HUD son comunes. En el informe, el motor comprueba objetivos, instrumentos, energía y regreso antes de habilitar el siguiente tramo. Los encuentros también tienen un área física y una acción situada. Los hallazgos opcionales enriquecen los desvíos.
 
 | Área | Tamaño del terreno | Borde y circulación | Entrada / cierre |
 | --- | ---: | --- | --- |
-| Complejo terrestre | 288 m | Patio, pista, hangares y mirador conectados por pistas y relieve de borde. | Llega a Control, registra el objetivo y aprueba el diseño antes de pilotar el ascenso. |
+| Complejo terrestre | 288 m | Patio, pista, hangares y mirador conectados por pistas y relieve de borde. | Despídete en el patio y, tras el prólogo, llega a Control y aprueba el diseño de la misión. |
 | Estación | 196 m | Módulos presurizados, laboratorios y acceso a la esclusa. | Transfiere carga, autentica la cápsula y prepara la protección de LUMA. |
 | EVA | 155 m | Cubierta y anclajes solapados de 17 m, con dos rutas configurables. | Contrasta luz, recoge registrador y autentícalo de vuelta en la esclusa. |
 | Luna | 256 m | Base, llanura, cráter, cresta y dos caminos alrededor de la grieta de Nácar. | Selecciona zona, equipa el traje, reúne las tres piezas en orden libre y coteja en órbita. |
@@ -35,6 +37,7 @@ Los tamaños describen la malla, incluidos los bordes de seguridad. Las ubicacio
 3. Alinea secuencia, pruebas y salida con [campaign.ts](../../src/core/campaign.ts). Las escenas, datos y UI mantienen separadas la prueba recogida y la conclusión validada.
 4. Escribe cada línea como `{es, en}`. Añade diálogos situados a `point:<id>` y de zona a `zone:<id>`. Define `chat` para las conversaciones voluntarias con `L`. El motor habilita esa conversación cuando LUMA y su traductor están disponibles.
 5. Los clips de LUMA se producen en el modelo local del propietario. Coloca los archivos autorizados en `public/assets/voice/luma/` y las entradas en [clips.json](../../public/assets/voice/luma/clips.json). La clave es `escena/evento/índice/idioma`, empezando en cero. El [guion bilingüe de LUMA](../05-Arte/GUION-LUMA.md) reúne los IDs y las líneas. El visor reproduce la pista correspondiente al idioma elegido y presenta el subtítulo durante toda la línea. Los clips se cancelan al pasar de línea, cerrar la escena o salir del juego. La última escena con voz usa `service/point:safe-bay`.
+6. Mantén las transiciones de [campaña](../../src/ui/screens/campaign-scenes.tsx) ligadas al informe lunar de C1, al informe lunar de C2, al plan de rescate de C3 y al informe terrestre de C4. El siguiente destino se revela con la evidencia correspondiente. El epílogo terrestre retoma la despedida inicial.
 
 ## Prueba para entregar una región
 

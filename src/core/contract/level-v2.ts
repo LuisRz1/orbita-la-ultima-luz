@@ -6,7 +6,7 @@ import type { MoveParams, Solid } from '../movement.ts';
 
 export type Vec2 = { x: number; z: number };
 
-export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: number; zone: string };
+export type LevelPoint = Omit<POI, 'position'> & { position: Vec2; radius: number; zone: string; verb?: Localized };
 /**
  * `drain`: extra energy per second while inside. `hazard` says what causes it (cold by default).
  * `surge`: a contingency. Once the point `after` is completed the zone drains `drain` instead (for example a dust
@@ -53,6 +53,7 @@ export type LevelV2 = {
   kitVersion: 2; id: 'orbit' | 'moon' | 'mars' | 'bennu' | 'extraction'; mission: string;
   title: Localized; subtitle: Localized; briefing: Localized; arrival: Localized; outcome: Localized;
   terrain: { size: number; res: number; height(x: number, z: number): number };
+  attire?: 'civilian';
   /** Inner faces of a walkable station bay, in world metres. */
   pressurizedBay?: PressurizedBay;
   companionBerth?: { hatch: Vec2; rest: Vec2; secured: Vec2 };
@@ -74,10 +75,10 @@ export type LevelV2 = {
   /** After this point the player carries LUMA (it no longer flies on its own). */
   carryAfter?: string;
   /**
-   * People to rescue, drawn as simple figures. They wait at `at` and, once `boardAfter` is done, walk `route` to the
-   * vehicle in single file. Only the extraction uses it.
+   * Crew wait at `at` and walk `route` after `boardAfter` is done.
+   * Ground crews may wear a flight uniform instead of a pressure suit.
    */
-  crew?: { members: { id: string; sister?: boolean; at: Vec2 }[]; boardAfter: string; route: Vec2[] };
+  crew?: { members: { id: string; sister?: boolean; uniform?: 'flight'; at: Vec2 }[]; boardAfter: string; route: Vec2[] };
   /** LUMA's last level: once a sortie here is complete, LUMA is gone for good and never reacts again. */
   farewell?: boolean;
   /** Anchor line: the player can rise at most this many metres above the ground before the line holds them. */

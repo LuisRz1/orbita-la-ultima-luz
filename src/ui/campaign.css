@@ -7,6 +7,22 @@
     #070c16;
 }
 .orbita .campaign-orbital-art {position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.campaign-cinematic .story-orb {
+  --rim:#e3edf5;--lit:#9dadbc;--middle:#656a74;--shadow:#19212c;
+  position:absolute;top:47%;left:50%;width:min(43vh,65vw);aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;opacity:.82;background:
+    radial-gradient(ellipse at 42% 33%,#121d2d28 0 6%,transparent 12%),
+    radial-gradient(ellipse at 27% 49%,#121d2d35 0 8%,transparent 20%),
+    radial-gradient(circle at 31% 26%,var(--lit),var(--middle) 42%,var(--shadow) 66%,#080e17 83%);
+  box-shadow:inset 2px 3px 5px var(--rim),0 -8px 70px color-mix(in srgb,var(--rim) 20%,transparent);
+}
+.campaign-cinematic[data-destination="mars"] .story-orb {--rim:#ffba92;--lit:#dc9a71;--middle:#a15a42;--shadow:#3d2228;}
+.campaign-cinematic[data-destination="bennu"] .story-orb {--rim:#d9caaf;--lit:#8b837c;--middle:#575056;--shadow:#1d1e28;
+  width:min(32vh,52vw);border-radius:49% 41% 46% 50% / 47% 52% 45% 46%;transform:translate(-50%,-50%) rotate(-25deg);}
+.campaign-cinematic[data-destination="earth"] .story-orb {--rim:#b5f0ee;--lit:#79bdad;--middle:#3f6a82;--shadow:#172a48;}
+.campaign-cinematic .prologue-cue.world {top:19%;width:min(90vw,670px);text-align:center;}
+.campaign-cinematic .prologue-cue.world .tag {color:#e0ecf2;letter-spacing:.25em;}
+.orbita .campaign-game:has(.campaign-cinematic) .save-error {z-index:13;bottom:2vh;}
 .orbita .campaign-orbital-art i {
   display:block;position:absolute;width:min(65vw,830px);aspect-ratio:1;
   left:-8vw;top:31%;border-radius:50%;transform:rotate(-26deg);

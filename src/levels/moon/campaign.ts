@@ -1,6 +1,6 @@
 import type { LevelV2 } from '../../core/contract/level-v2.ts';
 import { at, point, scenery, t, zone } from '../expedition-shapes.ts';
-import { moonDialogue, type Line } from './dialogue.ts';
+import { moonDialogue, recordedLuma, type Line } from './dialogue.ts';
 import { moonLevel } from './level.ts';
 import { moonHeight } from './terrain.ts';
 
@@ -46,10 +46,15 @@ export function campaignMoon(site:'ridge'|'slope'):LevelV2{
 }
 
 export const lunarCampaignDialogue:Record<string,Line[]>={
-  ...moonDialogue,complete:[],
-  chat:[{speaker:'LUMA',text:t('Aquí las sombras tienen un borde limpio. Quédate un momento conmigo donde todavía llega la luz.',
+  ...Object.fromEntries(Object.entries(moonDialogue).map(([key,lines])=>[
+    key,lines.map((line,index)=>line.speaker==='LUMA'?recordedLuma('moon',moonDialogue,key,index):line),
+  ])),
+  complete:[],
+  intro:[moonDialogue.intro[0],recordedLuma('moon',moonDialogue,'intro',2)],
+  chat:[recordedLuma('moon',moonDialogue,'recalled',1),{speaker:'LUMA',text:t('Aquí las sombras tienen un borde limpio. Quédate un momento conmigo donde todavía llega la luz.',
     'The shadows have a sharp edge here. Stay with me for a moment while there is still light.')}],
   'point:habitat':[
+    recordedLuma('moon',moonDialogue,'intro',1),
     {speaker:'LUMA',text:t('Yo paso por el conducto. Tú mira desde la consola. Así no perdemos el enlace cuando cierre la tapa.',
       'I can fit through the duct. Watch from the console so we keep the link when the cover shuts.')},
     {speaker:'LUMA',text:t('¿Nos quedamos aquí un momento? Desde el alunizaje me cuesta más seguirte.',

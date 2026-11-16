@@ -34,16 +34,13 @@ import { createFx } from './fx.ts';
 import { createPost, type Post } from './post.ts';
 import { arrivalShot, type Shot, type ShotFrame } from './cinematic.ts';
 import { debugEnabled } from './debug.ts';
-import { playLumaLine, stopLumaLine } from './voice.ts';
+import { bundledLumaVoice, playLumaLine, stopLumaLine } from './voice.ts';
 
 export type Game = { dispose(): void };
 export type GameOptions = {
   module: LevelModule; site: string; chapter: number; autostart: boolean; luma?: boolean;
   saveId?: string; entryDesign?: SuitDesign;
 };
-
-/** Recorded LUMA lines known at build time (lang/level/key-index.m4a); lines without a recording stay silent. */
-const lumaVoices = import.meta.glob('../assets/voice/luma/*/*/*.m4a', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 const verbs = {
   scan: { es: 'Escanear', en: 'Scan' }, salvage: { es: 'Recuperar', en: 'Recover' },
@@ -101,6 +98,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
   const viewport = createViewport(host, tier);
   const hf = buildHeightfield(level.terrain.size, level.terrain.res, level.terrain.height);
   const bay = level.pressurizedBay, course = level.anchorCourse, berth = level.companionBerth, site = options?.site;
+  const civilian=level.attire==='civilian';
   const bulkheads = bay ? bulkheadColliders(bay) : [];
   const ground: Ground = { height: (x, z) => heightAt(hf, x, z), slope: (x, z) => slopeAt(hf, x, z), solids: level.props.map(p => p.solid) };
   const view = buildWorldView(level, hf, tier, viewport.renderer);
@@ -166,7 +164,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
   let fovKick = 0, shake = 0, fallSpeed = 0;
   const baseFov = 62;
   /** Helmet view (V or the setting) and photo mode (P): camera-only, the simulation and collisions are unchanged. */
-  const firstPerson = () => prefs.getState().view === 'first' && phase === 'eva' && !cine;
+  const firstPerson = () => !civilian && prefs.getState().view === 'first' && phase === 'eva' && !cine;
   let photo = false, bob = 0;
   applyPrefs();
   const unsubscribePrefs = prefs.subscribe(applyPrefs);
@@ -233,7 +231,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
   /** LUMA is with the player unless the level makes it join later (chapter 1: once the protected bay is open). */
   // LUMA's death is permanent: after the farewell level is complete it never appears or speaks there again.
   const lumaGone = () => !!level.farewell && progress.attempts.some(a => a.outcome === 'complete') && !dialogue;
-  const lumaHere = () => options?.luma !== false && site !== 'ground' && site !== 'eva' && site !== 'earth'
+  const lumaHere = () => options?.luma !== false && !civilian && site !== 'eva' && site !== 'earth'
     && (!berth || done('protected-bay')) && !lumaGone() && (!level.companionAfter || (phase === 'eva' && done(level.companionAfter)));
   const canTalk = () => phase === 'eva' && !paused && !dialogue && !recalling && !returning && !ending
     && lumaHere() && (!berth || done('translator') && !done('capsule-auth')) && !!script.chat;
@@ -259,7 +257,11 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     if (!dialogue) return;
     audio.play('click');
     dialogue.index++;
-    if (dialogue.index >= dialogue.lines.length) { dialogue = null; stopLumaLine(); }
+    if (dialogue.index >= dialogue.lines.length) {
+      if(level.crew&&dialogue.key==='point:'+level.crew.boardAfter)crewStart=time;
+      dialogue = null;
+      stopLumaLine();
+    }
     publish(true);
   }
   function award(event: GameEvent) {
@@ -638,13 +640,14 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
   }
 
   function updateEva(dt: number) {
-    const params = suitMovement({ ...tuning, ...level.movement, ...(course ? { runSpeed: site === 'bennu' ? 5.5 : 4.5 } : {}) }, sortie.stats);
+    const base = { ...tuning, ...level.movement, ...(course ? { runSpeed: site === 'bennu' ? 5.5 : 4.5 } : {}) };
+    const params = civilian?{...base,airJumps:0}:suitMovement(base,sortie.stats);
     const k = input.look.yaw, fx = -Math.sin(k), fz = -Math.cos(k), rx = Math.cos(k), rz = -Math.sin(k);
     const ax = (input.isHeld('right') ? 1 : 0) - (input.isHeld('left') ? 1 : 0);
     const ay = (input.isHeld('up') ? 1 : 0) - (input.isHeld('down') ? 1 : 0);
     Object.assign(prev, { x: body.x, y: body.y, z: body.z });
     const frozen = recalling || ending > 0 || releasing > 0;
-    let dash = !course && !frozen && input.wasPressed('dash');
+    let dash = !civilian && !course && !frozen && input.wasPressed('dash');
     if (dash && spendable(sortie) < dashCost) { dash = false; tell(say('Energía en reserva: sin dash.', 'Energy at reserve: no dash.'), 'warn'); }
     if (!body.grounded && spendable(sortie) < sortie.stats.airJumpCost) body.airJumpsLeft = 0;
     const events = stepBody(body, frozen ? { x: 0, z: 0, jump: false, jumpHeld: false, dash: false } : {
@@ -703,9 +706,9 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
         // Contingency: a point can set off a hazard (the relay repair on Mars brings a dust front over the dunes).
         const surge = level.zones.find(z => z.surge?.after === result.point.id)?.surge;
         if (surge) { setStorm(true); tell(surge.warning, 'warn'); play('storm'); }
-        if (result.point.id === level.crew?.boardAfter) crewStart = time;
         if (result.point.id === level.companionAfter) lumaPos.set(result.point.position.x, body.y + 1.2, result.point.position.z);
-        play('point:' + result.point.id);
+        play('point:' + result.point.id,site==='departure');
+        if (result.point.id === level.crew?.boardAfter && !dialogue) crewStart = time;
       } else if (result.error === 'none') {
         // No mission point in reach: maybe an atlas rock. Nothing at all needs no feedback.
         const ruin = ruinInReach(level, progress.ruins, body.x, body.z);
@@ -733,9 +736,9 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     const picked = collect(level, sortie.session, body.x, body.y, body.z, (x, z) => heightAt(hf, x, z));
     for (const id of picked) gainEcho(id);
 
-    if (!frozen && input.wasPressed('luma') && (!berth || done('translator') && !done('capsule-auth'))) callLuma();
+    if (!civilian && !frozen && input.wasPressed('luma') && (!berth || done('translator') && !done('capsule-auth'))) callLuma();
     // R: free scanner sweep over the ground. Purely a look around: it shows nothing the map does not.
-    if (!frozen && input.wasPressed('scan')) { vfx.pulse(body.x, body.y, body.z, 18, biome.cyan); audio.play('scan'); }
+    if (!civilian && !frozen && input.wasPressed('scan')) { vfx.pulse(body.x, body.y, body.z, 18, biome.cyan); audio.play('scan'); }
     if (fetching && time - fetching.start > 2.2) {
       // LUMA is back with the echo.
       const id = fetching.id;
@@ -784,7 +787,8 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     }
 
     const moving = Math.hypot(body.vx, body.vz) > 0.5;
-    if (!frozen) {
+    if (civilian && !frozen) sortie.time+=dt;
+    if (!civilian && !frozen) {
       // LUMA's glow spares part of the cold while it floats close by (not while it runs a trail or fetches).
       const here = level.zones.find(q => q.id === zone);
       const near = Math.hypot(lumaPos.x - body.x, lumaPos.z - body.z);
@@ -840,7 +844,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     }
 
     // Radio link: losing it for a moment is a warning; losing it for longer triggers LUMA's recall.
-    const signal = link();
+    const signal = civilian?1:link();
     lostFor = signal <= 0 ? lostFor + dt : 0;
     if (signal < 0.5 && signal > 0 && notice?.tone !== 'warn') tell(say('La señal cae: vuelve hacia el centro de la zona de enlace.', 'Signal fading: head back toward the middle of the link area.'), 'warn');
     if (lostFor > 1.5 && !recalling) {
@@ -897,12 +901,11 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     const lang = prefs.getState().lang;
     if (line && (line !== lastLine || lang !== lastLang) && dialogue) {
       audio.play(line.speaker === 'LUMA' ? 'luma' : 'control');
-      // Only use bundled clips whose dialogue matches the active scene.
-      const recordedLevel = !options || site === 'moon' || site === 'station' && dialogue.key === 'point:translator' ? level.id : null;
-      const voiceUrl = recordedLevel && lumaVoices[`../assets/voice/luma/${lang}/${recordedLevel}/${dialogue.key.replace(/:/g, '_')}-${dialogue.index}.m4a`];
+      const recording = line.recording ?? (!options?{level:level.id,key:dialogue.key,index:dialogue.index}:undefined);
+      const voiceUrl = recording&&bundledLumaVoice(lang,recording);
       stopLumaLine();
-      if (line.speaker === 'LUMA' && voiceUrl) audio.voice(voiceUrl);
-      else if (line.speaker === 'LUMA' && options) void playLumaLine(site!, dialogue.key, dialogue.index, lang);
+      if (line.speaker === 'LUMA' && options) void playLumaLine(options.site, dialogue.key, dialogue.index, lang,voiceUrl);
+      else if (line.speaker === 'LUMA' && voiceUrl) audio.voice(voiceUrl);
     }
     lastLine = line; lastLang = lang;
     // Losing pointer lock in the middle of a sortie (Esc, alt-tab) pauses it.
@@ -921,7 +924,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     else if (phase === 'eva' && input.wasPressed('pause') && !lostLock && !photo) { paused = !paused; publish(true); }
     // V switches the camera live at any moment of a sortie, story lines included; in the lander it is remembered for
     // the next sortie (the room camera stays fixed so the station panels stay readable).
-    if ((phase === 'eva' || phase === 'ship') && !paused && input.wasPressed('view')) {
+    if (!civilian && (phase === 'eva' || phase === 'ship') && !paused && input.wasPressed('view')) {
       const next = prefs.getState().view === 'first' ? 'third' : 'first';
       prefs.setState({ view: next });
       audio.play('ui-tic');
@@ -984,7 +987,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
       levelTitle: level.title, levelSubtitle: level.subtitle, briefing: level.briefing,
       objectives: level.points.map(p => ({ id: p.id, title: p.title, required: p.required, done: sortie.session.completed.includes(p.id), action: p.action, power: p.power })),
       echoes: { found: progress.echoes.length, total: level.collectibles.length },
-      prompt: reach ? { verb: level.id === 'orbit' && reach.action === 'service' ? say('Usar', 'Use') : verbs[reach.action],
+      prompt: reach ? { verb: reach.verb??(level.id === 'orbit' && reach.action === 'service' ? say('Usar', 'Use') : verbs[reach.action]),
         title: reach.title, hint: reach.hint, cost: actionCost(reach.power, reach.action, sortie.design),
         blocked: missingFor(level, sortie.session, reach).map(id => level.points.find(p => p.id === id)!.title),
         missing: needs && !sortie.design.instruments.includes(needs) ? instruments[needs].name : null }
@@ -1028,10 +1031,10 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
   }
 
   /** Crew walk the route in single file at a calm pace and disappear into the vehicle at its end. */
-  function updateCrew() {
+  function updateCrew(dt:number) {
     if (!level.crew) return;
     level.crew.members.forEach((m, i) => {
-      const fig = view.crew.get(m.id)!;
+      const {group:fig,rig} = view.crew.get(m.id)!;
       const walked = crewStart === null ? 0 : Math.max(0, (time - crewStart) * 1.6 - i * 2.5);
       const path = [m.at, ...level.crew!.route];
       let left = walked, x = m.at.x, z = m.at.z, heading = fig.rotation.y, arrived = true;
@@ -1042,8 +1045,10 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
       }
       fig.visible = !arrived || walked === 0;
       const moving = walked > 0 && !arrived;
-      fig.position.set(x, heightAt(hf, x, z) + (moving && !prefs.getState().reduceMotion ? Math.abs(Math.sin(time * 5 + i)) * 0.06 : 0), z);
-      if (moving) fig.rotation.y = heading;
+      const bob = moving && !rig && !prefs.getState().reduceMotion ? Math.abs(Math.sin(time * 5 + i)) * 0.06 : 0;
+      fig.position.set(x, heightAt(hf, x, z) + bob, z);
+      if (moving) fig.rotation.y = heading+(m.uniform?Math.PI:0);
+      if(!paused&&!prefs.getState().reduceMotion)rig?.animate(dt,{speed:moving?1.6:0,grounded:true,vertical:0,turn:0,boosting:false,tethered:false});
     });
   }
 
@@ -1262,7 +1267,7 @@ export async function createGame(host: HTMLElement, options?: GameOptions, signa
     if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
 
     view.tickSky(prefs.getState().reduceMotion ? 0 : time);
-    updateCrew();
+    updateCrew(frameDt);
     view.beacon.visible = Math.sin(time * 3) > -0.2;
     for (const lamp of view.blinkers) lamp.visible = Math.sin(time * 2.4 - lamp.position.x * 0.2) > -0.5;
     for (const [id, m] of view.echoes) if (m.visible) m.rotation.y = time * 1.5 + id.length;

@@ -1,16 +1,19 @@
 // Prologue of a new expedition: about 45 narrated words over the title scene, with letterbox bars, one visual cue
 // per line and subtitles. Skippable at any time; the guided suit-up starts when it ends.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { Localized } from '../../core/contract/grid-v1.ts';
 import { sound } from '../../engine/audio.ts';
+import { bundledLumaVoice, playLumaLine, stopLumaLine } from '../../engine/voice.ts';
+import type { LumaRecording } from '../../levels/moon/dialogue.ts';
 import { useT } from '../i18n.ts';
 import { prefs } from '../prefs.ts';
 import { commands, hud } from '../store.ts';
 
 const narration = import.meta.glob('../../assets/voice/prologue/*/*.m4a', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
-type Cue = 'flatline' | 'stamp' | 'capsule' | 'glow' | 'title';
-export const prologueLines: { text: Localized; cue: Cue; tag: Localized }[] = [
+type Cue = 'flatline' | 'stamp' | 'capsule' | 'glow' | 'title' | 'world';
+export type SceneLine = { text: Localized; cue: Cue; tag: Localized; recording?: LumaRecording; speaker?: 'LUMA' };
+export const prologueLines: SceneLine[] = [
   { text: { es: 'Hace meses, la expedición Aurora dejó de responder.', en: 'Months ago, the Aurora expedition stopped answering.' }, cue: 'flatline',
     tag: { es: 'EXP. AURORA · ÚLTIMO CONTACTO', en: 'EXP. AURORA · LAST CONTACT' } },
   { text: { es: 'Tu hermana iba a bordo. La búsqueda se suspendió.', en: 'Your sister was on board. The search was called off.' }, cue: 'stamp',
@@ -26,35 +29,42 @@ export const prologueLines: { text: Localized; cue: Cue; tag: Localized }[] = [
 /** Reading time when a line has no recording (or audio is blocked): about 2.6 words per second, at least 2.4 s. */
 const readTime = (text: string) => Math.max(2.4, text.split(/\s+/).length / 2.6);
 
-export function Prologue({ onFinish }: { onFinish?: () => void } = {}) {
+export function StoryScene({ name, lines, destination, heading, busy=false, onFinish }: {
+  name:Localized; lines:SceneLine[]; destination?:'moon'|'mars'|'bennu'|'earth'; heading?:Localized;
+  busy?:boolean; onFinish:()=>void;
+}) {
   const { t, lang } = useT();
   const [index, setIndex] = useState(0);
   const [shown, setShown] = useState(false);
-  const done = useRef(false);
+  const [ended,setEnded]=useState(false);
   const finish = () => {
-    if (done.current) return;
-    done.current = true;
-    sound.stopVoice();
-    hud.setState({ prologue: false });
-    if (onFinish) onFinish();
-    else commands.newGame();
+    if(busy)return;
+    setEnded(true);
+    stopLumaLine();
+    onFinish();
   };
+  const finishAtEnd=useEffectEvent(finish);
 
   useEffect(() => {
-    if (index >= prologueLines.length) { finish(); return; }
+    if(ended)return;
     let alive = true, timer: ReturnType<typeof setTimeout> | undefined;
     setShown(false);
-    const line = prologueLines[index];
-    const url = narration[`../../assets/voice/prologue/${lang}/${index}.m4a`];
+    const line = lines[index];
+    const url = !destination && narration[`../../assets/voice/prologue/${lang}/${index}.m4a`];
+    const voice = line.speaker==='LUMA' ? playLumaLine('scene-'+destination,'line',index,lang,
+      line.recording&&bundledLumaVoice(lang,line.recording)) : url ? sound.narrate(url) : Promise.resolve(0);
     const reveal = setTimeout(() => alive && setShown(true), 250);
-    void (url ? sound.narrate(url) : Promise.resolve(0)).then(seconds => {
+    const last = index===lines.length-1;
+    void voice.then(seconds => {
       if (!alive) return;
-      const hold = (seconds || readTime(t(line.text))) + (index === prologueLines.length - 1 ? 2.2 : 0.9);
-      timer = setTimeout(() => alive && setIndex(i => i + 1), hold * 1000);
+      const hold = (seconds || readTime(line.text[lang])) + (last ? 2.2 : 0.9);
+      timer = setTimeout(() => {
+        if(last)finishAtEnd();
+        else setIndex(i=>i+1);
+      }, hold*1000);
     });
-    return () => { alive = false; clearTimeout(reveal); if (timer) clearTimeout(timer); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, lang]);
+    return () => { alive = false; clearTimeout(reveal); if (timer) clearTimeout(timer); stopLumaLine(); };
+  }, [index, lang, lines, destination, ended]);
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (['Escape', 'Enter', 'Space', 'KeyE'].includes(e.code)) { e.preventDefault(); finish(); } };
@@ -62,10 +72,13 @@ export function Prologue({ onFinish }: { onFinish?: () => void } = {}) {
     return () => window.removeEventListener('keydown', key);
   });
 
-  const line = prologueLines[Math.min(index, prologueLines.length - 1)];
+  const line = lines[index];
   const calm = prefs.getState().reduceMotion;
-  return <div className={'prologue' + (calm ? ' calm' : '')} data-prologue={index} onClick={finish} role="dialog" aria-label={t({ es: 'Prólogo', en: 'Prologue' })}>
+  return <div className={'prologue' + (calm ? ' calm' : '')} data-prologue={destination?undefined:index}
+    data-story-scene={destination??'prologue'} onClick={finish} role="dialog" aria-label={t(name)}>
+    {destination&&<div className="story-orb" aria-hidden="true"/>}
     <i className="bar-top" /><i className="bar-bottom" />
+    {heading&&index===0&&<span className="prologue-heading">{t(heading)}</span>}
     <div className={'prologue-cue ' + line.cue + (shown ? ' on' : '')} key={index} aria-hidden="true">
       {line.cue === 'flatline' && <svg viewBox="0 0 300 60"><path className="pulse" d="M0 30 H70 L80 12 L92 48 L104 22 L114 36 L124 30 H300" /></svg>}
       {line.cue === 'stamp' && <span className="stamp">{t(line.tag)}</span>}
@@ -74,7 +87,22 @@ export function Prologue({ onFinish }: { onFinish?: () => void } = {}) {
       {line.cue === 'title' && <><h2>ÓRBITA</h2><small>{t({ es: 'LA ÚLTIMA LUZ', en: 'THE LAST LIGHT' })}</small></>}
       {line.cue !== 'stamp' && line.cue !== 'title' && <span className="tag">{t(line.tag)}</span>}
     </div>
-    <p className={'prologue-sub' + (shown ? ' on' : '')} key={'s' + index} aria-live="polite">{t(line.text)}</p>
-    <p className="prologue-skip">{t({ es: 'E · Espacio · clic: saltar', en: 'E · Space · click: skip' })}</p>
+    <p className={'prologue-sub' + (shown ? ' on' : '')} key={'s' + index} aria-live="polite">
+      {line.speaker&&<b>{line.speaker}</b>}{t(line.text)}
+    </p>
+    <button type="button" className="prologue-skip" disabled={busy}>
+      {t(ended?{es:'Continuar',en:'Continue'}:{es:'Saltar · E / Espacio',en:'Skip · E / Space'})}
+    </button>
   </div>;
+}
+
+export function Prologue({ onFinish, afterDeparture=false, busy=false }: {
+  onFinish?: () => void; afterDeparture?:boolean; busy?:boolean;
+} = {}) {
+  return <StoryScene name={{es:'Prólogo',en:'Prologue'}} lines={prologueLines} busy={busy}
+    heading={afterDeparture?{es:'Meses después',en:'Months later'}:undefined} onFinish={()=>{
+      hud.setState({prologue:false});
+      if(onFinish)onFinish();
+      else commands.newGame();
+    }}/>;
 }

@@ -11,8 +11,8 @@ import { Prologue } from './prologue.tsx';
 import { ShipScreen } from './ship.tsx';
 import { SortieReport, type SortieSummary } from './sortie-report.tsx';
 
-export function SortieScreen({onCampaign,onExit,onComplete,busy=false,summary,campaign=false}:{
-  onCampaign?:()=>void;onExit?:()=>void;onComplete?:(report:Report)=>void;busy?:boolean;summary?:SortieSummary;campaign?:boolean;
+export function SortieScreen({onCampaign,onExit,onComplete,busy=false,summary,campaign=false,civilian=false}:{
+  onCampaign?:()=>void;onExit?:()=>void;onComplete?:(report:Report)=>void;busy?:boolean;summary?:SortieSummary;campaign?:boolean;civilian?:boolean;
 }){
   const {t}=useT();
   const {phase,report,saveError,paused,cinematic,photo,prologue,view}=useStore(hud);
@@ -27,8 +27,8 @@ export function SortieScreen({onCampaign,onExit,onComplete,busy=false,summary,ca
   else if(phase==='eva'&&cinematic)body=<CinematicCard/>;
   else if(phase==='eva'&&photo)body=<PhotoHint/>;
   else if(phase==='eva')body=<>
-    <HelmetHud/><MissionPanel/><Compass/><Telemetry/>
-    {view!=='first'&&<LumaCard/>}<ZoneTitle/><Prompt/><ViewChip/>
+    {!civilian&&<HelmetHud/>}<MissionPanel civilian={civilian}/><Compass/>{!civilian&&<Telemetry/>}
+    {!civilian&&view!=='first'&&<LumaCard/>}<ZoneTitle/><Prompt civilian={civilian}/>{!civilian&&<ViewChip/>}
     {paused&&<PauseMenu onExit={campaign?onExit:undefined}/>}
   </>;
   return <>

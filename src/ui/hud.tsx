@@ -12,13 +12,13 @@ const clock = (s: number) => {
   return [Math.floor(t / 3600), Math.floor(t / 60) % 60, t % 60].map(n => String(n).padStart(2, '0')).join(':');
 };
 
-export function MissionPanel() {
+export function MissionPanel({civilian=false}:{civilian?:boolean}={}) {
   const { t } = useT();
   const { levelTitle, levelSubtitle, objectives, echoes, atlas, beacons, pages, elapsed, compass } = useStore(hud);
   if (!levelTitle) return null;
   const required = objectives.filter(o => o.required);
   const goal = compass.marks.find(m => m.kind === 'goal');
-  return <section className="panel mission" aria-label={t('eva')}>
+  return <section className="panel mission" aria-label={civilian?t({es:'Objetivo en tierra',en:'Objective on Earth'}):t('eva')}>
     <span className="panel-title">{levelSubtitle ? t(levelSubtitle) : t('eva')} · {clock(elapsed)}</span>
     <h1>{t(levelTitle)}</h1>
     <div className="next" data-next>
@@ -31,7 +31,7 @@ export function MissionPanel() {
         {required.map(o => <i key={o.id} data-objective={o.id} className={o.done ? 'done' : ''} title={t(o.title)} />)}
       </b>
     </div>
-    <div className="row"><span>{t('echoes')}</span><b>{echoes.found}/{echoes.total}</b></div>
+    {echoes.total>0&&<div className="row"><span>{t('echoes')}</span><b>{echoes.found}/{echoes.total}</b></div>}
     {atlas.total > 0 && <div className="row" data-atlas><span>{t('atlas')}</span><b className="atlas">▲ {atlas.found}/{atlas.total}</b></div>}
     {pages.total > 0 && <div className="row" data-pages><span>{t('pages')}</span><b className="pages">{pages.found}/{pages.total}</b></div>}
     {beacons.lit > 0 && <div className="row" data-beacons><span>{t('beacons')}</span><b>{beacons.lit}/{beacons.total}</b></div>}
@@ -158,7 +158,7 @@ export function ZoneTitle() {
   return <div className="zone-title" key={zoneAt} aria-live="polite">{t(zone)}</div>;
 }
 
-export function Prompt() {
+export function Prompt({civilian=false}:{civilian?:boolean}={}) {
   const { t } = useT();
   const { prompt, notice, now, locked, dialogue, elapsed, canTalk, tethered } = useStore(hud);
   const showNotice = notice && now - notice.at < 6 && !dialogue;
@@ -172,7 +172,8 @@ export function Prompt() {
       {prompt.missing && <small>{t('suitLacks')} {t(prompt.missing).toLowerCase()}</small>}
       {prompt.hint && !prompt.blocked.length && !prompt.missing && t(prompt.hint) !== t(prompt.title) && <small>{t(prompt.hint)}</small>}
     </p>}
-    {!dialogue && (elapsed < 25 || !locked) && <p className="hint">{t(tethered
+    {!dialogue && (elapsed < 25 || !locked) && <p className="hint">{t(civilian
+      ? {es:'WASD caminar · Ratón cámara · E interactuar · C centrar',en:'WASD walk · Mouse look · E interact · C centre'} : tethered
       ? { es:'WASD seguir la línea · E usar · R escanear · V visor · C centrar', en:'WASD follow the tether · E use · R scan · V visor · C centre' }
       : 'hint')}</p>}
     {canTalk && <button type="button" className="luma-talk" onClick={()=>commands.talk()}><kbd>L</kbd>{t(
@@ -185,8 +186,9 @@ export function DialogueBox() {
   const { t } = useT();
   const line = useStore(hud, s => s.dialogue);
   if (!line) return null;
-  return <div className="dialogue" role="dialog" aria-label={line.speaker} data-dialogue>
-    <span className={'speaker ' + line.speaker.toLowerCase()}>{line.speaker}</span>
+  const speaker=line.speaker==='SISTER'?t({es:'Tu hermana',en:'Your sister'}):line.speaker;
+  return <div className="dialogue" role="dialog" aria-label={speaker} data-dialogue>
+    <span className={'speaker ' + line.speaker.toLowerCase()}>{speaker}</span>
     <p>{t(line.text)}</p>
     <button onClick={() => commands.advance()} aria-label={t('advance')}>{t('advance')} <kbd>E</kbd></button>
   </div>;

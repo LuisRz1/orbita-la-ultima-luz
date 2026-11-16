@@ -11,7 +11,7 @@ tags: [orbita, campana, capitulo-1]
 
 Las seis principales se juegan en la campaña 3D. Abre `/?campana` para seguir la partida, o `/?campana&primera-luz` para jugar solo el capítulo con un guardado separado. La duración sigue como objetivo de producción. La [rama de C1](https://github.com/LuisRz1/orbita-la-ultima-luz/tree/feat/world-orbit) conserva la referencia anterior.
 
-**Juego 3D:** la estación es el primer nivel (`/`) y cubre M03–M05 con la autenticación de AUR-E01 y AUR-E02. Ver [Estación «Quirófano azul»](../ESTACION-QUIROFANO.md). M01, M02 y M06 siguen en la versión 2D hasta que exista el vuelo 3D.
+En una partida nueva, el jugador recorre de civil el complejo terrestre y se despide de su hermana antes de que salga Aurora. El prólogo narrado introduce el salto de meses. Después empiezan la investigación en Control y el diseño de M01. La [estación «Quirófano azul»](../ESTACION-QUIROFANO.md) cubre el encuentro orbital y da acceso a la EVA.
 
 ## Objetivo y regiones
 
@@ -41,6 +41,8 @@ Orden: M01 → M02 → M03 → M04 → M05 → M06. Fallar una maniobra admite r
 3. LUMA se asoma por la escotilla. Se le prepara la manta, se verifica su cápsula de transporte y se calibra el traductor con un saludo de dos pulsos. El acta de traslado y la identificación de la cápsula validan AUR-E01. El parche tiene un recuerdo adicional en el diario.
 4. Se comparan la baranda sombreada con luz de trabajo cian y la baranda corta al Sol con visera. El tramo alterna luz y sombra de los paneles. Retirar el registrador deja AUR-E02 recogida. Su autenticación ocurre al regresar a la esclusa y revela `LUN-ARC-07`.
 5. LUMA descansa protegido durante el crucero. Al acoplar, el informe entrega el código al nodo, registra las dos pruebas, los datos y reservas, y plantea escoger un lugar para alunizar.
+
+La cinemática de cierre ocurre al archivar el informe. LUMA recuerda a la hermana mirando la Luna. Luego se habilita la elección del lugar de alunizaje.
 
 ## Condición para pasar
 

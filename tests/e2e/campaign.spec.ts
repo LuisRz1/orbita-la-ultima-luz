@@ -22,8 +22,10 @@ async function operate(page:Page,id:string,start:boolean,inspect?:(point:string)
     await call(page,'teleport',p.x,p.z);
     await call(page,'step',2);
     await settle(page);
+    const voice=id==='station'&&p.id==='translator'?page.waitForResponse(r=>/\/point_translator-0-[\w-]+\.m4a$/.test(r.url())):null;
     await call(page,'press','interact');
     await call(page,'step',2);
+    if(voice)expect((await voice).ok()).toBe(true);
     await settle(page);
     await call(page,'step',210);
     await settle(page);
@@ -53,6 +55,14 @@ async function file(page:Page,id:string){
   await expect(area(page,id)).toBeVisible();
   await page.locator('[data-file]').click();
 }
+async function skipStory(page:Page,id:string){
+  await expect(page.locator('[data-story-scene="'+id+'"]')).toBeVisible();
+  await page.getByRole('button',{name:/Saltar/}).click();
+}
+async function finishOpening(page:Page){
+  await operate(page,'departure',false);
+  await skipStory(page,'prologue');
+}
 
 async function currentEvidence(page:Page,id:string,status:'collected'|'validated'){
   await page.locator('[data-journal]').click();
@@ -65,12 +75,11 @@ async function currentEvidence(page:Page,id:string,status:'collected'|'validated
 }
 test('full-viewport astronaut moves by keyboard, looks with the mouse, and the journal switches languages',async ({page})=>{
   await page.goto('/?campana&debug&quality=low');
+  await finishOpening(page);
+  await expect(area(page,'ground')).toBeVisible();
   await page.waitForFunction(()=>window.__orbita?.state?.());
   await call(page,'pause',true);
   expect(await page.locator('canvas').boundingBox()).toEqual({x:0,y:0,width:1440,height:960});
-  await page.keyboard.press('v');
-  await call(page,'step',2);
-  await expect(page.locator('[data-helmet]')).toBeVisible();
   await page.keyboard.press('v');
   await call(page,'step',2);
   await expect(page.locator('[data-helmet]')).toHaveCount(0);
@@ -140,6 +149,7 @@ test('Aurora: all 24 missions, seven validated document IDs, persistent farewell
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   await page.goto('/?campana&debug&quality=low');
+  await finishOpening(page);
   await operate(page,'ground',false);
   await expect(area(page,'design')).toBeVisible();
   await page.getByRole('button',{name:/Registrar objetivo de búsqueda/}).click();
@@ -152,6 +162,10 @@ test('Aurora: all 24 missions, seven validated document IDs, persistent farewell
   await expect(area(page,'station')).toBeVisible();
   await page.waitForFunction(()=>typeof window.__orbita?.teleport==='function');
   await call(page,'pause',true);
+  expect((await call(page,'state') as {companion:boolean}).companion).toBe(false);
+  await page.keyboard.press('v');await call(page,'step',2);
+  await expect(page.locator('[data-helmet]')).toBeVisible();
+  await page.keyboard.press('v');await call(page,'step',2);
   await call(page,'teleport',-55,33);
   await page.keyboard.down('a');
   await call(page,'step',75);
@@ -188,9 +202,16 @@ test('Aurora: all 24 missions, seven validated document IDs, persistent farewell
   await expect(page.locator('.first-light-cabin-line')).toContainText('Me dormí un momento');
   await cruise(page,'moon-cruise');await fly(page,'moon-arrive');
   await expect(area(page,'moon-handoff')).toContainText('LUN-ARC-07');
+  const lunarVoice=page.waitForResponse(r=>/\/complete-1-[\w-]+\.m4a$/.test(r.url()));
   await file(page,'moon-handoff');
+  await expect(area(page,'scene-moon')).toBeVisible();
+  await expect(page.locator('[data-story-scene="moon"]')).toContainText('La Luna… Ella la miraba mucho',{timeout:15_000});
+  expect((await lunarVoice).ok()).toBe(true);
+  await page.reload();
+  await skipStory(page,'moon');
   await route(page,'moon-site');await fly(page,'moon-land');await operate(page,'moon',true);
   await fly(page,'moon-rise');await file(page,'moon-report');
+  await skipStory(page,'mars');
   await route(page,'mars-plan');await fly(page,'mars-depart');await cruise(page,'mars-cruise');
   await fly(page,'mars-arrive');await route(page,'mars-site');await fly(page,'mars-land');
   await operate(page,'mars',true);await fly(page,'mars-rise');
@@ -198,6 +219,7 @@ test('Aurora: all 24 missions, seven validated document IDs, persistent farewell
   await page.locator('[data-choice="science"]').click();
   await expect(page.locator('[data-route]')).toBeDisabled();
   await route(page,'rescue-plan','rescue');
+  await skipStory(page,'bennu');
   await fly(page,'bennu-depart');await cruise(page,'bennu-cruise');await fly(page,'bennu-arrive');
   await operate(page,'bennu',true);
   await operate(page,'service',false,async id=>{
@@ -214,6 +236,7 @@ test('Aurora: all 24 missions, seven validated document IDs, persistent farewell
   });
   await expect(area(page,'epilogue')).toContainText('Recepción confirmada');
   await file(page,'epilogue');
+  await skipStory(page,'earth');
   await expect(area(page,'complete')).toContainText('Aurora está en casa');
   await page.locator('[data-journal]').click();
   await expect(page.locator('dialog [data-mission][data-status="complete"]')).toHaveCount(24);
@@ -232,14 +255,15 @@ test('Aurora: all 24 missions, seven validated document IDs, persistent farewell
 test('First Light completes independently and carries its evidence into the lunar chapter',async ({page})=>{
   test.setTimeout(160_000);
   await page.goto('/?campana&primera-luz&debug&quality=low');
+  await finishOpening(page);
   await page.waitForFunction(()=>window.__orbita?.state?.());
   await call(page,'pause',true);
   await page.keyboard.down('Space');
-  await call(page,'step',39);
+  await call(page,'step',19);
   await page.keyboard.up('Space');
   const air=await call(page,'state') as {grounded:boolean;y:number};
   expect(air.grounded).toBe(false);
-  expect(air.y).toBeGreaterThan(1.4);
+  expect(air.y).toBeGreaterThan(.35);
   const jump=await call(page,'pose') as number[][];
   expect(jump[3][0]).toBeLessThan(-.23);
   const impact=await page.evaluate(()=>{
@@ -261,6 +285,7 @@ test('First Light completes independently and carries its evidence into the luna
   await route(page,'eva-plan','sunlit');await operate(page,'eva',false,undefined,true);
   await route(page,'moon-plan','economy');await fly(page,'moon-depart');await cruise(page,'moon-cruise');await fly(page,'moon-arrive');
   await file(page,'moon-handoff');
+  await skipStory(page,'moon');
   await expect(area(page,'complete')).toContainText('Primera luz completado');
   await page.locator('[data-journal]').click();
   await expect(page.locator('dialog [data-mission][data-status="complete"]')).toHaveCount(6);

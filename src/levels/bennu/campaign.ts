@@ -1,6 +1,8 @@
 import { people } from '../../core/campaign.ts';
 import type { LevelV2 } from '../../core/contract/level-v2.ts';
-import type { Line } from '../moon/dialogue.ts';
+import { recordedLuma, type Line } from '../moon/dialogue.ts';
+import { extractionDialogue } from '../extraction/dialogue.ts';
+import { bennuDialogue as recordedBennu } from './dialogue.ts';
 import { at, mound, point, scenery, smooth, t, zone } from '../expedition-shapes.ts';
 
 export function bennuHeight(x:number,z:number){
@@ -86,20 +88,22 @@ export const serviceLevel:LevelV2={
 };
 
 export const bennuDialogue:Record<string,Line[]>={
-  chat:[{speaker:'LUMA',text:t('Ajusta tu línea. Si no puedes oír al traductor, mira mis dos patas. Aquí estoy.',
+  chat:[recordedLuma('bennu',recordedBennu,'intro',1),{speaker:'LUMA',text:t('Ajusta tu línea. Si no puedes oír al traductor, mira mis dos patas. Aquí estoy.',
     'Check your line. If you cannot hear the translator, look at my two paws. I am here.')}],
   intro:[{speaker:'LUMA',text:t('Si oyes su voz antes que yo, dime qué dice. Hoy el traductor tarda.',
     'If you hear her voice first, tell me what she says. The translator is slow today.')}],
+  'point:contact':[recordedLuma('bennu',recordedBennu,'point:voice',1)],
   'point:sister':[
     {speaker:'AURORA',text:t('Creí que no llegaría nadie. La cápsula sí salió… Estás aquí, LUMA.',
       'I thought nobody would come. The capsule made it out… You are here, LUMA.')},
-    {speaker:'LUMA',text:t('Sí. Le enseñé nuestro saludo.', 'Yes. I taught them our greeting.')},
+    recordedLuma('bennu',recordedBennu,'complete',2),
   ],
 };
 export const serviceDialogue:Record<string,Line[]>={
+  intro:[recordedLuma('extraction',extractionDialogue,'intro',1)],
   'point:disconnect':[{speaker:'CONTROL',text:t('El traje no cabe por ese conducto. No fuerces el portón.',
-    'The suit cannot fit in the duct. Do not force the gate.')},{speaker:'LUMA',text:t('Yo conozco el paso. Como en el refugio. Tú espera mi señal.',
-      'I know the way. Like in the shelter. Wait for my signal.')}],
+    'The suit cannot fit in the duct. Do not force the gate.')},recordedLuma('extraction',extractionDialogue,'point:undock',3)],
+  'point:life-line':[recordedLuma('extraction',extractionDialogue,'point:undock',5)],
   'point:safe-bay':[{speaker:'LUMA',text:t('¿Te quedas aquí? Solo un momento. Ya veo a tu hermana.',
     'Will you stay here? Just for a moment. I can see your sister.')},{speaker:'AURORA',text:t('Aquí estamos, los dos.',
       'We are here. Both of us.')}],

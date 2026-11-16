@@ -3,7 +3,7 @@ import type { POI, World } from '../../core/contract/grid-v1.ts';
 import { chapterTitle, earth as groundPlan, exteriors, station as stationPlan, type EvaRoute } from '../../core/orbit/content.ts';
 import { people } from '../../core/campaign.ts';
 import { archiveId, capsuleId, receptionId, sunlitCoolingDrain } from '../../core/orbit/first-light.ts';
-import type { Line } from '../moon/dialogue.ts';
+import { recordedLuma, type Line } from '../moon/dialogue.ts';
 import { orbitDialogue } from './dialogue.ts';
 import { at, mound, point, scenery, smooth, t, zone } from '../expedition-shapes.ts';
 
@@ -24,7 +24,8 @@ const padProps=[
 const course=(prefix:string,cells:readonly [number,number][])=>cells.map(([x,z],i)=>({id:prefix+'-'+i,position:at(x,z)}));
 const template={kitVersion:2,id:'orbit',title:chapterTitle,sun:{azimuth:120,elevation:29}} as const;
 export const groundLevel:LevelV2={
-  ...template,mission:'campaign-ground',subtitle:groundPlan.subtitle,realGravity:9.81,
+  ...template,mission:'campaign-ground',subtitle:groundPlan.subtitle,realGravity:9.81,attire:'civilian',
+  movement:{gravityUp:9.81,gravityDown:12,jumpSpeed:3.7},
   briefing:t('Control ha reabierto la búsqueda de Aurora. Consulta el expediente de recuperación en la terminal.','Mission Control has reopened the search for Aurora. Read the recovery file at the terminal.'),
   arrival:t('Control a Apoyo Uno. La estación recuperó una cápsula con el código de Aurora. Cruza el patio hasta la terminal iluminada. Tu hermana figura en el expediente.',
     'Mission Control to Support One. The station recovered a capsule with Aurora’s code. Cross the plaza to the lit terminal. Your sister is in the file.'),
@@ -41,6 +42,32 @@ export const groundLevel:LevelV2={
       t('Control te da acceso al aviso de recuperación y al expediente de tu hermana.','Mission Control grants access to the recovery notice and your sister’s file.')),
   ],
   props:padProps,collectibles:course('ground-echo',[[-41,41],[-59,-51],[43,-25],[53,30]]),
+};
+
+export const departureLevel:LevelV2={
+  ...groundLevel,mission:'campaign-departure',title:t('La partida de Aurora','Aurora’s departure'),
+  subtitle:t('Tierra · día del lanzamiento','Earth · launch day'),spawn:at(5,52),
+  briefing:t('Tu hermana parte con Aurora. Despídete de ella en el patio.','Your sister is leaving with Aurora. Say goodbye to her in the plaza.'),
+  arrival:t('Tu hermana te espera al final del camino.','Your sister is waiting at the end of the path.'),
+  outcome:t('Tu hermana cruza el patio rumbo a la lanzadera. Aurora parte.','Your sister crosses the plaza toward the shuttle. Aurora departs.'),
+  exit:'sister-goodbye',points:[{
+    ...point('sister-goodbye','plaza',5,39,'upload',t('Despedirte de tu hermana','Say goodbye to your sister'),
+      t('Aurora está lista para despegar.','Aurora is ready for launch.')),
+    verb:t('Hablar','Talk'),
+  }],
+  crew:{members:[{id:'sister',sister:true,uniform:'flight',at:at(5,38)}],boardAfter:'sister-goodbye',
+    route:[at(7,28),at(34,-29)]},
+  props:[...padProps,...[48,42,36].map(z=>groundProp('marker',2.8,z,.14,0,1.15))],
+  collectibles:[],
+};
+
+export const departureDialogue:Record<string,Line[]>={
+  'point:sister-goodbye':[
+    {speaker:'SISTER',text:t('Mira mi parche. Lo cosí torcido. Si ves la transmisión, así sabrás cuál soy.',
+      'Look at my patch. I sewed it on crooked. If you watch the broadcast, you’ll know which one is me.')},
+    {speaker:'SISTER',text:t('Guárdame un sitio junto a ti, donde se vea la pista. Cuando volvamos, nos sentamos ahí.',
+      'Save me a spot beside you where we can see the runway. We’ll sit there when we get back.')},
+  ],
 };
 
 type Placement=Record<string,[number,number,string]>;
@@ -149,6 +176,7 @@ export function evaLevel(route:EvaRoute):LevelV2 {
 const receiptSpots=[at(-5,36),at(0,32),at(9,32)];
 export const earthLevel:LevelV2={
   ...groundLevel,mission:'campaign-earth',title:t('Las cosas que quedan','The things that remain'),
+  attire:undefined,movement:undefined,
   subtitle:t('Centro de recepción terrestre','Earth reception centre'),spawn:at(5,47),
   briefing:t('Acompaña a Aurora al puesto de recepción y entrega los resultados.','Escort Aurora to reception and hand over the results.'),
   arrival:t('Aurora está en casa. Comprueba la recepción de las tres personas del manifiesto.','Aurora is home. Verify reception of all three people on the manifest.'),
@@ -168,12 +196,13 @@ export const earthLevel:LevelV2={
 
 export const stationDialogue:Record<string,Line[]>={
   chat:[{speaker:'LUMA',text:t('¿Puedes hacer el saludo otra vez? Cuando oigo los dos pulsos, sé que estás cerca.',
-    'Can you greet me again? When I hear the two pulses, I know you are close.')}],
+    'Can you greet me again? When I hear the two pulses, I know you are close.')},
+    recordedLuma('orbit',orbitDialogue,'point:translator',1)],
   'point:capsule':[{speaker:'CONTROL',text:t('Guarda el parche. Tu hermana trabajaba con ese equipo. La hora del envío dice que alguien pudo lanzar la cápsula; todavía no sabemos qué pasó después.',
     'Keep the patch. Your sister worked with that equipment. The launch time tells us someone could send the capsule. We still do not know what happened after that.')}],
   'point:protected-bay':[{speaker:'CONTROL',text:t('Deja la escotilla abierta. Haremos el saludo cuando él se acerque.',
     'Leave the hatch open. We can try a greeting when he comes closer.')}],
-  'point:translator':orbitDialogue['point:translator'],
+  'point:translator':orbitDialogue['point:translator'].map((_,i)=>recordedLuma('orbit',orbitDialogue,'point:translator',i)),
   'point:keepsake':[{speaker:'LUMA',text:t('Dormía junto a su mesa. Si me asustaba el ruido, ella dejaba la mano a mi lado hasta que se me pasaba.',
     'I slept by her desk. If the noise frightened me, she left her hand beside me until it passed.')}],
 };

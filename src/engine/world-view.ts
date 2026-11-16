@@ -31,6 +31,7 @@ export type PointView = { id: string; beam: Mesh; ring: Mesh };
 export type Ambience = { update(dt: number, camera: Vector3, time: number): void; setStorm(level: number): void };
 export type Footprints = { place(x: number, y: number, z: number, facing: number): void };
 export type Dust = { burst(x: number, y: number, z: number, count: number, spread: number): void; update(dt: number): void };
+type CrewFigure = {group:Group;rig?:Astronaut};
 export type WorldView = {
   scene: Scene; player: Group; astronaut: Astronaut; luma: Group; lumaModel: Luma; shadow: Mesh; beacon: Mesh;
   points: Map<string, PointView>; echoes: Map<string, Mesh>;
@@ -42,7 +43,7 @@ export type WorldView = {
   /** Geophone sites (S1): a short post whose lamp lights once a geophone is planted. */
   geophones: Map<string, Mesh>; setGeophone(id: string, on: boolean): void;
   /** Rescued crew figures by id (empty unless the level has a crew). */
-  crew: Map<string, Group>; dust: Dust; footprints: Footprints; ambience: Ambience;
+  crew: Map<string, CrewFigure>; dust: Dust; footprints: Footprints; ambience: Ambience;
   /** Switches between the plain sky band and the painted nebula (setting); `tick` drifts the nebula. */
   setSky(painted: boolean): void; tickSky(time: number): void;
   /** Lamps that blink in sequence (ramp markers). */
@@ -562,15 +563,17 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   }
   const setGeophone = (id: string, on: boolean) => { const l = geophones.get(id); if (l) l.material = on ? geoOn : geoOff; };
 
-  const crew = new Map<string, Group>();
+  const crew = new Map<string,CrewFigure>();
   for (const m of level.crew?.members ?? []) {
-    const f = buildCrewFigure(!!m.sister);
+    const rig=m.uniform==='flight'?buildAstronaut('flight'):undefined;
+    const f = rig?.group??buildCrewFigure(!!m.sister);
     f.position.set(m.at.x, heightAt(hf, m.at.x, m.at.z), m.at.z);
+    if(m.uniform)f.rotation.y=Math.atan2(m.at.x-level.spawn.x,m.at.z-level.spawn.z);
     scene.add(f);
-    crew.set(m.id, f);
+    crew.set(m.id,{group:f,rig});
   }
 
-  const astronaut = buildAstronaut();
+  const astronaut = buildAstronaut(level.attire);
   const player = astronaut.group;
   const lumaModel = buildLuma();
   const luma = lumaModel.group;
@@ -584,7 +587,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
     // Real shadows replace the blob under the player.
     shadow.visible = false;
     castShadows(props); castShadows(player); castShadows(luma);
-    for (const f of crew.values()) castShadows(f);
+    for (const f of crew.values()) castShadows(f.group);
     for (const m of specimens.values()) castShadows(m);
     for (const lamp of [...beacons.values(), ...geophones.values()]) if (lamp.parent) castShadows(lamp.parent);
   }

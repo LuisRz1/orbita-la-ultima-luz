@@ -2,7 +2,7 @@
 id: historia-principal
 type: narrativa
 status: especificacion-con-spoilers
-updated: 2026-10-14
+updated: 2026-11-15
 tags: [orbita, historia, aurora, luma, spoilers]
 ---
 # Historia principal — Órbita: La última luz
@@ -16,6 +16,8 @@ tags: [orbita, historia, aurora, luma, spoilers]
 La ciencia permite seguir su rastro y preparar un rescate viable. Cada misión principal debe revelar una pista, abrir una ruta o aportar una capacidad necesaria para recuperar a las personas. El regreso es la culminación del rescate.
 
 ## Premisa sin revelar el final
+
+La campaña comienza en la Tierra, el día que Aurora sale. El protagonista está de civil y camina hasta el patio del complejo para despedirse de su hermana. Ella le muestra el parche que cosió torcido y le pide que le guarde un sitio junto a la pista. Tras el salto de tiempo, el prólogo narrado cuenta la pérdida de contacto y la recuperación de la cápsula. El jugador vuelve al mismo complejo para abrir el expediente en Control.
 
 En un futuro cercano hipotético, Aurora desapareció después de desviarse para investigar una señal desconocida. Tu hermana formaba parte de la tripulación. La búsqueda no logró localizarla y se suspendió.
 
@@ -51,6 +53,8 @@ El origen remoto de LUMA puede seguir siendo una pregunta científica. El final 
 | [4. Lo que queda de la luz](CAPITULOS/C4-LO-QUE-QUEDA.md) | ¿Podemos alcanzarlos y llevarlos de vuelta? | Tripulación recuperada y regreso terrestre completado; LUMA se sacrifica para salvar al protagonista. | Blanco azulado; despedida íntima y muerte definitiva. |
 
 Ruta: **Tierra → Luna → Marte → Bennu → Tierra**. El nodo marciano sirve para reabastecer y reconfigurar el rescate. Las aproximaciones se pilotan en 2.5D; los trayectos largos se planifican y aceleran. No hay una escala terrestre intermedia.
+
+Después de cada cierre, una cinemática recoge el hallazgo ya validado y conecta con el siguiente destino. Al confirmar la recepción en la Tierra, la hermana vuelve al patio con el protagonista y retoma la promesa de sentarse junto a la pista.
 
 ## Cadena de pruebas y revelaciones
 

@@ -87,7 +87,6 @@ export function App() {
   const { t } = useT();
   const [error, setError] = useState<string | null>(null);
   const [mode,setMode]=useState(initialMode);
-  const [opening,setOpening]=useState(false);
   const root=useRef<HTMLDivElement>(null);
   const [fullscreen,setFullscreen]=useState(false);
   const [fullscreenError,setFullscreenError]=useState(false);
@@ -108,7 +107,7 @@ export function App() {
     setMode(next);
   },[]);
   const open=useCallback(()=>switchGame('aurora'),[switchGame]);
-  const openFirstLight=useCallback(()=>{setOpening(true);switchGame('primera-luz');},[switchGame]);
+  const openFirstLight=useCallback(()=>switchGame('primera-luz'),[switchGame]);
   const openExpeditions=useCallback(()=>switchGame('menu'),[switchGame]);
   const exit=useCallback(()=>switchGame('setup'),[switchGame]);
   const toggleFullscreen=useCallback(async ()=>{
@@ -144,7 +143,7 @@ export function App() {
   return <div className="orbita" ref={root}>
     {mode==='setup'?<LaunchSetup onPlay={openFirstLight} onCampaign={open} onExpeditions={openExpeditions}/>:
     mode!=='menu'?<Suspense fallback={<LoadingScreen/>}>
-      <CampaignGame key={mode} slot={mode} opening={mode==='primera-luz'&&opening} onExit={exit} onFullCampaign={open}/>
+      <CampaignGame key={mode} slot={mode} onExit={exit} onFullCampaign={open}/>
     </Suspense>:<>
       <GameCanvas onError={setError}/>
       {!ready&&<LoadingScreen/>}

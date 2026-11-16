@@ -96,12 +96,41 @@ const resultSchema=z.discriminatedUnion('kind',[
   z.object({kind:z.literal('report')}).strict(),
 ]);
 export type CampaignResult=z.infer<typeof resultSchema>;
+const transitions = {
+  'moon-handoff': 'moon',
+  'moon-report': 'mars',
+  'rescue-plan': 'bennu',
+  epilogue: 'earth',
+} as const;
+const cinematicSchema=z.enum(['prologue','moon','mars','bennu','earth']);
+export type CampaignCinematic=z.infer<typeof cinematicSchema>;
+export type CampaignScene='departure'|CampaignCinematic;
+
 const schema=z.object({
   version:z.literal(1),
   log:z.array(z.object({id:z.string(),result:resultSchema}).strict()).max(campaignStages.length),
+  departureSeen:z.literal(true).optional(),
+  cinematic:cinematicSchema.optional(),
 }).strict();
 export type Campaign=z.infer<typeof schema>;
 export const newCampaign=():Campaign=>({version:1,log:[]});
+/** Older campaigns skip the opening once they have logged a gameplay checkpoint. */
+export function pendingCampaignScene(state:Campaign):CampaignScene|null {
+  return state.cinematic ?? (!state.log.length&&!state.departureSeen?'departure':null);
+}
+export function transitionAfter(id:string):CampaignCinematic|undefined {
+  return Object.hasOwn(transitions,id)?transitions[id as keyof typeof transitions]:undefined;
+}
+export function acknowledgeCampaignScene(state:Campaign,scene:CampaignScene,cinematics:boolean):Campaign {
+  if(pendingCampaignScene(state)!==scene)return state;
+  const {cinematic:_,...rest}=state;
+  const next:Campaign=rest;
+  if(scene==='departure'){
+    next.departureSeen=true;
+    if(cinematics)next.cinematic='prologue';
+  }
+  return next;
+}
 export const activeStage=(state:Campaign)=>campaignStages[state.log.length]??null;
 export const passed=(state:Campaign,id:string)=>state.log.some(item=>item.id===id);
 export function option(state:Campaign,id:string){
@@ -219,6 +248,14 @@ export function restoreCampaign(raw:unknown):Campaign|null{
     const next=acceptStage(state,id,result);
     if(next===state)return null;
     state=next;
+  }
+  const {departureSeen,cinematic}=record.data;
+  if(departureSeen)state.departureSeen=true;
+  if(cinematic){
+    const last=state.log.at(-1);
+    const expected=last?transitionAfter(last.id):departureSeen?'prologue':undefined;
+    if(cinematic!==expected)return null;
+    state.cinematic=cinematic;
   }
   return state;
 }

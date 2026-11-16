@@ -1,5 +1,6 @@
 import type { LevelV2 } from '../../core/contract/level-v2.ts';
-import type { Line } from '../moon/dialogue.ts';
+import { recordedLuma, type Line } from '../moon/dialogue.ts';
+import { marsDialogue as recordedMars } from './dialogue.ts';
 import { at, mound, point, scenery, smooth, t, zone } from '../expedition-shapes.ts';
 
 export function marsHeight(x:number,z:number){
@@ -57,10 +58,8 @@ export function marsLevel(site:'beacon'|'basin'):LevelV2 {
 }
 
 export const marsDialogue:Record<string,Line[]>={
-  chat:[{speaker:'LUMA',text:t('Hoy me cuesta el camino. Si vamos más despacio, puedo seguir contándote lo que recuerdo.',
-    'The walk is hard today. If we go slower, I can keep telling you what I remember.')}],
-  intro:[{speaker:'LUMA',text:t('Antes subía de un salto. Hoy necesito una pausa. Ve a la baliza. Yo sigo tu ritmo.',
-    'I used to get up there in one jump. Today I need a pause. Go to the beacon. I will follow at your pace.')}],
+  chat:[recordedLuma('mars',recordedMars,'recalled',1)],
+  intro:[recordedLuma('mars',recordedMars,'intro',2),recordedLuma('mars',recordedMars,'intro',3)],
   'point:luma-rest':[{speaker:'LUMA',text:t('Ella también me dejaba algo tibio cerca. Así aprendí que podía quedarme.',
     'She used to leave something warm nearby too. That is how I learned I could stay.')}],
   'point:relay':[{speaker:'CONTROL',text:t('El archivo tiene sello y fecha. Leemos el destino cuando esté cotejado en el nodo.',

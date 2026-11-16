@@ -16,7 +16,7 @@ export type CompassMark = { id: string; label: Localized | null; bearing: number
 export type Phase = 'loading' | 'menu' | 'ship' | 'eva' | 'report';
 export type StationId = 'battery' | 'thruster' | 'antenna' | 'instruments' | 'locker' | 'airlock';
 export type ShipState = { draft: SuitDesign; done: StationId[]; next: StationId | null; open: StationId | null; near: StationId | null; guided: boolean };
-export type DialogueLine = { speaker: 'LUMA' | 'CONTROL' | 'AURORA'; text: Localized };
+export type DialogueLine = import('../levels/moon/dialogue.ts').Line;
 
 /** State the engine publishes for the DOM interface. Continuous values are refreshed ten times per second. */
 export type HudState = {

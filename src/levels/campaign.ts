@@ -21,6 +21,7 @@ export async function loadCampaignLevel(site:string,state:Campaign):Promise<Leve
       : {level:m.bennuLevel,dialogue:m.bennuDialogue,facts:facts.bennuFacts,biome:'carbono'};
   }
   const m=await import('./orbit/campaign.ts');
+  if(site==='departure')return {level:m.departureLevel,dialogue:m.departureDialogue,facts:facts.orbitFacts,biome:'tierra'};
   if(site==='ground')return {level:m.groundLevel,dialogue:{},facts:facts.orbitFacts,biome:'tierra'};
   if(site==='station')return {level:m.stationLevel,dialogue:m.stationDialogue,facts:facts.orbitFacts,biome:'quirofano'};
   if(site==='eva')return {level:m.evaLevel(option(state,'eva-plan')==='sunlit'?'sunlit':'sheltered'),

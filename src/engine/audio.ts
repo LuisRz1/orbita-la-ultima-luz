@@ -375,6 +375,7 @@ export class GameAudio {
   private voiceGain!: GainNode;
   private voices = new Map<string, Promise<AudioBuffer | null>>();
   private speaking: AudioBufferSourceNode | null = null;
+  private voiceVersion = 0;
   private windGain: GainNode | null = null;
   /**
    * Wind bed. 0 on the Moon (no air carries sound); on Mars the thin atmosphere does carry a low, breathy wind, as
@@ -441,6 +442,8 @@ export class GameAudio {
 
   /** Plays a recorded line and resolves with its length in seconds once it starts (0 when it cannot play). */
   narrate(url: string): Promise<number> {
+    this.stopVoice();
+    const version = this.voiceVersion;
     const ctx = this.ctx;
     if (!ctx) return Promise.resolve(0);
     let buffer = this.voices.get(url);
@@ -450,8 +453,7 @@ export class GameAudio {
       this.voices.set(url, buffer);
     }
     return buffer.then(buf => {
-      if (!buf || this.ctx !== ctx) return 0;
-      this.stopVoice();
+      if (!buf || this.ctx !== ctx || version !== this.voiceVersion || ctx.state !== 'running') return 0;
       const source = ctx.createBufferSource();
       source.buffer = buf;
       source.connect(this.voiceGain);
@@ -464,6 +466,7 @@ export class GameAudio {
   }
 
   stopVoice() {
+    this.voiceVersion++;
     if (!this.speaking || !this.ctx) return;
     try { this.speaking.stop(); } catch { /* already stopped */ }
     this.speaking = null;

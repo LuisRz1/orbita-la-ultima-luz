@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { acceptStage, activeStage, collectedEvidence, flightMinimum, fuelLeft, missionLog, newCampaign, people,
+import { acceptStage, acknowledgeCampaignScene, activeStage, collectedEvidence, flightMinimum, fuelLeft, missionLog, newCampaign, pendingCampaignScene, people,
   restoreCampaign, spacecraft, validEvidence, voyage, type Campaign, type CampaignResult } from '../../src/core/campaign.ts';
 import { bulkheadColliders, checkLevel, walkable, type LevelV2 } from '../../src/core/contract/level-v2.ts';
 import { buildHeightfield } from '../../src/core/heightfield.ts';
@@ -12,9 +12,9 @@ import { actionCost, assessSuit, proposals, reserve } from '../../src/core/suit.
 import { bennuLevel, serviceLevel } from '../../src/levels/bennu/campaign.ts';
 import { marsLevel } from '../../src/levels/mars/campaign.ts';
 import { campaignMoon } from '../../src/levels/moon/campaign.ts';
-import { earthLevel, evaLevel, groundLevel, stationLevel } from '../../src/levels/orbit/campaign.ts';
+import { departureLevel, earthLevel, evaLevel, groundLevel, stationLevel } from '../../src/levels/orbit/campaign.ts';
 
-const fieldLevels:LevelV2[]=[groundLevel,stationLevel,evaLevel('sheltered'),evaLevel('sunlit'),
+const fieldLevels:LevelV2[]=[departureLevel,groundLevel,stationLevel,evaLevel('sheltered'),evaLevel('sunlit'),
   campaignMoon('ridge'),campaignMoon('slope'),marsLevel('beacon'),marsLevel('basin'),bennuLevel,serviceLevel,earthLevel];
 test('all destinations and variants are connected on foot or by a continuous chain of anchors',()=>{
   for(const level of fieldLevels){
@@ -68,6 +68,22 @@ test('First Light rejects proof out of order and both vehicle kits have a viable
       assert.ok(costs+reserve+30<stats.capacity);
     }
   }
+});
+
+test('the playable opening is saved separately and prior mission logs resume directly',()=>{
+  const fresh=newCampaign();
+  assert.equal(pendingCampaignScene(fresh),'departure');
+  assert.equal(acknowledgeCampaignScene(fresh,'prologue',true),fresh);
+  const narrated=acknowledgeCampaignScene(fresh,'departure',true);
+  assert.equal(pendingCampaignScene(narrated),'prologue');
+  assert.deepEqual(restoreCampaign(JSON.parse(JSON.stringify(narrated))),narrated);
+  assert.equal(restoreCampaign({...narrated,cinematic:'bennu'}),null);
+  const opened=acknowledgeCampaignScene(narrated,'prologue',true);
+  assert.equal(pendingCampaignScene(opened),null);
+  assert.equal(pendingCampaignScene(acknowledgeCampaignScene(fresh,'departure',false)),null);
+  assert.equal(missionLog(opened).length,0);
+  const existing=acceptStage(fresh,'ground',{kind:'field',points:['control'],energy:64});
+  assert.equal(pendingCampaignScene(restoreCampaign(existing)!),null);
 });
 
 test('both vehicle profiles can finish all 24 missions with valid maneuvers and ordered rescue evidence',()=>{

@@ -3,8 +3,15 @@
 // terminal has authenticated AUR-E03, which says where Aurora went next (Mars).
 import type { Localized } from '../../core/contract/grid-v1.ts';
 
-export type Speaker = 'LUMA' | 'CONTROL' | 'AURORA';
-export type Line = { speaker: Speaker; text: Localized };
+export type Speaker = 'LUMA' | 'CONTROL' | 'AURORA' | 'SISTER';
+export type LumaRecording = { level: string; key: string; index: number };
+export type Line = { speaker: Speaker; text: Localized; recording?: LumaRecording };
+
+/** Keep the recording paired with its original bilingual transcript when reusing a line. */
+export function recordedLuma(level:string,script:Record<string,Line[]>,key:string,index:number):Line {
+  const line=script[key][index];
+  return {...line,recording:{level,key,index}};
+}
 const l = (speaker: Speaker, es: string, en: string): Line => ({ speaker, text: { es, en } });
 
 export const moonDialogue: Record<string, Line[]> = {
