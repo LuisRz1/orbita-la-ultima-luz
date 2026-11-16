@@ -14,12 +14,12 @@ const clock = (s: number) => {
 
 export function MissionPanel() {
   const { t } = useT();
-  const { levelTitle, objectives, echoes, atlas, beacons, pages, elapsed, compass } = useStore(hud);
+  const { levelTitle, levelSubtitle, objectives, echoes, atlas, beacons, pages, elapsed, compass } = useStore(hud);
   if (!levelTitle) return null;
   const required = objectives.filter(o => o.required);
   const goal = compass.marks.find(m => m.kind === 'goal');
   return <section className="panel mission" aria-label={t('eva')}>
-    <span className="panel-title">{t('eva')} · {clock(elapsed)}</span>
+    <span className="panel-title">{levelSubtitle ? t(levelSubtitle) : t('eva')} · {clock(elapsed)}</span>
     <h1>{t(levelTitle)}</h1>
     <div className="next" data-next>
       <span>{t('nextGoal')}</span>
@@ -97,8 +97,8 @@ export function ViewChip() {
   const wanted = useStore(prefs, s => s.view);
   const first = view === 'first' || wanted === 'first';
   return <p className="view-chip" data-view-chip={first ? 'first' : 'third'}><kbd>V</kbd>{first
-    ? t({ es: 'vista de casco · V: tercera persona', en: 'helmet view · V: third person' })
-    : t({ es: 'tercera persona · V: vista de casco', en: 'third person · V: helmet view' })}</p>;
+    ? t({ es: 'Tercera persona', en: 'Third person' })
+    : t({ es: 'Vista de casco', en: 'Helmet view' })}</p>;
 }
 
 /** Photo mode: everything hidden but a one-line reminder of the controls. */

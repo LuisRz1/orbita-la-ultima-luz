@@ -2,7 +2,7 @@
 
 > **NASA Space Apps Challenge 2026 · Space Mission Design Game.** A browser game in 3D where every sortie is a small mission: design the spacesuit under a mass budget, go out and spend a limited battery, read a report that links each decision to its outcome, and redesign. **[English](#for-the-judges) · [Español](#para-el-jurado)**
 
-**Para jugar.** La portada abre los ajustes. Elige idioma, sonido, cámara y gráficos, y pulsa **Jugar Primera luz**. Al cerrar C1 puedes llevar el informe a la campaña desde la elección de alunizaje.
+**Para jugar.** La portada abre los ajustes. Elige idioma, sonido, cámara y gráficos, y pulsa **Jugar Primera luz**. Al cerrar C1 puedes llevar el informe a la campaña desde la elección de alunizaje. [Jugar en Vercel](https://orbita-la-ultima-luz.vercel.app/).
 
 **To play.** Setup opens first. Choose language, sound, camera and graphics, then choose **Play First Light**. After filing the Chapter 1 report you can continue the campaign from lunar landing site selection.
 

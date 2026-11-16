@@ -34,6 +34,8 @@
   color:#d5e5e7;background:#0d161fe8;padding:6px 9px;border:1px solid var(--line);font-size:11px;
 }
 .orbita .campaign-game .center-bottom {bottom:54px;}
+.orbita .campaign-game:has(.helmet) .center-bottom {bottom:25.5vh;}
+.orbita .campaign-game .view-chip {left:auto;right:14px;bottom:48px;}
 .orbita .campaign-fuel {position:absolute;bottom:15px;right:16px;margin:0;pointer-events:none;}
 .orbita .campaign-game button,.orbita .campaign-journal button {font:inherit;}
 .orbita .campaign-panel button,.orbita .campaign-toolbar button,.orbita .campaign-journal button {
