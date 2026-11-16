@@ -146,8 +146,9 @@ function paintedSky(colors: [string, string]) {
   return dome;
 }
 
-/** Faint Milky Way band painted on a sky dome behind the stars. */
+/** Daylight over Earth or a faint Milky Way band behind the stars. */
 function skyBand() {
+  const day=biome.sky==='day';
   const mat = new ShaderMaterial({
     side: BackSide, depthWrite: false, fog: false,
     uniforms: { uTop: { value: new Color(biome.skyTop) }, uHorizon: { value: new Color(biome.skyHorizon) }, uBand: { value: new Color(biome.milkyWay) } },
@@ -159,6 +160,14 @@ function skyBand() {
         return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y),
                    mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
       void main() {
+        ${day ? `
+        vec3 sky = mix(uHorizon,uTop,smoothstep(-0.04,0.68,vDir.y));
+        vec3 p = vDir * vec3(7.0,18.0,7.0);
+        float clouds = smoothstep(0.50,0.73,0.72*n(p)+0.28*n(p*2.4));
+        float height = smoothstep(0.01,0.21,vDir.y)*(1.0-smoothstep(0.73,0.96,vDir.y));
+        gl_FragColor = vec4(mix(sky,vec3(0.93,0.95,0.94),0.55*height*clouds),1.0);
+        #include <colorspace_fragment>
+        ` : `
         vec3 axis = normalize(vec3(0.35, 0.55, 0.76));
         float d = dot(vDir, axis);
         float cloud = n(vDir * 6.0) * 0.6 + n(vDir * 14.0) * 0.3 + n(vDir * 30.0) * 0.1;
@@ -167,6 +176,7 @@ function skyBand() {
         vec3 sky = mix(uHorizon, uTop, smoothstep(0.0, 0.14, vDir.y));
         vec3 col = sky + uBand * band * 0.25 * smoothstep(-0.05, 0.12, vDir.y) - vec3(0.02) * dust;
         gl_FragColor = vec4(max(col, vec3(0.0)), 1.0);
+        `}
       }`,
   });
   const dome = new Mesh(new SphereGeometry(460, 32, 16), mat);
@@ -403,7 +413,7 @@ export function buildWorldView(level: LevelV2, hf: Heightfield, tier: Tier = 'me
   // The painted nebula is an illustrated-look option (fiction); the realistic sky never shows it.
   const painted = biome.nebula && !real ? paintedSky(biome.nebula) : null;
   if (painted) { painted.visible = false; scene.add(painted); }
-  if (real) band.visible = false;
+  if (real && biome.sky!=='day') band.visible = false;
   scene.add(glow, band);
   if (level.pressurizedBay || level.anchorCourse && level.id === 'orbit') {
     const earth = new Mesh(new SphereGeometry(52, 32, 20), new MeshLambertMaterial({ map: earthTexture(), fog: false }));

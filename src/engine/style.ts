@@ -136,8 +136,8 @@ const carbono: Biome = {
 
 const tierra: Biome = {
   ...nacar, sky: 'day', starCount: 0, nebula: null, air: 1.6, wind: .4,
-  lit: '#a6b39a', mid: '#68877e', shadow: '#445d65', deep: '#183539', ink: '#243c3f',
-  skyTop: '#375879', skyHorizon: '#9eb5ad', fog: '#93a6a5', hemiSky: '#a6c3df',
+  lit: '#82975f', mid: '#5c7d50', shadow: '#435f50', deep: '#183539', ink: '#243c3f',
+  skyTop: '#4d86ba', skyHorizon: '#c3d6d8', fog: '#adc0bf', hemiSky: '#a6c3df',
   rockLit: '#818778', rockDark: '#4e5a61', luma: '#ffe2a0', lumaCore: '#ffffff',
   real: { ...nacar.real, exposure: .85, ground: '#849071', rock: '#686f65', planetshine: 0,
     skyFill: '#9fc9ea', skyZenith: '#4d7dab', skyHorizon: '#c9dedf',

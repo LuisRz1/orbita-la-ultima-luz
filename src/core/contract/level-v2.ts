@@ -52,7 +52,7 @@ export type PressurizedBay = { min: Vec2; max: Vec2; ceiling: number };
 export type LevelV2 = {
   kitVersion: 2; id: 'orbit' | 'moon' | 'mars' | 'bennu' | 'extraction'; mission: string;
   title: Localized; subtitle: Localized; briefing: Localized; arrival: Localized; outcome: Localized;
-  terrain: { size: number; res: number; height(x: number, z: number): number };
+  terrain: { size: number; res: number; height(x: number, z: number): number; apron?: { min:Vec2; max:Vec2 } };
   attire?: 'civilian';
   /** Inner faces of a walkable station bay, in world metres. */
   pressurizedBay?: PressurizedBay;

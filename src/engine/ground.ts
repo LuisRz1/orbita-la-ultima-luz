@@ -55,7 +55,7 @@ const hazardCircles = (level: LevelV2): Circle[] =>
  * no visible tiling) and rock strata on steep faces, fading with distance.
  * `octaves` trades detail for cost on low-end GPUs.
  */
-function terrainMaterial(octaves: number, plating = false) {
+function terrainMaterial(octaves: number, plating: boolean, day: boolean) {
   const m = new MeshBasicMaterial({ vertexColors: true, toneMapped: false });
   if (plating) {
     // Station deck: panel seams every 3 m, rivet rows and a faint brushed variation instead of regolith.
@@ -123,9 +123,9 @@ float pits(vec2 p) {
   float broad = fbm(xz * 0.045);
   float grain = vnoise(xz * 3.1) - 0.5;
   float albedo = 0.9 + (broad - 0.5) * 0.22 + grain * 0.08 * near;
-  // Small pits: a darker bowl with a lit rim, only close to the camera.
-  float c = pits(xz * 0.32 + broad * 1.5);
-  albedo *= 1.0 - near * (smoothstep(1.0, 0.45, c) * 0.18 - smoothstep(1.25, 1.0, c) * smoothstep(0.85, 1.0, c) * 0.12);
+  ${day ? '' : `
+    float c = pits(xz * 0.32 + broad * 1.5);
+    albedo *= 1.0 - near * (smoothstep(1.0, 0.45, c) * 0.18 - smoothstep(1.25, 1.0, c) * smoothstep(0.85, 1.0, c) * 0.12);`}
   // Steep faces show layered rock.
   float steep = smoothstep(0.35, 0.6, 1.0 - vN.y);
   float strata = 0.93 + 0.07 * sin(vWorld.y * 3.2 + broad * 6.0 + vnoise(xz * 0.4) * 3.0);
@@ -134,18 +134,25 @@ float pits(vec2 p) {
   diffuseColor.rgb *= albedo;
 }`);
   };
-  m.customProgramCacheKey = () => 'terrain' + octaves;
+  m.customProgramCacheKey = () => (day?'day-terrain':'terrain') + octaves;
   return m;
 }
 
+type Apron = LevelV2['terrain']['apron'];
+function apronCoverage(apron:NonNullable<Apron>,x:number,z:number){
+  const edge=Math.min(x-apron.min.x,apron.max.x-x,z-apron.min.z,apron.max.z-z);
+  return Math.max(0,Math.min(1,edge/1.6));
+}
+
 /** The illustrated terrain: light baked into banded vertex colours, per-pixel albedo detail, no shadow map. */
-export function terrainIllustrated(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[]) {
+function terrainIllustrated(hf: Heightfield, sun: [number, number, number], octaves: number, cold: Circle[], apron:Apron) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
   geometry.rotateX(-Math.PI / 2);
   const pos = geometry.attributes.position as BufferAttribute;
   const colorsOut = new Float32Array(pos.count * 3), bakedSun = new Float32Array(pos.count);
   const lit = new Color(biome.lit), mid = new Color(biome.mid), line = new Color(biome.ink), c = new Color();
   const shadow = new Color(biome.shadow), deep = new Color(biome.deep), dark = new Color(), space = new Color(biome.fog);
+  const concrete = new Color('#919c9d'), paved = new Color();
   const h = (x: number, z: number) => heightAt(hf, x, z);
   for (let k = 0; k < pos.count; k++) {
     const x = pos.getX(k), z = pos.getZ(k);
@@ -167,6 +174,7 @@ export function terrainIllustrated(hf: Heightfield, sun: [number, number, number
     }
     dark.copy(shadow).lerp(deep, inCold);
     c.copy(dark).lerp(mid, toMid).lerp(lit, toLit);
+    if(apron)c.lerp(paved.copy(concrete).multiplyScalar(.48+.52*toLit),apronCoverage(apron,x,z));
     // Cavity and crest terms from curvature: hollows darken; sharp breaks get an ink line.
     const lap = (h(x + 2, z) + h(x - 2, z) + h(x, z + 2) + h(x, z - 2) - 4 * hf.data[k]) / 4;
     c.multiplyScalar(Math.min(1.0, Math.max(0.62, 1 - lap * 0.7)));
@@ -177,25 +185,29 @@ export function terrainIllustrated(hf: Heightfield, sun: [number, number, number
   }
   geometry.setAttribute('color', new Float32BufferAttribute(colorsOut, 3));
   geometry.computeVertexNormals();
-  return { mesh: new Mesh(geometry, terrainMaterial(octaves, biome.plating)), bakedSun };
+  return { mesh: new Mesh(geometry, terrainMaterial(octaves, biome.plating, biome.sky==='day')), bakedSun };
 }
 
 /** PHASE 0 STUB of the realistic terrain: the heightfield grid with one flat physically based material. */
-function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadows: boolean) {
+function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadows: boolean, apron:Apron) {
   const geometry = new PlaneGeometry(hf.size, hf.size, hf.res - 1, hf.res - 1);
   geometry.rotateX(-Math.PI / 2);
   const pos = geometry.attributes.position as BufferAttribute;
   const bakedSun = new Float32Array(pos.count), tint = new Float32Array(pos.count * 3);
+  const ground=new Color(biome.real.ground), concrete=new Color('#919c9d'), base=new Color();
   for (let k = 0; k < pos.count; k++) {
     pos.setY(k, hf.data[k]);
-    const visible = sunVisibility(hf, pos.getX(k), pos.getZ(k), sun);
+    const x=pos.getX(k), z=pos.getZ(k);
+    const visible = sunVisibility(hf, x, z, sun);
     bakedSun[k] = visible;
     // Without a shadow map the baked visibility darkens the albedo instead (crude; B replaces it with the `sun` hook).
-    tint.fill(shadows ? 1 : 0.25 + 0.75 * visible, k * 3, k * 3 + 3);
+    const light=shadows?1:.25+.75*visible;
+    if(apron)base.copy(ground).lerp(concrete,apronCoverage(apron,x,z)).multiplyScalar(light).toArray(tint,k*3);
+    else tint.fill(light,k*3,k*3+3);
   }
   geometry.setAttribute('color', new Float32BufferAttribute(tint, 3));
   geometry.computeVertexNormals();
-  const material = new MeshStandardMaterial({ color: biome.real.ground, roughness: biome.plating ? 0.55 : 0.95, metalness: 0, vertexColors: true });
+  const material = new MeshStandardMaterial({ color: apron?'#ffffff':biome.real.ground, roughness: biome.plating ? 0.55 : 0.95, metalness: 0, vertexColors: true });
   if (biome.voidBelow !== null) {
     // Station: the void under the decks is not drawn, so each deck reads as a slab floating over Earth. Panel seams
     // every 3 m darken the paint a little.
@@ -234,8 +246,8 @@ function terrainRealistic(hf: Heightfield, sun: [number, number, number], shadow
 export function buildGround(level: LevelV2, hf: Heightfield, sun: [number, number, number], opts: GroundOptions): Ground {
   const group = new Group();
   const { mesh, bakedSun } = look.real
-    ? terrainRealistic(hf, sun, opts.lighting.shadows)
-    : terrainIllustrated(hf, sun, opts.tier === 'low' ? 3 : 4, hazardCircles(level));
+    ? terrainRealistic(hf, sun, opts.lighting.shadows, level.terrain.apron)
+    : terrainIllustrated(hf, sun, opts.tier === 'low' ? 3 : 4, hazardCircles(level), level.terrain.apron);
   group.add(mesh, scatterRocks(level, hf, opts.scatter, { shadows: opts.lighting.shadows }));
   return { group, bakedSun };
 }

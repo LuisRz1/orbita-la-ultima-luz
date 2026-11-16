@@ -17,7 +17,7 @@ En partidas nuevas se juega primero la despedida de la hermana en la Tierra, de 
 
 La campaña conserva AUR-E01–AUR-E07, reabastecimiento marciano, sacrificio de LUMA y manifiesto de los tres supervivientes. El guardado registra los hitos y las cinemáticas por separado. Los textos y las grabaciones incorporadas están en español e inglés. Las tomas pendientes se detallan en el [guion de LUMA](../05-Arte/GUION-LUMA.md).
 
-En campo, V cambia entre tercera persona y visor, C centra, F activa pantalla completa y G activa una capacidad de LUMA cuando está disponible. La calidad inicial es automática, con aspecto ilustrado. Los ajustes permiten activar el aspecto realista y el posproceso.
+En campo, V cambia al visor cuando el traje está equipado, C centra, F activa pantalla completa y G activa una capacidad de LUMA cuando está disponible. La calidad inicial es automática, con aspecto ilustrado. Los ajustes permiten activar el aspecto realista y el posproceso.
 
 ## Verificación y continuidad
 
